@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Task name shown in VSCode
+            "label": "Compile LaTeX with Docker",
+            "type": "shell",
+            // The compile command
+            "command": "docker start -a latex-builder",
+            "group": {
+                // Set as default build task
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                // Always show terminal output
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}

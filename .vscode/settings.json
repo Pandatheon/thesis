@@ -1,29 +1,28 @@
 {
     "latex-workshop.latex.autoBuild.run": "onSave",
     "latex-workshop.synctex.afterBuild.enabled": true,
-    "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%/build",
+    // Match the directory name 'out' used by the Makefile
+    "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%/out",
     "latex-workshop.latex.search.rootFiles.include": [
         "%WORKSPACE_FOLDER%/main.tex"
     ],
     "latex-workshop.latex.recipes": [
         {
-            "name": "latexmk",
+            "name": "Docker Compile",
             "tools": [
-                "latexmk",
-            ]
-        },
-    ],
-    "latex-workshop.latex.tools": [
-        {
-            "name": "latexmk",
-            "command": "latexmk",
-            "args": [
-                "-cd",
-                "-synctex=1",
-                "-interaction=nonstopmode",
-                "--output-directory=%WORKSPACE_FOLDER%/build",
-                "%WORKSPACE_FOLDER%/main.tex"
+                "docker-compile-tool"
             ]
         }
     ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "docker-compile-tool",
+            "command": "docker",
+            "args": [
+                "start",
+                "-a",
+                "latex-builder"
+            ]
+        }
+    ]
 }

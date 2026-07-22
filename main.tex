@@ -11,7 +11,6 @@
 % -----------------------------------------------------------------------------------
 
 %! TEX root = main.tex
-
 % Document settings
 \input{settings+/docclass}
 % select chair
@@ -19,8 +18,11 @@
 % Supported chairs
 % EMES
 % SYSCOP
-\selectchair{EMES}
+\selectchair{SYSCOP}
 \input{settings+/settings}  % Custom variables are located in settings+/variables.tex
+
+% Compile specific chapters only
+\includeonly{chapters/theory}
 
 % -----------------------------------------------------------------------------------
 % Information about the work and the author
@@ -56,35 +58,6 @@
 \supervisor{M.Sc. Max Doe}
 \supervisorDepartment{IMTEK -- Department of Microsystems Engineering}
 \supervisorChair{Laboratory for something that likely has a long title as well}
-
-% -----------------------------------------------------------------------------------
-% German chair and thesis info
-% -----------------------------------------------------------------------------------
-% \institute{IMTEK -- Institut für Mikrosystemtechnik}
-% \ifchair{EMES}
-%     \chair{Professur für Elektrische Messtechnik und Eingebettete Systeme}\fi
-% \ifchair{SYSCOP}
-%     \chair{Systems Control and Optimization Laboratory}\fi
-
-% \thesisType{Master Thesis}
-% \thesisTitle{Erstellung einer \LaTeX~Vorlage für\\
-%             Abschlussabeiten von Studierenden}
-% \submitDate{10. März 2022} % Verwenden Sie \today für das Kompilierdatum
-% \editingTime{13. Juli 2021 - 10. März 2022}
-
-% % Examiners
-% \firstExaminer{Prof. Dr. Im Tek}
-% \firstExaminerDepartment{IMTEK -- Institut für Mikrosystemtechnik}
-% \firstExaminerChair{Professur für irgendwas mit sicherlich ziemlich langem titel}
-
-% \secondExaminer{Prof. Dr. Max Musterperson}
-% \secondExaminerDepartment{IMTEK -- Institut für Mikrosystemtechnik}
-% \secondExaminerChair{Professur für irgendwas mit sicherlich ziemlich langem titel}
-
-% % Supervisor
-% \supervisor{M.Sc. Max Musterperson}
-% \supervisorDepartment{IMTEK -- Institut für Mikrosystemtechnik}
-% \supervisorChair{Professur für irgendwas mit sicherlich ziemlich langem titel}
 
 % -----------------------------------------------------------------------------------
 % Main document
@@ -134,16 +107,18 @@
     % Simulation, Real World Experiment, Outlook, Acknowledgements
     \cleardoublepage
     \pagenumbering{arabic}  % 1, 2, 3..
-    \input{chapters/introduction}                                         \clearpage
-    \input{chapters/theory}                                               \clearpage
-    \input{chapters/sota}                                                 \clearpage
-    \input{chapters/implementation}                                       \clearpage
-    \input{chapters/experiment}                                           \clearpage
-    \input{chapters/discussion}                                           \clearpage
-    \input{chapters/summary}                                              \clearpage
-    \input{chapters/conclusion}                                           \clearpage
-    \input{chapters/outlook}                                              \clearpage
-    \input{chapters/acknowledgments}                                      \clearpage
+
+    % Use \include for main content. It automatically calls \clearpage.
+    \include{chapters/introduction}
+    \include{chapters/theory}
+    \include{chapters/sota}
+    \include{chapters/implementation}
+    \include{chapters/experiment}
+    \include{chapters/discussion}
+    \include{chapters/summary}
+    \include{chapters/conclusion}
+    \include{chapters/outlook}
+    \include{chapters/acknowledgments}
 
     % Bibliography
     \printbibliography[heading=bibintoc]                            \cleardoublepage
@@ -154,7 +129,7 @@
     \pagenumbering{Alph} % A, B, C..
 
     % Appendix
-    \input{chapters/appendix}                                             \clearpage
+    \include{chapters/appendix}
 
     % print main glossary
     %       type=main           glossary
@@ -163,6 +138,6 @@
     \printglossary[type=main]
 
     % Either print all entries or only used entries for all lists
-    \glsaddallunused
+    % \glsaddallunused
 
 \end{document}
