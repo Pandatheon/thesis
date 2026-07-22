@@ -1,0 +1,148 @@
+% ---------------------------------------------------------------------
+% File Import Support
+% ---------------------------------------------------------------------
+\usepackage{import} % Enables relative path imports for modular document structure.
+
+% ---------------------------------------------------------------------
+% Language and Character Encoding
+% ---------------------------------------------------------------------
+\usepackage[ngerman, english]{babel} % Set document languages: German + English.
+
+% ---------------------------------------------------------------------
+% Font Configuration — LuaLaTeX Only
+% ---------------------------------------------------------------------
+% LuaLaTeX handles UTF-8 input natively — inputenc and fontenc are obsolete here.
+
+\usepackage{lmodern}   % Default serif/monospace fallback fonts.
+\usepackage{fontspec}  % Primary font package for LuaLaTeX.
+\setsansfont{Arial}    % Set sans-serif font to Arial (main font for this document).
+
+% Notes:
+% - lmodern fills in main and monospace fonts if not explicitly set with fontspec.
+% - Comment lmodern if full fontspec control is preferred.
+
+% ---------------------------------------------------------------------
+% Page Layout and Formatting
+% ---------------------------------------------------------------------
+\usepackage[automark,headsepline]{scrlayer-scrpage} % Header/footer management.
+
+\newcommand{\theBCOR}{15mm} % Binding correction for double-sided print layouts.
+
+\usepackage[
+    bindingoffset=\theBCOR,
+    % showframe, % Show boxes which indicate margins and paddings
+    bottom = 3.5cm,
+    left = 2.5cm,
+    right = 2.5cm
+]{geometry} % Custom page dimensions.
+
+\usepackage{float}          % Prevent page breaks inside figures/tables.
+\usepackage{pdflscape}      % Landscape page support.
+\usepackage{threeparttable} % Table notes support.
+\usepackage{booktabs}       % Improved table rules and spacing.
+
+% ---------------------------------------------------------------------
+% Content Presentation
+% ---------------------------------------------------------------------
+\usepackage{tikz}          % Graphics and diagrams.
+\usepackage{graphicx}      % Image inclusion.
+
+\addtokomafont{disposition}{\rmfamily} % Roman font for all section headings.
+
+\usepackage[onehalfspacing]{setspace}  % Line spacing: 1.5x for readability.
+
+\usepackage[stretch=10]{microtype}     % Typographic optimizations.
+% Disable expansion if font glitches occur:
+% \usepackage[stretch=10, expansion=false]{microtype}
+
+\usepackage{textcomp}      % Access to symbols like \textmu (µ).
+
+\usepackage[
+    range-units=single,
+    range-phrase=-,
+    separate-uncertainty=true,
+    multi-part-units=repeat
+]{siunitx} % Scientific units, uncertainty handling.
+% https://tex.stackexchange.com/questions/124488/multi-part-numbers-and-units-in-siunitx
+
+\usepackage{listings}      % Source code formatting.
+\usepackage{enumitem}      % Fine-tune list spacing and indentation.
+\setlist{nosep}
+
+\usepackage{todonotes}     % Inline ToDo notes.
+\setuptodonotes{inline, inlinepar}
+\reversemarginpar          % Place ToDo notes in the left margin.
+% Adjust margin width if notes overflow:
+% \setlength{\marginparwidth}{2cm}
+
+\usepackage{xcolor}        % Color customization support.
+\usepackage{amsmath}       % Math typesetting.
+
+% ---------------------------------------------------------------------
+% Utility Packages
+% ---------------------------------------------------------------------
+\usepackage{blindtext}     % Filler text for layout development.
+\usepackage[hidelinks]{hyperref} % Hide link borders in PDF output.
+
+% ---------------------------------------------------------------------
+% Glossary and Index
+% ---------------------------------------------------------------------
+% IMPORTANT: Version pin required for compatibility.
+\usepackage[acronym, nogroupskip]{glossaries}[=v4.49]
+\usepackage{xltabular}     % Required table layout extension for glossaries.
+
+% ---------------------------------------------------------------------
+% Bibliography Configuration
+% ---------------------------------------------------------------------
+\usepackage{csquotes}      % Quotation style integration.
+\usepackage[
+    style=ieee,
+    citestyle=numeric-comp,
+    backend=biber
+]{biblatex}
+
+% ---------------------------------------------------------------------
+% Paths and Included Files
+% ---------------------------------------------------------------------
+% Fix paths for standalone compiling
+\ifstandalone
+    \def \home {..}
+\else
+    \def \home {.}
+\fi
+
+\input{\home/settings+/style/page}     % Page style configuration.
+\graphicspath{{\home/images/}}         % Default image path.
+
+\input{\home/settings+/style/code.tex} % Code listings style.
+\lstset{inputpath={\home/code/}}       % Default path for listings files.
+
+\input{\home/settings+/style/symbols}       % Set path to symbols list style file
+\input{\home/settings+/style/acronyms}      % Set path to acronym list style file
+\input{\home/references/glossary_acronyms}  % Load glossary, symbol and acronyms list
+
+\addbibresource{\home/references/references.bib}
+\input{\home/settings+/variables}
+
+\usepackage[listings=false]{scrhack} % Compatibility fix for older packages.
+
+% ---------------------------------------------------------------------
+% Optional Packages — Uncomment As Needed
+% ---------------------------------------------------------------------
+% \usepackage{amsfonts}      % Additional mathematical fonts
+% \usepackage{caption}       % Customize caption appearance for figures and tables
+% \usepackage{subcaption}    % Create subfigures/subtables with individual subcaptions
+% \usepackage{calc}          % Arithmetic with LaTeX lengths.
+% \usepackage{imakeidx}      % Index creation.
+% \usepackage{paralist}      % Compact lists.
+% \usepackage{epigraph}      % Quotation formatting.
+% \usepackage{algorithm}     % Algorithms (floating).
+% \usepackage{algpseudocode} % Pseudocode formatting.
+% \usepackage{algorithmic}   % Legacy pseudocode.
+% \usepackage{xspace}        % Smart space insertion.
+% \usepackage{tabularx}      % Flexible table widths.
+% \usepackage{longtable}     % Multipage tables.
+% \usepackage{verbatim}      % Multiline comments.
+% \usepackage{datapie}       % Pie charts.
+% \usepackage{afterpage}     % Command placement after page breaks.
+% \usepackage{wrapfig}       % Text wrapping around figures.
