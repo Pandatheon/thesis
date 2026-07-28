@@ -144,8 +144,8 @@
 % \usepackage{imakeidx}      % Index creation.
 % \usepackage{paralist}      % Compact lists.
 % \usepackage{epigraph}      % Quotation formatting.
-% \usepackage{algorithm}     % Algorithms (floating).
-% \usepackage{algpseudocode} % Pseudocode formatting.
+\usepackage{algorithm}     % Algorithms (floating).
+\usepackage{algpseudocode} % Pseudocode formatting.
 % \usepackage{algorithmic}   % Legacy pseudocode.
 % \usepackage{xspace}        % Smart space insertion.
 % \usepackage{tabularx}      % Flexible table widths.
@@ -154,3 +154,13 @@
 % \usepackage{datapie}       % Pie charts.
 % \usepackage{afterpage}     % Command placement after page breaks.
 % \usepackage{wrapfig}       % Text wrapping around figures.
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\theoremstyle{plain}
+\newtheorem{remark}{Remark}
+\newtheorem{assumption}{Assumption}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}

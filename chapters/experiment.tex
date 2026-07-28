@@ -9,17 +9,41 @@
 % ----------------------------------------------------------------------------
 \begin{document}
 
-\chapter{Experimental Setup} % Overview text
-\label{Chapter::Experimental_Setup}
-   This chapter contains an explanation of how the experimental setup was done, what parameters had to be controlled, and the equipment used.
+\chapter{Numerical Experiments} % Overview text
 
-% Explain the setup of your experiment in such a way that others could repeat it
-% First, explain the environment of the experiment
-% Second, explain the tools used
-% Lastly, how is everything setup for the experiment, what are the variables?
-% Do not discuss results here !!!
-\section{Experimental Setup Part}
-\label{Section::Experimental_Setup_Part}
-    Text
+
+\section{Iteration Profile and Flop Units Estimation}
+
+\section{Experiment Setup}
+
+    \subsection{Prototype Solver Implementation}
+    We implemented a Riccati-based IPM solver in python, which produces similar iteration behavior as HPIPM in convex QPs with certain solver settings.
+    It is basically just HPIPM in detla formulation without iterative refinement, the setting is as following:
+    
+    TODO: have a setting table for explaining this.
+ 
+    We test the solver with convex QP subproblems from the OCPs in benchmark, the iteration profile is as follows:
+
+    TODO: Insert the fig
+
+    \subsection{General setup}
+    With the Python prototype, we further implement the following regularizations in the solver as:
+    \begin{itemize}
+        \item PROJECT
+        \item MIRROR
+        \item PRECOMPUTE
+        \item PM\_STAGE\_MIRROR
+        \item PM\_STAGE\_GMW
+        \item INERTIA\_CORRECTION
+    \end{itemize}
+
+
+\section{Numerical Results}
+    \subsection{Mehrotra's Predictor-Corrector with Funnel Line Search}
+    \subsection{Mehrotra's Probing with Funnel Line Search}
+    \subsection{Mehrotra's Probing without Funnel Line Search}
+
+
+\section{Possible Disscusion}
 
 \end{document}

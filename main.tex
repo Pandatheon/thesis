@@ -22,14 +22,22 @@
 \input{settings+/settings}  % Custom variables are located in settings+/variables.tex
 
 % Compile specific chapters only
-\includeonly{chapters/theory}
+\includeonly{
+            % chapters/introduction,
+            % chapters/theory,
+            % chapters/proposed,
+             chapters/benchmark,
+            %  chapters/experiment,
+            %  chapters/conclusion_outlook,
+            %  chapters/acknowledgments,
+             }
 
 % -----------------------------------------------------------------------------------
 % Information about the work and the author
 % -----------------------------------------------------------------------------------
 % Author
-\author{Your Name}
-\matrikelnr{1234567}
+\author{Jingtao Xiong}
+\matrikelnr{5986123}
 
 % -----------------------------------------------------------------------------------
 % English chair and thesis info
@@ -41,23 +49,23 @@
     \chair{Systems Control and Optimization Laboratory}\fi
 
 \thesisType{Master's Thesis}
-\thesisTitle{Creation of a \LaTeX~Template for\\Students to use for Their Thesis}
+\thesisTitle{Riccati-based Primal Regularizations in Interiror-Point Solvers for Indefinte Quadratic Programs}
 \submitDate{March 10, 2022} % Use \today for the date of compilation
 \editingTime{July 13, 2021 - March 10, 2022}
 
 % Examiners
-\firstExaminer{Prof. Dr. Im Tek}
+\firstExaminer{Prof. Dr. Moritz Diehl}
 \firstExaminerDepartment{IMTEK -- Department of Microsystems Engineering}
-\firstExaminerChair{Laboratory for something that likely has a long title as well}
+\firstExaminerChair{Systems Control and Optimization Laboratory}
 
 \secondExaminer{Prof. Dr. Max Doe}
 \secondExaminerDepartment{IMTEK -- Department of Microsystems Engineering}
 \secondExaminerChair{Laboratory for something that likely has a long title as well}
 
 % Supervisor
-\supervisor{M.Sc. Max Doe}
+\supervisor{M.Sc. Jonnathan Frey}
 \supervisorDepartment{IMTEK -- Department of Microsystems Engineering}
-\supervisorChair{Laboratory for something that likely has a long title as well}
+\supervisorChair{Systems Control and Optimization Laboratory}
 
 % -----------------------------------------------------------------------------------
 % Main document
@@ -83,22 +91,22 @@
     % -------------------------------------------------------------------------------
     % Abstract in English and German
     \pagenumbering{Roman}  % I, II, III..
-    \input{chapters/abstract}                                             \clearpage
-    \input{chapters/zusammenfassung}                                      \clearpage
+    \include{chapters/abstract}
+    \include{chapters/zusammenfassung}
 
     % Table of contents
-    \tableofcontents                                                      \clearpage
+    \tableofcontents
 
     % List of Symbols & Acronyms
-    \input{settings+/front_matter/lists&indexes/symbols}                  \clearpage
-    \input{settings+/front_matter/lists&indexes/acronyms}                 \clearpage
+    \include{settings+/front_matter/lists&indexes/symbols}
+    \include{settings+/front_matter/lists&indexes/acronyms}
 
     % List of Figures & Tables
-    \input{settings+/front_matter/lists&indexes/figureindex}              \clearpage
-    \input{settings+/front_matter/lists&indexes/tableindex}               \clearpage
+    \include{settings+/front_matter/lists&indexes/figureindex}
+    \include{settings+/front_matter/lists&indexes/tableindex}
 
     % List of C++,C,Python,... Code listings
-    \input{settings+/front_matter/lists&indexes/codeindex}                \clearpage
+    \include{settings+/front_matter/lists&indexes/codeindex}
 
     % -------------------------------------------------------------------------------
     % Main Content
@@ -111,13 +119,10 @@
     % Use \include for main content. It automatically calls \clearpage.
     \include{chapters/introduction}
     \include{chapters/theory}
-    \include{chapters/sota}
-    \include{chapters/implementation}
+    \include{chapters/proposed}
+    \include{chapters/benchmark}
     \include{chapters/experiment}
-    \include{chapters/discussion}
-    \include{chapters/summary}
-    \include{chapters/conclusion}
-    \include{chapters/outlook}
+    \include{chapters/conclusion_outlook}
     \include{chapters/acknowledgments}
 
     % Bibliography

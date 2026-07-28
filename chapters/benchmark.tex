@@ -1,0 +1,302 @@
+\documentclass[class=scrbook, crop=false]{standalone}
+\usepackage[subpreambles=true]{standalone}
+\ifstandalone
+    \input{../settings+/settings}
+\fi
+
+% ----------------------------------------------------------------------------
+%                               Implementation
+% ----------------------------------------------------------------------------
+\begin{document}
+
+\chapter{A Benchmark for Indefinite OCP Quadratic Programs} % Outline text
+In order to evaluate the performance of the proposed methods, especially in the context of nonlinear OCPs.
+We have created a benchmark consisting of a set of indefinite OCP quadratic programs from QP subproblems arising in the SQP method for solving nonlinear OCPs.
+The benchmark is designed to cover a wide range of problem instances, varying in size, structure, and degree of indefiniteness.
+
+\section{Benchmark Construction}
+
+    \subsection{Formulation of OCPs}
+    Following \cite{Kiessling2026}, each system is cast as a fixed-time
+    regulator problem. The eight OCPs are characterized as follows:
+    \begin{itemize}
+        \item \textbf{Pendulum:} An inverted pendulum on an actuated cart,
+        driven by a horizontal force. It is regulated from the downward to the
+        upright equilibrium subject to an input bound and an additional mixed
+        state--input inequality constraint.
+        \item \textbf{Acrobot:} A two-link pendulum actuated only at the elbow
+        joint, with joint friction. The state is driven between two prescribed
+        configurations through terminal equality constraints, yielding a strongly
+        nonlinear, underactuated maneuver.
+        \item \textbf{Dubins car:} A kinematic unicycle with position and heading as
+        states, actuated by forward velocity and turn rate. It performs a
+        parallel-parking maneuver, a lateral displacement returning to the initial
+        heading, within a narrow corridor imposed by state-box constraints, with a
+        terminal equality constraint on the full pose.
+        \item \textbf{Furuta pendulum:} A rotary inverted pendulum with
+        experimentally identified parameters and joint damping, actuated by a single
+        base-arm torque. The pendulum is swung up and stabilized at the upright
+        position under tight torque limits and a non-uniform time grid.
+        \item \textbf{Flying robot:} A planar free-flying robot with position,
+        orientation and their rates, propelled by four non-negative thrusters that
+        together produce a body-aligned net force and a turning moment. The full
+        state is regulated to the origin under thrust non-negativity and
+        summed-thrust linear constraints.
+        \item \textbf{Robot arm:} A three-DOF robot arm (radial extension, rotation,
+        elevation) with configuration-dependent inertia and a cross-axis actuator
+        coupling that is nonlinear in the inputs. A joint angle is regulated to a new
+        set-point under state and input bounds; the input coupling renders the exact
+        Hessian indefinite.
+        \item \textbf{Crane:} An overhead crane with hoisting length, trolley
+        position and payload swing angle, actuated by trolley and hoisting
+        accelerations. The load is transferred between two rest positions while
+        respecting a swing-rate bound and a nonlinear region constraint on the
+        payload.
+        \item \textbf{Moonlander:} A planar lunar lander with translational and
+        rotational motion under reduced gravity, actuated by two laterally offset
+        thrusters. It performs a soft landing, reaching a ground target with zero
+        terminal velocity, under non-negative, bounded thrust.
+    \end{itemize}
+
+    \begin{table}[H]
+        \centering % Center the table
+        \caption{Summary of the evaluated OCP problems} % Add table caption
+        \label{tab:ocp_problems} % Add label for cross-referencing
+        \begin{tabular}{l c c c}
+            \hline
+            \textbf{Problem} & $n_x$ & $n_u$ & $N$ \\
+            \hline
+            Pendulum     & 4  & 1 & 20 \\
+            Acrobot      & 4  & 2 & 15 \\
+            Dubins car   & 3  & 2 & 25 \\
+            Furuta       & 4  & 1 & 20 \\
+            Flying robot & 6  & 4 & 30 \\
+            robot arm    & 6  & 3 & 30 \\
+            crane        & 6  & 2 & 35 \\
+            moonlander   & 6  & 2 & 30 \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+
+    These OCPs also cover different state and control dimensions, as shown in
+    Table \ref{tab:ocp_problems}. The state dimension $n_x$ ranges from $3$ to
+    $6$, the control dimension $n_u$ from $1$ to $4$, and the horizon length $N$
+    from $15$ to $35$.
+    This spread is chosen so that the benchmark spans a range of common problem scales in control problems,
+    which allows the evaluated methods to be assessed across problems of varying size and structure.
+    And several of the systems (e.g.\ the pendulum, acrobot and Furuta pendulum) are
+    underactuated, which makes the regulation task more demanding and provides a useful source of difficulty
+    in addition to the varying problem dimensions.
+
+    To be noticed, each problem is formulated as a regulator problem with a quadratic stage cost
+    penalizing deviations from the target state and the control effort, subject to
+    box constraints on the controls.
+    This ensures the corresponding QP subproblems share the block-wise structure in the Hessian matrix,
+    align with the targeted mathematical structure.
+
+    \subsection{Collecting Strategy}
+    In order to benchmark the proposed Riccati-based regularizations,
+    we are interested in the QP subproblems with an indefinite
+    reduced Hessian.
+
+    To obtain a representative set of such problems, we therefore extract
+    the QP subproblems that arise inside the SQP process itself, rather than
+    constructing them artificially. This keeps the collected QPs close to the
+    dynamics and constraints encountered during an actual OCP solve.
+
+    Based on this idea, we implement a systematic approach with the
+    following steps to create indefinite OCP QPs from the formulated OCP:
+
+    \begin{enumerate}
+        \item \textbf{Generate:} In this step, we generate iterates by solving
+        the OCP. To obtain iterates at various points during the solution
+        process, we can apply SQP-level regularization techniques (such as
+        PROJECT or MIRROR) or utilize the Gauss-Newton Hessian approximation
+        in \texttt{acados}.
+
+        \item \textbf{Collect:} In this step, we utilize the previously
+        generated iterates as initial guesses for linearization within the
+        solver. By restricting the maximum number of SQP iterations, we can
+        selectively collect indefinite QPs that exhibit an indefinite reduced
+        Hessian.
+    \end{enumerate}
+
+    In the collect step, limiting the number of SQP iterations prevent the solver moving towards the neighborhood of the OCP solution,
+    Thus the iterates are more likely to yield an indefinite linearization and are therefore the ones of interest here.
+
+    With this strategy, we are able to collect QP subproblems that will appear
+    during the SQP solving process, which can provide relatively realistic
+    dynamics and constraints in the QP problems.
+    And the resulting QPs share the mathematical structure as:
+    \begin{equation*}
+    \begin{aligned}
+        & \underset{x, u}{\text{minimize}}
+        & & \sum_{k=0}^{N-1} \frac{1}{2} \begin{bmatrix} x_k \\ u_k \end{bmatrix}^T \begin{bmatrix} Q_k & S_k^T \\ S_k & R_k \end{bmatrix} \begin{bmatrix} x_k \\ u_k \end{bmatrix} + \begin{bmatrix} q_k \\ r_k \end{bmatrix}^T \begin{bmatrix} x_k \\ u_k \end{bmatrix} + \frac{1}{2} x_N^T Q_N x_N + q_N^T x_N \\
+        & \text{subject to}
+        & & \begin{aligned}[t]
+                & \quad x_0 = \bar{x}_0, \\
+                & \quad x_{k+1} = A_k x_k + B_k u_k, \quad k = 0, \dots, N-1, \\
+                & \quad \begin{bmatrix} \underline{u}_k \\ \underline{x}_k \\ \underline{d}_k \end{bmatrix} \le \begin{bmatrix} J_k^{b,u} & 0 \\ 0 & J_k^{b,x} \\ D_k & C_k \end{bmatrix} \begin{bmatrix} u_k \\ x_k \end{bmatrix} \le \begin{bmatrix} \overline{u}_k \\ \overline{x}_k \\ \overline{d}_k \end{bmatrix}, \quad k = 0, \dots, N-1
+            \end{aligned}
+    \end{aligned}
+    \end{equation*}
+    where, at each stage $k$, $x_k \in \mathbb{R}^{n_x}$ and $u_k \in \mathbb{R}^{n_u}$
+    denote the state and control (deviation) variables, and $N$ is the horizon
+    length. All remaining quantities are obtained by linearizing the OCP at the
+    current SQP iterate:
+    \begin{itemize}
+        \item $Q_k = Q_k^T$, $R_k = R_k^T$ and $S_k$ are the state, control, and
+        state--control coupling blocks of the Hessian of the Lagrangian, while $q_k$
+        and $r_k$ are the corresponding gradient terms; $Q_N$ and $q_N$ are the
+        terminal Hessian and gradient.
+        \item $\bar{x}_0$ is the fixed initial state, and $A_k$, $B_k$ are the
+        Jacobians of the discretized dynamics with respect to $x_k$ and $u_k$, which
+        define the linearized state-transition equation.
+        \item $J_k^{b,u}$ and $J_k^{b,x}$ are selection matrices picking out the
+        bounded control and state components, with bounds $\underline{u}_k,
+        \overline{u}_k$ and $\underline{x}_k, \overline{x}_k$ (box constraints).
+        \item $D_k$ and $C_k$ are the Jacobians of the general path constraints with
+        respect to $u_k$ and $x_k$, bounded by $\underline{d}_k$ and
+        $\overline{d}_k$; these constraints couple states and controls.
+    \end{itemize}
+
+\section{Benchmark Analysis}
+    In this section,
+    we will introduce some analysis of the collected problem instances
+    for gaining a better understanding of characteristics regarding definiteness in the indefinite OCP QP benchmark,
+    The analysis focuses on the definiteness of reduced Hessian matrices concerning
+    how the indefiniteness of reduced Hessian distribute and where the indefiniteness results from.
+
+    \subsection{Distribution of Indefiniteness}
+    We first characterize the collected QPs along two axes:
+    the \emph{depth} of indefiniteness, measured by the magnitude of the smallest (most negative) eigenvalue $|\lambda_{\min}|$ of the reduced Hessian,
+    and the \emph{width}, measured by the fraction of block reduced Hessians that are indefinite within a QP (the indefinite-stage rate).
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.95\textwidth]{images/benchmark/indefiniteness_coverage_scatter.pdf}
+        \caption{Depth ($|\lambda_{\min}|$ of the reduced Hessian, log scale)
+        versus width (indefinite-stage rate) of the collected QPs, coloured by
+        OCP problem.}
+        \label{fig:indefinite_qp_scatter}
+    \end{figure}
+
+    As seen from Figure~\ref{fig:indefinite_qp_scatter}, the collected indefinite QPs do not concentrate in a single regime.
+    They spread over roughly eight orders of magnitude in depth ($|\lambda_{\min}|$ ranging from about $10^{-4}$ to $10^{4}$).
+    And the coverage is strongly problem-dependent: each OCP occupies a characteristic region of the depth--width plane rather than scattering uniformly.
+
+    Two complementary major patterns can be observed.
+    Problems that are indefinite in only a small fraction of their stages, such as \texttt{overhead\_crane},
+    \texttt{furuta} and \texttt{free\_flying\_robot}, nevertheless reach very deep negative curvature, with $|\lambda_{\min}|$ up to $10^{2}$--$10^{4}$.
+    Conversely, problems with a high indefinite-stage rate, \texttt{dubins\_car} and \texttt{robot},
+    with ranging from $0.6$--$1.0$, tend to exhibit only moderate depth, with $|\lambda_{\min}|$ around $10^{-1}$--$10^{1}$.
+    Broad and deep indefiniteness thus appear to occur largely separately rather than together.
+
+    Some problems also fall in the middle, such as \texttt{acrobot} and
+    \texttt{moonlander}, which occupy intermediate indefinite-stage rates
+    (roughly $0.15$--$0.55$) together with intermediate depths ($|\lambda_{\min}|$
+    mostly between $10^{0}$ and $10^{2}$, occasionally deeper). They neither
+    confine their negative curvature to a few stages nor spread it across the
+    whole horizon, and thus bridge the two extreme regimes rather than belonging
+    clearly to either.
+
+    Taken together, the eight OCPs cover a broad range of the depth--width plane:
+    from narrow-but-deep (\texttt{overhead\_crane}, \texttt{furuta}, \texttt{free\_flying\_robot}),
+    through intermediate (\texttt{acrobot}, \texttt{moonlander}),
+    to broad-but-shallow (\texttt{dubins\_car}, \texttt{robot}),
+    with \texttt{pendulum} adding cases of very shallow negative curvature at low indefinite-stage rates.
+    This spread indicates that the collected QP subproblems exercise indefiniteness across qualitatively different regimes rather than a single one.
+
+    \begin{figure}[H]
+        \centering
+        \begin{minipage}[t]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth]{images/benchmark/indefiniteness_coverage_depth.pdf}
+            \subcaption{Depth: distribution of $|\lambda_{\min}|$.}
+            \label{fig:indefinite_depth}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[t]{0.48\textwidth}
+            \centering
+            \includegraphics[width=\linewidth]{images/benchmark/indefiniteness_coverage_breadth.pdf}
+            \subcaption{Width: distribution of the indefinite-stage rate.}
+            \label{fig:indefinite_breadth}
+        \end{minipage}
+        \caption{Marginal distributions of depth and width over all collected QPs.}
+        \label{fig:indefinite_marginals}
+    \end{figure}
+
+    Figure~\ref{fig:indefinite_marginals} shows the two marginal distributions of the same data. The depth histogram
+    (Figure~\ref{fig:indefinite_depth}) is centred around $|\lambda_{\min}| \approx 10$, where most of the indefinite QPs lie,
+    and decays toward both a near-singular tail near $10^{-3}$ and a small number of very deep cases at $10^{3}$--$10^{4}$.
+    Hence, although extreme cases exist, the negative curvature typically encountered during the SQP iterations is of moderate magnitude.
+
+    The width histogram (Figure~\ref{fig:indefinite_breadth}) shows how the indefinite-stage rate is distributed over the collected QPs. The rate
+    covers the full range up to~$1$, with a large share of QPs being indefinite in only a minority of their stages and a thinner spread toward higher
+    rates.
+
+    This is consistent with the scatter plot: for most problems only a subset of stages become indefinite, whereas a few problems
+    (\texttt{dubins\_car}, \texttt{robot}) are indefinite across the majority of their stages.
+
+    \subsection{Source of Indefiniteness}
+    Recalling the block reduced Hessian at $k$ stage is calculated as $M_k = R_k + B^\top P_{k+1}B$,
+    which is assembled from two contributions: the control cost block $R$ and the cost-to-go block $P$. 
+
+    To understand \emph{where} the indefiniteness originates,
+    we classify every indefinite stage according to which of the two blocks has a negative smallest eigenvalue: 
+    \emph{R only} ($R$ indefinite, $P$ definite), \emph{P only} ($P$ indefinite, $R$ definite), and \emph{RP only} (both indefinite).
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{images/benchmark/stage_indefiniteness_quadrant.pdf}
+        \caption{Number of indefinite stages by source: control cost~$R$,
+        cost-to-go~$P$, or both.}
+        \label{fig:indefinite_source_counts}
+    \end{figure}
+
+    Figure~\ref{fig:indefinite_source_counts} aggregates all indefinite stages across the benchmark. 
+    The dominant source is the joint case: $966$ of the $1298$ indefinite stages have \emph{both} $R$ and $P$ indefinite, 
+    so in the large majority of cases the negative curvature is not confined to a single block. 
+    Among the remaining stages where only one block is indefinite, 
+    the cost-to-go block is the more frequent culprit: $P$ alone accounts for $221$ stages, 
+    roughly twice the $111$ stages in which only the control cost $R$ is indefinite. 
+
+    Overall, the cost-to-go block $P$ is indefinite more often than the control cost block $R$,
+    which indicates that the indefiniteness is driven primarily by the cost-to-go term rather than by the control cost.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1.0\textwidth]{images/benchmark/stage_indefiniteness_signature.pdf}
+        \caption{Per-problem composition of stage indefiniteness. Each bar
+        shows, for one OCP, the share of stages that are \emph{R only},
+        \emph{both}, \emph{P only}, ($n$ is the number of collected indefinite stages).}
+        \label{fig:indefinite_source_signature}
+    \end{figure}
+
+    While Figure~\ref{fig:indefinite_source_counts} gives the aggregate picture,
+    Figure~\ref{fig:indefinite_source_signature} breaks the same classification down per problem and reveals a strongly problem-dependent and clean structure: 
+    six of the eight OCPs are dominated by a single category ($\geq\!90\%$ of their stages), and only\texttt{acrobot} and \texttt{overhead\_crane} are genuinely mixed.
+
+    As observed from Figure~\ref{fig:indefinite_source_signature},
+    most of the problems are governed by the \emph{both} case, 
+    including \texttt{dubins\_car}, \texttt{robot}, \texttt{moonlander}, \texttt{acrobot}, \texttt{furuta},
+    Notably, three problems (\texttt{dubins\_car}($n=417$), \texttt{robot}($n=336$) and \texttt{moonlander}($n=207$)), contribute by far the most indefinite stages, 
+    they largely account for the aggregate dominance of the \emph{both} case reported above. 
+
+    The \emph{P only} case dominates the remaining problems: \texttt{free\_flying\_robot} and \texttt{pendulum} are indefinite purely through the cost-to-go block,
+    and \texttt{overhead\_crane} leans the same way. 
+    Taken over all stages, the cost-to-go block is indefinite in the large majority of cases, 
+    whereas the \emph{R only} case is marginal:
+    it appears in only three problems and is negligible for \texttt{robot} and \texttt{overhead\_crane}, 
+    with \texttt{dubins\_car} being the sole problem where isolated $R$-block indefiniteness is substantial. 
+    Indefiniteness therefore predominantly involves the cost-to-go block, 
+    either alone or jointly with $R$, while $R$-block-only indefiniteness is the exception.
+
+    In conclusion, these figures numerically shows that,
+    across the benchmark the cost-to-go block is involved in the vast majority of indefinite stages, 
+    a regularization strategy that merely enforces $M\succ 0$ would therefore leave the negative curvature unaddressed in most stages. 
+    Since the cost-to-go term enters the reduced Hessian through $M_k = R_k + B^\top P_{k+1} B$, 
+    keeping $P_{k+1}$ (and hence $M_k$) definite is essential for a reliable regularization method, whereas treating the control cost block alone is not sufficient.
+
+\end{document}

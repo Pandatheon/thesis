@@ -1,0 +1,406 @@
+\documentclass[class=scrbook, crop=false]{standalone}
+\usepackage[subpreambles=true]{standalone}
+
+\ifstandalone
+    \input{../settings+/settings}
+\fi
+
+% ----------------------------------------------------------------------------
+%                               Implementation
+% ----------------------------------------------------------------------------
+\begin{document}
+
+\chapter{Riccati-based Primal Regularization}
+
+\section{Riccati Recursion as explicit L$^\top$DL decomposition}
+As mentioned in \cite{frisonAlgorithmsMethodsHighPerformance}, 
+the Riccati recursion can be interpreted as a block factorization of the KKT system \ref{eq:schur_comp_KKT}.
+In this subsection, we further show the relationship between the Riccati recursion and the block $\mathrm{L}^\top \mathrm{DL}$ of reduced Hessian $\tilde{M}^i$.
+
+On the one hand, the backward pass of the Riccati recursion can be concluded as follows:
+\begin{algorithm}[H]
+\caption{Backward Pass of Riccati Recursion}
+\label{alg:riccati_recursion}
+\begin{algorithmic}[1]
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$
+\Statex 
+\For{$k = N-1$ \textbf{down to} $0$}
+    \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
+    \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1} A_k$
+    \State $K_k \gets -\tilde{M}_k^{-1} \Gamma_k$
+    \State $k_k \gets -\tilde{M}_k^{-1} \left(\tilde{r}_{\mathrm{stat}, u}^k + B_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1})\right)$
+    \State $P_k \gets \tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top K_k$
+    \State $p_k \gets \tilde{r}_{\mathrm{stat}, x}^k + A_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1}) + \Gamma_k^\top k_k$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Where the $M_k$ is the reduced Hessian block obtained by Riccati recursion. 
+
+The block $\mathrm{L}^\top \mathrm{DL}$ factorization of the reduced Hessian $\tilde{M}^i$ can be expressed as:
+\begin{align*}
+    \tilde{M}^i &= L^\top 
+    \begin{bmatrix}
+    \tilde{M}_{0} & 0 & \cdots & 0 \\
+    0 & \tilde{M}_{1} & \cdots & 0 \\
+    \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & \cdots & \tilde{M}_{N-1}
+    \end{bmatrix}
+    L
+\end{align*}
+
+Consequently, the $L$ is defined as:
+\begin{align*}
+    L = 
+    \begin{bmatrix}
+    I & 0 & \cdots & 0 \\
+    -K_1 B_0 & I & \cdots & 0 \\
+    -K_2 \Phi_{2, 1} B_0 & -K_2 B_1 & \cdots & 0 \\
+    -K_3 \Phi_{3, 1} B_0 & -K_3 \Phi_{3, 2} B_1 & \cdots & 0 \\
+    \vdots & \vdots & \vdots &\vdots \\
+    -K_{N-1} \Phi_{N-1, 1} B_0 & -K_{N-1} \Phi_{N-1, 2} B_1  & \cdots & I
+    \end{bmatrix},
+\end{align*}
+where $\Phi_{i, j}$ is defined as:
+\begin{align*}
+    \Phi_{i, j} = \begin{cases}
+    \prod_{k=j}^{i-1} A_k = A_{i-1} A_{i-2} \cdots A_j, & \text{if } i > j, \\
+    I, & \text{if } i = j.
+    \end{cases}
+\end{align*}
+
+\section{Block Wise Primal Regularization}
+With this interpretation, we can directly apply the regularization to the reduced Hessian block $\tilde{M}_k^i$ during the Riccati recursion.
+When the Cholesky factorization of $\tilde{M}_k^i$ fails in practice, 
+we do regularization to the reduced Hessian block $\tilde{M}_k^i$ by adding a regularization matrix block $E_k^i$, i.e. $\tilde{M}_k^i + E_k^i$.
+By the relationship, this can also guarantee the positive definiteness of $\tilde{M}^i$.
+The Backward pass of modified Riccati recursion can be concluded as follows:
+\begin{algorithm}[H]
+\caption{Backward Pass of Modified Riccati Recursion}
+\label{alg:modified_riccati_recursion}
+\begin{algorithmic}[1]
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$, $\lambda > 0$
+\Statex 
+\For{$k = N-1$ \textbf{down to} $0$}
+    \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
+    \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
+    \If{factorization fails}
+        \State $\tilde{M}_k \gets \tilde{M}_k + E_k$ \Comment{Apply regularization}
+        \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
+    \EndIf
+    \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1} A_k$
+    \Statex
+    \State $K_k \gets -L_k^{-\top} L_k^{-1} \Gamma_k$
+    \State $k_k \gets -L_k^{-\top} L_k^{-1} \left(\tilde{r}_{\mathrm{stat}, u}^k + B_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1})\right)$
+    \Statex
+    \State $P_k \gets \tilde{Q}_k + A_k^\top P_{k+1} A_k + \Gamma_k^\top K_k$
+    \State $p_k \gets \tilde{r}_{\mathrm{stat}, x}^k + A_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1}) + \Gamma_k^\top k_k$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\section{Failing of Minimal Perturbation in Block Reduced Hessian}
+    \subsection{Minimal Example}
+    In this subsection, we will discuss on the choice of regularization matrix block $E^i_k$ in the stage regularization.
+    We will show that the minimum perturbation strategy, i.e PROJECT\cite{verschuerenSparsityPreservingConvexification2017}, which is commonly the first choice for regularization,
+    can cause condition number issue in the stage regularization.
+
+    Suppose at the stage $k$, the reduced Hessian block $\tilde{M}_k$ is not positive definite.
+    Without loss of generality, we can assume $\tilde{M}_k$ has only one negative eigenvalue $\lambda_j$, and the corresponding eigenvector is $v_j$.
+    The minimum perturbation strategy is applied as:
+    \begin{equation}
+        E_k = (-\lambda_{j}+\epsilon) v_j v_j^\top,
+    \end{equation}
+    where the $\epsilon$ is a positive value to ensure the positive definiteness of the regularized reduced Hessian block. 
+
+    By Sherman-Morrison formula, the inverse of the regularized reduced Hessian block can be expressed as:
+    \begin{align*}
+        (\tilde{M}_k + E_k)^{-1} &= \tilde{M}_k^{-1} + \frac{\lambda_j-\epsilon}{\epsilon \lambda_j} v_j v_j^\top \\
+                                &= \tilde{M}_k^{-1} + (\frac{1}{\epsilon} - \frac{1}{\lambda_j}) v_j v_j^\top,
+    \end{align*}
+    and the update of cost-to-go matrix $P_k$ follows as:
+    \begin{align}
+        P_k &= \tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top K_k \notag \\
+            &=\tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}_k^{-1} \Gamma_k - (\frac{1}{\epsilon} - \frac{1}{\lambda_j}) \Gamma_k^\top v_j v_j^\top \Gamma_k \notag \\
+            &= P_k^{\mathrm{unmod}} - (\frac{1}{\epsilon} - \frac{1}{\lambda_j}) \Gamma_k^\top v_j v_j^\top \Gamma_k,
+    \end{align}
+    Note that this negative rank-1 modification can already render $P_k$ itself indefinite, 
+    independently of its downstream effect on $\tilde{M}_{k-1}$, whenever the perturbation 
+    magnitude exceeds the smallest eigenvalue of $P_k^{\mathrm{unmod}}$. This occurs even 
+    when the regularization on $\tilde{M}_k$ keeps the coefficient bounded, as long as the 
+    negative-curvature direction is strongly coupled through the dynamics.
+
+    Consequently, the reduced Hessian block $\tilde{M}_{k-1}$ at the previous stage as:
+    \begin{equation}
+        \tilde{M}_{k-1} = \tilde{M}_{k-1}^{\mathrm{unmod}} - (\frac{1}{\epsilon} - \frac{1}{\lambda_j}) z_j z_j^\top,
+    \end{equation}
+    where $z_j = B_{k-1}^\top \Gamma_k^\top v_j$ is a column vector.
+
+    And the condition number of the regularized reduced Hessian block $\tilde{M}_{k-1}$ can be approximated as:
+    \begin{equation}
+        \kappa(\tilde{M}_{k-1}) \approx \frac{c (\epsilon + |\lambda_j|)}{\epsilon |\lambda_j|},
+    \end{equation}
+    where $c = \frac{\|z_j\|^2}{\lambda_{\min}(\tilde{M}_{k-1}^{\mathrm{unmod}})}$ as an $O(1)$ constant.
+
+    Notably, when the $\epsilon$ is a small positive value,
+    the presence of the negative rank-1 update $-\frac{1}{\epsilon} z_j z_j^\top$ will dominate, not only severely deteriorates its condition number,
+    but also likely to make $\tilde{M}_{k-1}$ indefinite, which can further cause a domino effect through the stages.
+
+    \subsection{Insights and Proposed Methods}
+    This issue reveals two insights in stage regularization:
+    \begin{itemize}
+        \item The minimum modification objective \cite{fangModifiedCholeskyAlgorithms2007} is not the foremost consideration for stage regularization, 
+        as it can cause severe condition number issue in the preceding stages.
+        A trade-off between perturbation norm and condition number must be carefully treated.
+        \item The cost-to-go matrix $P_k$ must be incorporated into the regularization design, 
+        as the severity of propagation depends on the coupling structure between stages, 
+        which a purely local scheme cannot capture.
+    \end{itemize}
+\section{Local Quadratic Convergence Rate for Quadratic Programs}
+In this section, 
+we will attempt to prove the local quadratic convergence of the regularized interior point method for solving indefinite QPs.
+Following similar proof structure as in \cite{absilNewtonKKTInteriorpointMethods2007},
+we will organize the proof based on the formulation \ref{eq:reduced_KKT_system_schur} and start with several assumptions,
+
+\begin{assumption}
+    $(y^*, \lambda^*)$ is a local (or global) minimizer for \ref{eq:qp_problem}.
+\end{assumption}
+
+\begin{assumption}
+    Each local minimizer $(y^*,\lambda^*)$ for \ref{eq:qp_problem} is isolated.
+\end{assumption}
+
+\begin{assumption}
+    Linear independence constraint qualification (LICQ) holds at the minimizer $(y^*, \lambda^*)$.
+\end{assumption}
+
+\begin{assumption}
+    Strict complementarity holds at the minimizer $(y^*, \lambda^*)$.
+\end{assumption}
+
+The Assumptions 1-3 imply the second order sufficient condition (SOSC) for local optimality,
+so we have the following lemma 1:
+\begin{lemma}
+    Under Assumptions 1-3, for all $v \in C(y^*,\lambda^*) \setminus \{0\}$, it holds that $v^\top H v > 0$.
+\end{lemma}
+
+\begin{proof}
+    With Assumption 1, The second order necessary condition (SONC) for local optimality holds, which states that for all $v \in C(y^*,\lambda^*)$, we have $v^\top H v \ge 0$.
+
+    We proceed by contradiction. Suppose there exists $v \in C(y^*,\lambda^*) \setminus \{0\}$ such that $v^\top H v = 0$. 
+    Consider the point $y(\alpha) = y^* + \alpha v$ for $\alpha > 0$. Because the constraints are linear and $v$ is in the critical cone, $y(\alpha)$ remains feasible for sufficiently small $\alpha$. 
+
+    Since the objective function of \ref{eq:qp_problem} is quadratic. Expanding $f(y(\alpha))$ yields:
+    $$f(y(\alpha)) = f(y^*) + \alpha \nabla f(y^*)^\top v + \frac{1}{2} \alpha^2 v^\top H v$$
+
+    As $\nabla f(y^*)^\top v = 0$, given the assumption that $v^\top H v = 0$, the equation reduces exactly to $f(y(\alpha)) = f(y^*)$. 
+    This implies that $y(\alpha)$ is also a local minimizer, which directly contradicts Assumption 2. Therefore, $v^\top H v > 0$ must hold.
+    \label{proof:SOSC}
+\end{proof}
+
+\begin{lemma}
+    Under Assumption 1-4, given the sequence $\{W^i\}$ constructed by the algorithm, as \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$,
+    $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large.
+\end{lemma}
+
+\begin{proof}
+    Under Assumption 4, the critical cone $C(y^*,\lambda^*)$ reduces to the tangent space of the active constraints. 
+    Therefore, we have $C(y^*,\lambda^*) = \{v \mid F v = 0 ,G_{\mathcal{A}} v = 0\}$.
+
+    We then proceed with the reduced Hessian. For any $ v \in \{v \mid \|v\| = 1 \}$, we have:
+    \begin{align*}
+        v^\top \tilde{M}^i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
+                             &= d^\top H d + \sum_{j} \frac{\lambda_j}{s_j} (G_j d)^2 \\
+                             &= d^\top H d + \sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2
+    \end{align*}
+    where $d = Zv \in \{d \mid Ad = 0\} \setminus \{0\}$. 
+
+    We now proceed by contradiction, Assume $\exists v_i \in \{v \mid \|v\| = 1 \}, v_i \rightarrow \bar{v} : v_i^\top \tilde{M}^i v_i \leq 0$.
+    We can distinguish two cases:
+
+    For $G_{\mathcal{A}}\bar{d}=0$, this indicates $d_i \in C(y^*,\lambda^*) \setminus \{0\}$. $d_i^\top H d_i > 0$ follows by Lemma 1.
+    Rest of the terms are non-negative, so we have $\bar{v}^\top \tilde{M}^i \bar{v}> 0$, contradict with assumption.
+
+    For $G_{\mathcal{A}}\bar{d} \neq 0$, the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 \rightarrow \infty$, 
+    which dominates the other two terms, and thus $v_i^\top \tilde{M}^i v_i \rightarrow \infty > 0$, contradict with assumption.
+
+    Therefore, we can conclude that $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
+\end{proof}
+
+
+We take part of the following proposition from \cite{titsSimpleQuadraticallyConvergent1994} as a key step for proof.
+
+\begin{proposition}
+Let $F : \mathcal{R}^n \to \mathcal{R}^n$ be twice continuously differentiable and let $w^* \in \mathcal{R}^n$.
+Let $\rho > 0$ be such that $F(w^*) = 0$ and $\frac{\partial F}{\partial w}(w)$ is invertible whenever $w \in \overline{B}(w^*, \rho)$.
+Let $\delta^N : \overline{B}(w^*, \rho) \to \mathcal{R}^n$ be the Newton increment $\delta^N(w) := -\left(\frac{\partial F}{\partial w}(w)\right)^{-1} F(w)$.
+Then given any $c_1 > 0$ there exist $c_2 > 0$ such that the following statement holds:
+
+For every $w \in \overline{B}(w^*, \rho)$ and every $w^+ \in \mathcal{R}^n$ satisfying
+\begin{equation}
+    \|w^+ - (w + \delta^N(w))\| \leq c_1 \|\delta^N(w)\|^2,
+    \label{ineq:condition}
+\end{equation}
+it holds that
+\begin{equation}
+    \|w^+ - w^*\| \leq c_2 \|w - w^*\|^2.
+\end{equation}
+\end{proposition}
+
+With the Proposition 3, we will define $w = (y, \lambda)$ as the primal-dual variable and $w^* = (y^*, \lambda^*)$ as the solution,
+and establish the local quadratic convergence by showing that the conditions in Proposition 3 hold for the iterates generated by the algorithm.
+
+\begin{lemma}(Nocedal).
+    Under Assumption 4, when \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$, $\sigma_i$ $\mu_i$ = O($||\delta^N||^4$).
+\end{lemma}
+
+\begin{proof}
+    By Assumption 4, we have:
+    \begin{equation*}
+        \mu = \frac{1}{m} \sum_i t_i \lambda_i = O(\|w - w^*\|) = O(\|\delta^N\|).
+    \end{equation*}
+    Since the affine-scaling step is the Newton step for $F(w) = 0$, we obtain:
+    \begin{align*}
+        t_i + \Delta t_i^{\mathrm{aff}} &= t_i^* + O(\|w - w^*\|^2), \\
+        \lambda_i + \Delta \lambda_i^{\mathrm{aff}} &= \lambda_i^* + O(\|w - w^*\|^2).
+    \end{align*}
+    It follows that $(t_i + \Delta t_i^{\mathrm{aff}})(\lambda_i + \Delta \lambda_i^{\mathrm{aff}}) = O(\|w - w^*\|^2)$. 
+    Thus, $\mu^{\mathrm{aff}} = O(\|w - w^*\|^2) = O(\mu^2)$. 
+
+    According to the update rule, we obtain $\sigma = (\mu^{\mathrm{aff}} / \mu)^3 = O(\mu^3) \to 0$. 
+    Therefore, combining the orders derived above yields:
+    \begin{equation*}
+        \sigma\mu = O(\mu^4) = O(\|\delta^N\|^4).
+    \end{equation*}
+\end{proof}
+
+\begin{lemma}
+    Under Assumption 4, when \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$, the affine step size of primal step and dual step satisfy
+    \begin{equation*}
+        |1-\alpha_p| = O(\|\delta^N\|), \qquad |1-\alpha_d| = O(\|\delta^N\|).
+    \end{equation*}
+\end{lemma}
+
+\begin{proof}
+For the affine step, the linearized complementary condition is given by:
+\begin{equation*}
+t_i \Delta \lambda_i^{\mathrm{aff}} + \lambda_i \Delta t_i^{\mathrm{aff}} = -t_i \lambda_i
+\end{equation*}
+
+Dividing both sides by $t_i \lambda_i$ yields the fundamental step identity:
+\begin{equation*}
+\frac{\Delta \lambda_i^{\mathrm{aff}}}{\lambda_i} + \frac{\Delta t_i^{\mathrm{aff}}}{t_i} = -1,
+\end{equation*}
+where the magnitude bounds for the affine step are given from Lemma 4 as:
+\begin{equation*}
+    \|\Delta t^{\mathrm{aff}}\| = O(\|\delta^N\|), \qquad \|\Delta \lambda^{\mathrm{aff}}\| = O(\|\delta^N\|).
+\end{equation*}
+
+\emph{Primal step.}
+As the FTB for primal variables is defined as:
+\begin{equation*}
+    \alpha_p^{\max} = \min\left(1, \min_{\Delta t_j < 0} \frac{t_j}{-\Delta t_j}\right),
+\end{equation*} 
+where based on the identity, the ratio $\frac{t_j}{-\Delta t_j}$ can be expressed as:
+\begin{equation*}
+    \frac{t_j}{-\Delta t_j} = \frac{1}{1 + \frac{\Delta \lambda_i}{\lambda_i}}.
+\end{equation*}
+
+For inactive constraints $t_j\rightarrow t^\star > 0$, thus the ratio $\frac{t_j}{-\Delta t_j}  \rightarrow \infty$, and such indices do not attain the minimum.
+
+Since $\alpha_p^{\max} \leq 1$, for active constraints, $\lambda_i \rightarrow \lambda_i^* > 0$ 
+and $\Delta \lambda_i = O(\|\delta^N\|)$, we have:
+\begin{equation*}
+    1 - \alpha_p^{\max} = 1 - \frac{t_j}{-\Delta t_j} = \frac{\Delta \lambda}{\lambda + \Delta \lambda} = O(\|\delta^N\|).
+\end{equation*}
+
+Considering the safeguard value:
+\begin{align*}
+    \tau(\alpha_p^{\max}) &= (1-\alpha_p^{\max}) \epsilon_\alpha + (1 - \mu_c) \alpha_p^{\max},
+\end{align*}
+where $\mu_c = \min(\epsilon_\mu, \mu)$.
+
+We have:
+\begin{align*}
+    \alpha_p &= \tau(\alpha_p^{\max}) \alpha_p^{\max} \\
+             &= \alpha_p^{\max}[1-(1-\alpha_p^{\max})(1-\epsilon_\alpha) - \mu_c\alpha_p^{\max}] \\
+             &= \alpha_p^{\max} - (1-\alpha_p^{\max})(1-\epsilon_\alpha)\alpha_p^{\max} - \mu_c(\alpha_p^{\max})^2
+\end{align*}
+
+In local convergence, $\mu_c = \mu$ holds, by lemma 4, the $1 - \alpha_p$ is :
+\begin{align*}
+    1 - \alpha_p &= O(\|\delta^N\|) + O(\|\delta^N\|) + O(\|\delta^N\|^4) \\
+                 &= O(\|\delta^N\|).
+\end{align*}
+
+\emph{Dual step.}
+Symmetrically, the FTB for dual variables is defined as:
+\begin{equation*}
+    \alpha_d^{\max} = \min\left(1, \min_{\Delta \lambda_j < 0} \frac{\lambda_j}{-\Delta \lambda_j}\right),
+\end{equation*}
+For active constraints, corresponding indices do not attain the minimum, due to $\frac{\lambda}{-\Delta \lambda} \rightarrow \infty$.
+For inactive constraints, $t_j \rightarrow t_j^* > 0$ and $\Delta t_j = O(\|\delta^N\|)$, 
+thus the ratio $\frac{\lambda_j}{-\Delta \lambda_j} = 1 - O(\|\delta^N \|)$.
+
+We then have:
+\begin{equation*}
+    1 - \alpha_d^{\max} =  1 - \frac{\lambda_j}{-\Delta \lambda_j} = O(\|\delta^N\|).
+\end{equation*}
+
+Following the same logic as primal step, we can conclude that $1 - \alpha_d = O(\|\delta^N\|)$.
+
+Combining the two estimates gives 
+\begin{equation*}
+    |1-\alpha_p| = O(\|\delta^N\|), \qquad |1-\alpha_d| = O(\|\delta^N\|).
+\end{equation*}
+\end{proof}
+
+\begin{theorem}
+    Under Assumption 1-4, Let $\{y^i\}$, $\{\lambda^i\}$ as sequences constructed by algorithm, 
+    $\{(y^i, \lambda^i)\}$ converges to the solution $(y^*, \lambda^*)$ with local quadratic convergence rate.
+\end{theorem}
+
+\begin{proof}
+    We establish that the conditions in Proposition 3 hold with \ref{eq:reduced_KKT_system_schur} as:
+
+    \begin{equation}
+        \underbrace{
+            \begin{bmatrix}
+            M + E^i & Z^\top G^\top\\
+            GZ & -\Lambda_i^{-1}T_i\\
+            \end{bmatrix}
+            \begin{bmatrix}
+            \Delta y_z \\
+            \Delta \lambda \\
+            \end{bmatrix}
+        }_{\mathcal{M}(w)} = -
+        \begin{bmatrix}
+        r_{\mathrm{stat, redu}}^i \\
+        \tilde{r}_{\mathrm{ineq, redu}}^i \\
+        \end{bmatrix},
+    \end{equation}
+
+    Under Assumptions 1-4, $\frac{\partial \mathcal{M}}{\partial w}$ is invertible at $w^*$.
+    By Lemma 2, $E^i=0$ for all $i$ sufficiently large,
+    so the left-hand side coincides with the exact Newton Jacobian.
+    By Lemma 4,
+    $\sigma_i\mu_i = O(\|\delta^N\|^4)$. Consequently,$||\Delta w_i - \delta^N(w_i)|| = O(\|\delta^N(w^i)\|^4)$ for $w^i \to w^*$.
+
+    With $\Delta w_i = [\Delta y_i, \Delta \lambda_i]^\top$, we start with the update of primal variables $y$,
+    \begin{align}
+        \|y_{i+1} - (y_i+ \delta^N_y)\| &=  \|y_{i}+ \alpha_p \Delta y_i - (y_i+ \delta^N_y)\| \\
+                                      &\le |1 - \alpha_p| ||\Delta y_i|| + ||\Delta y_i - \delta^N_y||\\
+                                      &\le C_1 ||\delta^N_y|| ||\Delta y_i|| + C_2 ||\delta^N_y||^4 \\
+                                      &\le C' ||\delta^N_y||^2,
+    \end{align}
+    As a result, the condition \ref{ineq:condition} in Proposition 3 holds for the primal variables.
+    For the dual variables $\lambda$, the same logic applies with $\alpha_d$ substituting $\alpha_p$.
+    \footnote{In the implementation, 
+    the update for the dual variables is taken as $\max(\lambda+\alpha_d\Delta\lambda, \epsilon)$, 
+    where $\epsilon$ is on the order of machine precision.
+    This truncation is only activated when the accuracy reaches $\mathcal{O}(\sqrt{\epsilon})$ and thus does not affect the asymptotic convergence rate analysis above.}
+
+    Thus, we can conclude that the sequence $\{(y^i, \lambda^i)\}$ converges to $(y^*, \lambda^*)$ with local quadratic convergence rate.
+\end{proof}
+
+\end{document}
