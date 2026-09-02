@@ -10,6 +10,83 @@
 % ------------------------------------------------------------------------------------
 %                               Theoretical Background
 % ------------------------------------------------------------------------------------
+
+@book{nocedal2006numerical,
+  title={Numerical Optimization},
+  author={Nocedal, Jorge and Wright, Stephen},
+  year={2006},
+  publisher={Springer Science \& Business Media},
+  edition={2nd},
+  series={Springer Series in Operations Research and Financial Engineering},
+  address={New York},
+  doi={10.1007/978-0-387-40065-5},
+  isbn={978-0-387-30303-1}
+}
+
+@article{rao1998application,
+  title = {Application of {{Interior-Point Methods}} to {{Model Predictive Control}}},
+  author = {Rao, C. V. and Wright, S. J. and Rawlings, J. B.},
+  year = 1998,
+  month = dec,
+  journal = {Journal of Optimization Theory and Applications},
+  volume = {99},
+  number = {3},
+  pages = {723--757},
+  issn = {0022-3239, 1573-2878},
+  doi = {10.1023/A:1021711402723},
+  urldate = {2025-12-12},
+  abstract = {We present a structured interior-point method for the e cient solution of the optimal control problem in model predictive control (MPC). The cost of this approach is linear in the horizon length, compared with cubic growth for a naive approach. We use a discrete-time Riccati recursion to solve the linear equations e ciently at each iteration of the interior-point method, and show that this recursion is numerically stable. We demonstrate the e ectiveness of the approach by applying it to three process control problems.},
+  copyright = {https://www.springernature.com/gp/researchers/text-and-data-mining},
+  langid = {english},
+  file = {E:\Library\storage\DRT6JZV8\Rao 等 - 1998 - Application of Interior-Point Methods to Model Predictive Control.pdf}
+}
+
+@article{Mehrotra1992implementation,
+author = {Mehrotra, Sanjay},
+title = {On the Implementation of a Primal-Dual Interior Point Method},
+journal = {SIAM Journal on Optimization},
+volume = {2},
+number = {4},
+pages = {575-601},
+year = {1992},
+doi = {10.1137/0802028},
+URL = {
+        https://doi.org/10.1137/0802028
+},
+eprint = { 
+        https://doi.org/10.1137/0802028
+    
+}
+}
+
+@article{nocedalAdaptiveBarrierUpdate2009a,
+  title = {Adaptive {{Barrier Update Strategies}} for {{Nonlinear Interior Methods}}},
+  author = {Nocedal, Jorge and Wächter, Andreas and Waltz, Richard A.},
+  date = {2009},
+  journaltitle = {SIAM Journal on Optimization},
+  doi = {10.1137/060649513},
+  url = {https://sci-hub.st/10.1137/060649513},
+  urldate = {2026-05-13},
+  file = {E:\Library\storage\8PT9MLG5\Nocedal 等 - 2009 - Adaptive Barrier Update Strategies for Nonlinear Interior Methods.pdf}
+}
+
+@article{kiesslingUnifiedFunnelRestoration2025,
+  title = {A Unified Funnel Restoration {{SQP}} Algorithm},
+  author = {Kiessling, David and Leyffer, Sven and Vanaret, Charlie},
+  date = {2025-10-22},
+  journaltitle = {Mathematical Programming},
+  shortjournal = {Math. Program.},
+  issn = {1436-4646},
+  doi = {10.1007/s10107-025-02284-3},
+  url = {https://doi.org/10.1007/s10107-025-02284-3},
+  urldate = {2026-05-26},
+  abstract = {We consider nonlinearly constrained optimization problems and discuss a generic double-loop framework consisting of basic algorithmic ingredients that unifies a broad range of nonlinear optimization solvers. This framework has been implemented in the open-source solver Uno, a Swiss Army knife-like C++ optimization framework that unifies many nonlinearly constrained nonconvex optimization solvers. We illustrate the framework with a sequential quadratic programming (SQP) algorithm that maintains an acceptable upper bound on the constraint violation, called a funnel, that is monotonically decreased to control the feasibility of the iterates. Infeasible quadratic subproblems are handled by a feasibility restoration strategy. Globalization is controlled by a line search or a trust-region method. We prove global convergence of the trust-region funnel SQP method, building on known results from filter methods. We implement the algorithm in Uno, and we provide extensive test results for the trust-region line-search funnel SQP on small CUTEst instances.},
+  langid = {english},
+  keywords = {65K05,90C30,90C55},
+  file = {E:\Library\storage\3LUPJPN3\Kiessling 等 - 2025 - A unified funnel restoration SQP algorithm.pdf}
+}
+
+
 % ------------------------------------------------------------------------------------
 %                                  Proposed Method
 % ------------------------------------------------------------------------------------
@@ -83,8 +160,24 @@
 }
 
 % ------------------------------------------------------------------------------------
-%                                     Discussion
+%                                     Experiment
 % ------------------------------------------------------------------------------------
+
+@inproceedings{verschuerenTimeoptimalRaceCar2016b,
+  title = {Time-Optimal Race Car Driving Using an Online Exact Hessian Based Nonlinear {{MPC}} Algorithm},
+  booktitle = {2016 {{European Control Conference}} ({{ECC}})},
+  author = {Verschueren, Robin and Zanon, Mario and Quirynen, Rien and Diehl, Moritz},
+  year = 2016,
+  month = jun,
+  pages = {141--147},
+  doi = {10.1109/ECC.2016.7810277},
+  urldate = {2025-12-19},
+  abstract = {This work presents an embedded nonlinear model predictive control (NMPC) strategy for autonomous vehicles under a minimum time objective. The time-optimal control problem is stated in a path-parametric formulation such that existing reliable numerical methods for real-time nonlinear MPC can be used. Building on previous work on timeoptimal driving, we present an approach based on a sequential quadratic programming type algorithm with online propagation of second order derivatives. As an illustration of our method, we provide closed-loop simulation results based on a vehicle model identified for small-scale electric race cars.},
+  langid = {american},
+  keywords = {Automobiles,Mathematical model,Real-time systems,Tires,Trajectory,Vehicle dynamics},
+  file = {E:\Library\storage\7RSW38UV\Verschueren 等 - 2016 - Time-optimal race car driving using an online exact hessian based nonlinear MPC algorithm.pdf}
+}
+
 % ------------------------------------------------------------------------------------
 %                                     Conclusion
 % ------------------------------------------------------------------------------------
