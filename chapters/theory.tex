@@ -19,14 +19,13 @@
 \chapter{Primal--Dual Interior Point Solver in Optimal Control Problems}
 \label{Chapter::Theoretical_Background} % Outline text
 \setfigpath{theory}
-This chapter provides background knowledge to understand the concepts in the thesis.
+In this chapter, the theoretical background regarding relevant techniques implemented in the solver are introduced.
+The primal-dual interior point method (IPM) is introduced first in Section~\ref{sec:ipm} as the core algorithm for solving the optimal control problems in this thesis.
+Then, the Riccati recursion is introduced for efficiently solving the KKT system of the optimal control problem in Section~\ref{sec:ipm}.
+Finally, the adaptive barrier update and step size control strategies are discussed in Section~\ref{sec:update} and Section~\ref{sec:size_control} considering the nonconvex feature in this work.
 
 \section{Primal--Dual Interior Point Method}
 \label{sec:ipm}
-
-This section will introduce the primal-dual interior point method (IPM) for solving quadratic programming (QP) problems with equality and inequality constraints \cite{nocedal2006numerical},
-which is the core algorithm for solving the optimal control problems in this thesis.
-
 Consider a QP with equality $Fy=b$ and inequality constraints $Gy \le d$. By introducing slack variables $t$, we have the following formulation:
 
 \begin{mini}
@@ -145,6 +144,7 @@ the complemented reduced Hessian $\tilde{M}^i = Z^\top \tilde{H}^i Z$ and the ri
 This formulation exposes the connection between the reduced Hessian $\tilde{M}^i$ and the original Hessian $\tilde{H}$.
 
 \section{Efficient Solution with Riccati Recursion}
+\label{sec:riccati_recursion}
     Within the context of optimal control problems, 
     the KKT system \eqref{eq:schur_comp_KKT} exhibits a tridiagonal structure due to the temporal nature of the problem, as:
     \begin{equation}
@@ -222,10 +222,14 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     and the computational complexity is reduced from $\mathcal{O}(N^3)$ to $\mathcal{O}(N)$, where $N$ is the number of time steps in the optimal control problem.
 
 \section{Adaptive Barrier Update}
-    Discuss some updating strategies for the barrier parameter $\tau$ in the primal-dual interior point method.
+\label{sec:update}
+    In this section, two closely related adaptive barrier update strategies are discussed for the primal-dual IPM. 
+    While the monotone decrease of the barrier parameter $\tau$, such as the Fiacco-McCormick scheme \cite{fiacco1990nonlinear}, 
+    enjoys strong convergence guarantees, it may lead to slow convergence and practical limitations \cite{nocedalAdaptiveBarrierUpdate2009a}. 
+    We therefore prefer a more aggressive, adaptive update of $\tau$ to achieve faster convergence, which is the focus of this section
+
     \subsection{Mehrotra's Predictor-Corrector}
     \label{sec:mehrotra}
-
     For interior--point method, the Mehrotra's predictor--corrector scheme is usually considered as the default choice for fast convergence \cite{Mehrotra1992implementation}, 
     which adaptively updates the barrier parameter $\tau$ and adds a second-order corrector for improving the direction, at essentially the cost of one extra back-solve.
     In the stradetgy, the barrier parameter $\tau$ is defined as:
@@ -308,7 +312,12 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     where the centering parameter $\sigma_i$ is updated using \eqref{eq:centering} after the affine step, as in the predictor-corrector scheme.
 
 \section{Step Size Control}
-    Discuss the step size control strategies in primal-dual interior point method, which is used to ensure the positivity of the slack variables and Lagrange multipliers.
+\label{sec:size_control}
+    In this section, we discuss the step size control employed in the primal-dual interior point solver.
+    The fraction-to-the-boundary (FTB) rule is first introduced as a common strategy for step size control in IPM,
+    which ensures that the updated slack variables and Lagrange multipliers remain positive.
+    Then, a funnel line search with backtracking is proposed to ensure a decrease in either the objective function or the constraint violation, 
+    particularly in nonconvex cases where the FTB rule may not be sufficient to guarantee convergence.
 
     \subsection{Fraction-to-the-Boundary Rule}
     The fraction-to-the-boundary (FTB) rule is a common strategy for step size control in primal-dual interior point methods.
@@ -327,22 +336,49 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     typically set to a value close to 1 to ensure sufficient progress while maintaining feasibility.
 
     \subsection{Funnel Line Search with Backtracking}
+    \label{subsec:funnel_search}
     In nonconvex cases, the FTB rule may not be sufficient to guarantee convergence, as the search direction with FTB-controlled step size may not descend.
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{images/theory/funnel_qp.pdf}
+        \caption{Funnel (light gray) around the feasible set $\mathcal{F}$ (dark gray) of the QP.
+        Since the constraints $Ax \le b$ are linear, $\mathcal{F}$ is a polytope.
+        The solid outer boundary is the current funnel $\theta \le \theta_{\max}$, while
+        the dashed curve is the contracted funnel $\theta \le \theta_{\max}^{+}$ used at the next iteration, with $\theta_{\max}^{+} \le \theta_{\max}$.}
+        \label{fig:funnel_qp}
+    \end{figure}
+
     A funnel line search inspired by the funnel method \cite{kiesslingUnifiedFunnelRestoration2025} is implemented after the FTB rule applied to the step size,
-    where the funnel is defined as a relaxation of the feasible set that allows a constraint violation up to a given upper bound $\theta_i > 0$.
+    where the funnel is defined as a relaxation of the feasible set that allows a constraint violation up to a given upper bound $\theta_{\max} > 0$ as illustrated in Figure~\ref{fig:funnel_qp}.
+    Denoting by $\theta$ a measure of the constraint violation, the funnel is the set $\{x : \theta(x) \le \theta_{\max}\}$,
+    which for the linear constraints $Ax \le b$ of the QP is a polytope enclosing the feasible set $\mathcal{F}$.
+    Once a trial step is accepted, the bound is contracted to $\theta_{\max}^{+} \le \theta_{\max}$, 
+    so that the funnel progressively tightens around $\mathcal{F}$ across the iterations.
+
+    The funnel line search in this work is summarized in Algorithm \ref{alg:funnel_line_search}.
+    At each trial of the funnel line search, 
+    an candidate iterate $z^{+}$ is formed from $(\alpha^\mathrm{prim},\alpha^\mathrm{dual})$ and its objective $f^{+}$ and constraint violation $\theta^{+}=\lVert c^{+}\rVert$ are evaluated. 
+    The iterate is \emph{in the funnel} only if $\theta^{+}\le\theta_{\max}$, otherwise it is rejected and $\alpha^\mathrm{prim}$ is contracted. 
+    Inside the funnel, the \emph{switching condition} decides the step type: 
+    if it holds, sufficient objective progress is expected and an \emph{f-step} is taken, accepted when the Armijo condition is met; 
+    otherwise an \emph{h-step} targets feasibility, accepted when $\theta^{+}\le\kappa_h\theta_{\max}$, 
+    which also tightens the funnel via $\theta_{\max}\gets(1-\kappa)\theta^{+}+\kappa\theta_{\max}$. 
+    If neither is accepted, $\alpha^\mathrm{prim}$ is reduced and the search repeats.
 
     \begin{algorithm}[H]
     \caption{Funnel line search}
     \label{alg:funnel_line_search}
     \begin{algorithmic}[1]
-    \State \textbf{Input:} iterate $z$, direction $d$, steps $\alpha_p,\alpha_d$, $f$, $\theta=\lVert c\rVert$, $\theta_{\max}$, $\rho=\nabla f^{\top}d$
-    \For{$\text{ls} = 1$ \textbf{to} $\text{max\_ls}$}
-    \State form candidate $z^{+}(\alpha_p,\alpha_d)$; compute $f^{+}$, $\theta^{+}=\lVert c^{+}\rVert$
+    \State \textbf{Input:} iterate $z$, direction $d$, steps $\alpha^\mathrm{prim},\alpha^\mathrm{dual}$, $f$, $\theta=\lVert c\rVert$, $\theta_{\max}^0$, $\rho=\nabla f^{\top}d$
+    \State $\theta_{\max}$ = max($\theta_{\max}^0$, $\theta$)
+    \For{$\text{ls} = 1$ \textbf{to} $n_\mathrm{max}$}
+    \State form candidate $z^{+}(\alpha^\mathrm{prim},\alpha^\mathrm{dual})$
+    \State compute $f^{+}$, $\theta^{+}=\lVert c^{+}\rVert$
     \State $\text{accepted} \gets \textbf{false}$
     \If{$\theta^{+} \le \theta_{\max}$} \Comment{in funnel}
-        \If{$\alpha_p(-\rho) > \kappa_s\,\theta^{2}$} \Comment{switching}
-        \If{$f^{+} \le f + \gamma\,\alpha_p\,\rho$}
+        \If{$\alpha^\mathrm{prim}(-\rho) > \kappa_s\,\theta^{2}$} \Comment{switching}
+        \If{$f^{+} \le f + \gamma\,\alpha^\mathrm{prim}\,\rho$}
             \State $\text{accepted} \gets \textbf{true}$ \Comment{f-step (Armijo)}
         \EndIf
         \ElsIf{$\theta^{+} \le \kappa_h\,\theta_{\max}$}
@@ -350,20 +386,18 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
         \State $\text{accepted} \gets \textbf{true}$ \Comment{h-step}
         \EndIf
     \EndIf
-    \If{$\text{accepted}$} \textbf{break} \Else\ $\alpha_p \gets \beta\,\alpha_p$ \EndIf
+    \If{$\text{accepted}$} \textbf{break} \Else\ $\alpha^\mathrm{prim} \gets \beta\,\alpha^\mathrm{prim}$ \EndIf
     \EndFor
-    \State \Return $\alpha_p,\ \alpha_d $
+    \State \Return $\alpha^\mathrm{prim},\ \alpha^\mathrm{dual} $
     \end{algorithmic}
     \end{algorithm}
 
-    As summarized in Algorithm \ref{alg:funnel_line_search}.
-    At each trial of the funnel line search, an candidate iterate $z^{+}$ is formed from $(\alpha_p,\alpha_d)$ and its objective $f^{+}$ and constraint violation $\theta^{+}=\lVert c^{+}\rVert$ are evaluated. 
-    The iterate is \emph{in the funnel} only if $\theta^{+}\le\theta_{\max}$, otherwise it is rejected and $\alpha_p$ is contracted. 
-    Inside the funnel, the \emph{switching condition} decides the step type: 
-    if it holds, sufficient objective progress is expected and an \emph{f-step} is taken, accepted when the Armijo condition is met; 
-    otherwise an \emph{h-step} targets feasibility, accepted when $\theta^{+}\le\kappa_h\theta_{\max}$, 
-    which also tightens the funnel via $\theta_{\max}\gets(1-\kappa)\theta^{+}+\kappa\theta_{\max}$. 
-    If neither is accepted, $\alpha_p$ is reduced and the search repeats.
-
+    Unlike \cite{kiesslingUnifiedFunnelRestoration2025}, 
+    whose switching condition is built on the second-order model reduction $\Delta m_f = -\tfrac12 d^\top H d - \nabla f^\top d$, 
+    we retain only the first-order term $-\nabla f^\top d$, in line with the Armijo condition \cite{armijo1966minimization}. 
+    The reason is the nonconvexity of the subproblem: 
+    since $H$ is generally indefinite, the sign of $d^\top H d$ is not controlled, 
+    so the second-order contribution to $\Delta m_f$ may be misleading rather than informative for classifying the step. 
+    To compensate for dropping the second-order term, the constant $\kappa_s$ is set to a small value, so that objective-reducing steps are not misclassified as h-type steps.
 
 \end{document}
