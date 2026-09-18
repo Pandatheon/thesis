@@ -19,7 +19,7 @@ We conclude the chapter with a proof of the asymptotic exactness of the proposed
 
 \section{Primal regularization}
 \label{sec:hessian_reg}
-In indefinite QPs, the regularization needed to be applied to the Hessian matrix to ensure a descent search direction in the interior point method.
+In indefinite QPs, the regularization needs to be applied to the Hessian matrix to ensure a descent search direction in the interior point method.
 The resulting regularized reduced KKT system can be generally presented as:
 \begin{equation}
     \begin{bmatrix}
@@ -36,18 +36,19 @@ The resulting regularized reduced KKT system can be generally presented as:
     \end{bmatrix},
 \end{equation}
 where $E$ is the adjustment matrix for ensuring a positive definite Hessian.
-This process is commonly referred to as primal regularization and this section will briefly introduce the two types of primal regularization, 
-i.e. the regularization on full Hessian $\tilde{H}$ and the regularization on reduced Hessian $\tilde{M}$.
+This process is referred to as primal regularization, and this section will briefly introduce its two types, 
+distinguished by the target matrix, i.e. the matrix that the adjustment $E$ is derived from and applied to, 
+as the full Hessian regularization and the reduced Hessian regularization.
 
 \subsection{Regularization Strategies}
 \label{subsec:reg_strategies}
 We would like to start with the numerical techniques used by both full Hessian regularization and reduced Hessian regularization by regarding the calculation of adjustment matrix $E$.
 
-There are several strategies for constructing the adjustment matrix $E$ to ensure a positive definite Hessian, commonly, it can be computed from
+There are several strategies for constructing the adjustment matrix $E$ to ensure a positive definite Hessian, commonly, it can be computed from \cite{nocedal2006numerical, mcsweeneyModifiedCholeskyDecomposition2017, More1978levenberg}
 \begin{itemize}
-    \item Eigenvalue modification (EM): modifies the negative eigenvalues of $\tilde{H}$ \cite{nocedal2006numerical}.
-    \item Modified Cholesky factorization (MC): modifies the inertia of $\tilde{H}$ \cite{mcsweeneyModifiedCholeskyDecomposition2017}.
-    \item Levenberg-Marquardt (LM): adds a scaled identity matrix to $\tilde{H}$ \cite{More1978levenberg}.
+    \item Eigenvalue modification (EM): modifies the negative eigenvalues of $\tilde{H}$ .
+    \item Modified Cholesky factorization (MC): modifies the inertia of $\tilde{H}$.
+    \item Levenberg-Marquardt (LM): adds a scaled identity matrix to $\tilde{H}$.
 \end{itemize}
 
 We will mainly apply four commonly used strategies for regularization in this work, 
@@ -63,8 +64,10 @@ The four methods can be summarized as follows:
     \begin{equation*}
         \mathrm{project}(A, \epsilon) := V \max(\epsilon I, D_E) V^\top.
     \end{equation*}
-    Where the $\max$ operator is applied component-wise. This approach clips any negative or near-zero eigenvalues to a small positive constant $\epsilon > 0$,
-    which keeps a minimal adjustment to the original matrix for positive definiteness, but may lead to an increase in the condition number if the original eigenvalues were not close to zero.
+    Where the $\max$ operator is applied component-wise. 
+    This approach clips any negative or near-zero eigenvalues to a small positive constant $\epsilon > 0$,
+    which keeps a minimal adjustment to the original matrix for positive definiteness, thus the minimal Frobenius norm of the adjustment matrix $E$ \cite{nocedal2006numerical},
+    but may lead to an increase in the condition number if the original eigenvalues were not close to zero.
 
     \item \textbf{MIRROR} (Absolute eigenvalue modification):
     \begin{equation*}
@@ -114,14 +117,14 @@ by operating on the block Hessian matrix $\tilde{H}_k$ at $k$ stage,
     \tilde{S}_k & \tilde{R}_k
     \end{bmatrix} + E_k \succ 0, \quad k = 0, 1, \ldots, N-1,
 \end{equation}
-where $E_k$ is could be a diagonal matrix or a full matrix, depending on the regularization strategy mentioned in \ref{subsec:reg_strategies}.
+where $E_k$ could be a diagonal matrix or a full matrix, depending on the regularization strategy mentioned in \ref{subsec:reg_strategies}.
 
 The full Hessian regularization is direct and usually simple to implement, 
 but it can be too conservative without considering the definiteness of the reduced Hessian $\tilde{M}$, thus slow down the convergence.
 
 \subsection{Reduced Hessian regularization}
-According to a well-known result regarding the convexity of QPs, 
-which is also mentioned in \cite{verschueren2017sparsity} (for proof, see \cite{nocedal2006numerical}):
+The reduced Hessian regularization take the reduced Hessian matrix $\tilde{M}$ as the target matrix.
+According to the Theorem \ref{thm:reduced_hessian_convexity}, which is mentioned in \cite{verschueren2017sparsity} (for proof, see \cite{nocedal2006numerical}):
 \begin{theorem}
 \label{thm:reduced_hessian_convexity}
 Assume that LICQ holds. The QP problem has a unique global optimum if and only if the reduced Hessian is positive definite:
@@ -129,14 +132,12 @@ Assume that LICQ holds. The QP problem has a unique global optimum if and only i
     M = Z^\top H Z \succ 0.
 \end{equation}
 \end{theorem}
-This characterization shows that the positive definiteness of the reduced Hessian is a necessary and sufficient condition for the QP admitting a unique global optimum.
 
-With the Theorem \ref{thm:reduced_hessian_convexity},
-it is reasonable to regularize the reduced Hessian $\tilde{M}$ instead of the full Hessian $\tilde{H}$,
-which is less conservative than the full Hessian regularization, while still effective.
-And from a perspective of full Hessian regularization in \eqref{eq:regularized_system}, 
-the adjustment matrix is $E_k= Z_k E_k^r Z_k^\top$, 
-where $E_k^r$ is a positive definite matrix, ;added to regularize the reduced Hessian $\tilde{M}$.
+The positive definiteness of the reduced Hessian is a necessary and sufficient condition for the QP admitting a unique global optimum.
+It is thus reasonable to derive the correction from the reduced Hessian $\tilde{M}$ instead of full Hessian $\tilde{H}$, 
+which yields a less conservative regularization that still effective. 
+In view of \eqref{eq:regularized_system}, a correction $E_k^r \succ 0$ derived from and applied to the reduced Hessian
+enters the KKT system as the adjustment matrix $E_k = Z_k E_k^r Z_k^\top$.
 
 However, from definition, 
 computing the reduced Hessian directly requires a null-space basis of the equality constraints,
@@ -233,7 +234,7 @@ the Cholesky factorization of $\tilde{M}_k^i$ is computed for efficiency, which 
 This can be regarded as a detection of the indefiniteness of the reduced Hessian $\tilde{M}^i$.
 And when the Cholesky factorization fails, which indicates that the reduced Hessian $\tilde{M}^i$ is indefinite,
 we can regularize the reduced Hessian block $\tilde{M}_k^i$ by adding a block adjust matrix $E_k^i$, i.e. $\tilde{M}_k^i + E_k^i$.
-The $E_k^i$ can be computed from the methods mentioned in \ref{subsec:full_hessian}.
+The $E_k^i$ can be computed from the strategies mentioned in \ref{subsec:reg_strategies}.
 This gives a modification of the backward pass of Riccati recursion and can be concluded as follows:
 \begin{algorithm}[H]
 \caption{Backward Pass of Modified Riccati Recursion}
@@ -273,9 +274,8 @@ which causes a severe condition number issue in the preceding stages due to the 
 This motivates us to propose an improved stage regularization strategy that avoids minimum perturbation and takes the propagation into account.
 
 \subsection{Failure of Minimum-Perturbation Regularization}
-In this subsection, we will show that the minimum perturbation strategy, 
-i.e. eigenvalue modification with the minimum Frobenius norm of the adjustment matrix $E_k$ \cite{nocedal2006numerical}, 
-which is commonly the first choice for regularization with the least modification of the original problem,
+In this subsection, we will show that the minimum perturbation strategy, i.e. the PROJECT \cite{verschueren2017sparsity}, 
+which is commonly the first choice for regularization with the least modification of the original problem, 
 can cause condition number issue in the stage regularization by introducing a general example.
 
 Suppose at the stage $k$, the reduced Hessian block $\tilde{M}_k$ is not positive definite.
@@ -331,10 +331,11 @@ This issue reveals two insights in stage regularization:
 \end{itemize}
 
 From the first insight, instead of the minimum perturbation strategy,
-we can take the absolute value of the negative eigenvalues or inertia as the perturbation magnitude, 
-which can avoid the severe condition number issue in the preceding stages. 
-The technic is also mentioned in \cite{verschuerenTimeoptimalRaceCar2016b} as MIRROR for eigenvalue modification, 
-and \cite{fangModifiedCholeskyAlgorithms2007} as Type-II for modified Cholesky factorization.
+an intuitive, but effective, approach is to use the absolute value of the negative eigenvalues or inertia as the perturbation magnitude,
+which can avoid the severe condition number issue in the preceding stages.
+When it comes to the eigenvalue modification strategy, this is the MIRROR strategy \cite{verschueren2017sparsity},
+and when it comes to the modified Cholesky factorization strategy, this is the Type-II strategy \cite{fangModifiedCholeskyAlgorithms2007}, of which GMW is a common representitive.
+
 From the second insight, we can incorporate the cost-to-go matrix $P_k$ into the strategy design,
 which also can be achieved by adding an adjustment matrix $E_{k+1,P}^i$ to the cost-to-go matrix $P_k$ directly,
 so that the propagation of the negative curvature can be taken into account in the regularization design.
