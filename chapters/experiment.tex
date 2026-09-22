@@ -34,29 +34,30 @@ while the latter one, flop unit estimation, is approximated by the number of mod
 \subsection{Iteration Profile}
 Let $\mathcal{P}$ denote the set of test instances and $\mathcal{M}$ the set
 of candidate regularization strategies. For a method $m \in \mathcal{M}$ and
-an instance $p \in \mathcal{P}$, let $i_{m,p}$ be the number of outer
-iterations at which $m$ satisfies the convergence criterion on $p$. A run
-that reaches the iteration cap $i_{\max}$ without converging, or that stalls
-early, is treated as unsolved and we set $i_{m,p}=\infty$.
+an instance $\mathrm{p} \in \mathcal{P}$, let $i_{m,\mathrm{p}}$ be the number of outer
+iterations at which $m$ satisfies the convergence criterion on $\mathrm{p}$. A run
+that reaches the iteration cap $i_\mathrm{max}$ without converging, or that stalls
+early, is treated as unsolved and we set $i_{m,\mathrm{p}}=\infty$.
 
 The \emph{iteration profile} of method $m$ is
 \begin{equation}
-\pi_m(k) \;=\; \bigl|\{\, p \in \mathcal{P} : i_{m,p} \le k \,\}\bigr|,
-\qquad k = 1,\dots,i_{\max},
+\Pi_m(\ell) \;=\; \bigl|\{\, \mathrm{p} \in \mathcal{P} : i_{m,\mathrm{p}} \le \ell \,\}\bigr|,
+\qquad \ell = 1,\dots,i_\mathrm{max},
 \end{equation}
-i.e.\ the number of instances that $m$ solves within a budget of $k$
-iterations. Equivalently, $\pi_m(k)/|\mathcal{P}|$ is the empirical
-cumulative distribution of the solve-iteration count over solved instances.
-By construction $\pi_m$ is non-decreasing in $k$, and its value at the cap,
-$\pi_m(i_{\max})$, equals the total number of instances solved by $m$ under
+i.e.\ the number of instances that $m$ solves within a budget of $\ell$
+iterations. Equivalently, $\Pi_m(\ell)/n_\mathcal{P}$ is the empirical
+cumulative distribution of the solve-iteration count over the test set,
+which plateaus at the solve rate of $m$ rather than at $1$.
+By construction $\Pi_m$ is non-decreasing in $\ell$, and its value at the cap,
+$\Pi_m(i_\mathrm{max})$, equals the total number of instances solved by $m$ under
 the budget.
 
-The profile is read along two axes. The rate at which $\pi_m(k)$ rises with
-$k$ reflects the \emph{efficiency} of method $m$: a curve that climbs
-steeply at small $k$ solves most instances with few iterations. The height
-of the plateau, $\pi_m(i_{\max})$, reflects the \emph{robustness} of the
-method: it is the fraction of the test set solved within the prescribed
-budget. Because every method is evaluated under the same cap $i_{\max}$ and
+The profile is read along two axes. The rate at which $\Pi_m(\ell)$ rises with
+$\ell$ reflects the \emph{efficiency} of method $m$: a curve that climbs
+steeply at small $\ell$ solves most instances with few iterations. The height
+of the plateau, $\Pi_m(i_\mathrm{max})$, reflects the \emph{robustness} of the
+method: it is the number of test instances solved within the prescribed
+budget. Because every method is evaluated under the same cap $i_\mathrm{max}$ and
 the same convergence criterion, the curves are directly comparable across
 $\mathcal{M}$.
 
@@ -96,10 +97,11 @@ To unify the comparison, we implemented a prototype solver capable of accommodat
 The Riccati-based primal-dual interior-point solver is implemented in Python, using HPIPM, 
 the state-of-the-art Riccati-based IPM solver for OCP QPs, as a reference. 
 The prototype was designed to reproduce its iteration behavior on convex QPs, where the two solvers should therefore agree.
+It is available at \url{https://github.com/Pandatheon/Primal-dual_IPM.git}.
 
 One implementation detail deserves mention, as it departs from the plain FTB rule stated in Section~\ref{sec:size_control}. 
 Rather than retracting the maximal step by a fixed fraction $\eta$, 
-the primal and dual step sizes $\alpha^{\mathrm{prim}}$ and $\alpha^{\mathrm{dual}}$ are each obtained 
+the primal and dual step sizes $\alpha_{\mathrm{prim}}$ and $\alpha_{\mathrm{dual}}$ are each obtained 
 from their respective maximal step through the heuristic
 \begin{equation}
   \alpha =
@@ -304,7 +306,7 @@ which share the same solver, the same benchmark and the same parameters introduc
 \subsection{General setup}
 All ten methods are run under the same conditions. 
 The barrier parameter is updated by Mehrotra probing (\texttt{pred\_corr}$=0$) 
-and the step size is controlled by the FTB rule followed by the funnel line search, 
+and the step size is controlled by the FTB rule followed by the two-phase line search, 
 while the remaining settings are collected in Table~\ref{tab:general_settings}.
 
 A run terminates either when all four residuals fall below their tolerances 
@@ -326,34 +328,16 @@ or when the iteration budget $i_\mathrm{max}$ is exhausted, in which case the in
     \addlinespace
     $i_\mathrm{max}$   & $120$     & Iteration budget, beyond which the instance counts as unsolved \\
     $n_\mathcal{P}$    & $175$     & Nonconvex QP instances in the test set \\
-    \bottomrule
-\end{tabular}
-\end{table}
-
-The funnel line search brings a few parameters of its own, 
-which are listed in Table~\ref{tab:funnel-params} and kept fixed across all runs.
-
-\begin{table}[H]
-\centering
-\caption{Parameters of the funnel line search.}
-\label{tab:funnel-params}
-\begin{tabular}{@{}lll@{}}
-    \toprule
-    Symbol & Value & Role \\
-    \midrule
-    $\beta$           & $0.5$      & Backtracking factor, $\alpha_p \leftarrow \beta\alpha_p$ \\
+    \addlinespace
+    $\epsilon$         & $10^{-4}$ & Floor on the corrected eigenvalues and pivots, shared by all strategies \\
+    \addlinespace
+    $\beta$           & $0.5$      & Backtracking factor, $\alpha_\mathrm{prim} \leftarrow \beta\alpha_\mathrm{prim}$ \\
     $n_\mathrm{max}$        & $10$        & Maximum backtracking iterations \\
-    $\theta_\mathrm{max}^0$    & $100$  & Initial max funnel bound \\
-    \addlinespace
-    $\kappa_s$      & $10^{-1}$  & Switching constant, $\alpha_p(-\rho) > \kappa_s\,\theta^2$ \\
-    \addlinespace
-    $\gamma$        & $10^{-4}$  & Armijo constant for f-step, $f^+ \le f + \gamma\,\alpha_p\rho$ \\
-    $\kappa_{\theta}$ & $0.999$   & h-step acceptance factor, $\theta^+ \le \kappa_\theta\,\theta_{\max}$ \\
-    $\kappa_{u}$      & $0.5$      & Funnel-update weight, $(1-\kappa_u)\theta_{\max} + \kappa_u\theta^+$ \\
+    $\kappa_s$      & $10^{-1}$  & Switching constant, $\alpha_\mathrm{prim}(-\rho) > \kappa_s\,\theta^2$ \\
+    $\gamma$        & $10^{-4}$  & Armijo constant for the f-phase, $f^+ \le f + \gamma\,\alpha_\mathrm{prim}\rho$ \\
     \bottomrule
 \end{tabular}
 \end{table}
-
 
 \section{Numerical Comparison of Primal Regularizations}
 \label{sec:comparison}
@@ -399,8 +383,8 @@ reflecting the extra factorization work introduced by the cost-to-go term,
 yet they are markedly more robust and thus the focus of the comparison. 
 In Figure~\ref{fig:flop-profile-riccati}, \textsf{PM\_MIRROR} is the most robust method with only $4$ unsolved problems, 
 and \textsf{PM\_GMW} follows with $7$ 
-while keeping its worst-case cost more than an order of magnitude below \textsf{PM\_MIRROR} ($6.5\times10^{4}$ versus $9.4\times10^{5}$ flops) 
-and nearly a factor of $40$ below \textsf{PM\_PROJECT} ($2.4\times10^{6}$). 
+while keeping its worst-case cost more than an order of magnitude below \textsf{PM\_MIRROR} ($5.7\times10^{4}$ versus $9.4\times10^{5}$ flops) 
+and more than a factor of $40$ below \textsf{PM\_PROJECT} ($2.4\times10^{6}$). 
 Notably, though the \textsf{PM\_PROJECT} and \textsf{PM\_MIRROR} belong to the same class of regularization strategy, 
 the worst-case cost of \textsf{PM\_PROJECT} is higher than that of \textsf{PM\_MIRROR}, 
 which can be explained by the issue of inadequate regularization in the minimum perturbation strategy, 
@@ -421,7 +405,7 @@ Taken together, two figures first reveal a robustness ordering,
 If reliability is the priority, \textsf{PM\_MIRROR} is the safest
 choice, as it leaves the fewest instances unsolved. 
 If a balance between reliability and computational cost is preferred, \textsf{PM\_GMW} is the more attractive option: 
-it recovers almost all of the robustness of \textsf{PM\_MIRROR} ($7$ unsolved instances against $4$) at a worst-case cost roughly $15\times$ smaller.
+it recovers almost all of the robustness of \textsf{PM\_MIRROR} ($7$ unsolved instances against $4$) at a worst-case cost roughly $16\times$ smaller.
 We will therefore focus on \textsf{PM\_MIRROR} and \textsf{PM\_GMW} in the following comparisons with other regularization families.
 
 \subsection{Comparison with Full Hessian Regularizations}
@@ -450,7 +434,7 @@ the gap between Riccati-based methods and Full Hesian methods is even more prono
 and it runs in the Riccati-based methods' favour on \emph{both} axes. 
 In robustness, \textsf{PM\_MIRROR} fails on only $4$ instances and \textsf{PM\_GMW} on $7$, 
 while the full-Hessian methods fail on $32$ (\textsf{H\_PROJECT}), $40$ (\textsf{H\_MIRROR}), 
-and $58$ (\textsf{H\_GMW}) instances.
+and $59$ (\textsf{H\_GMW}) instances.
 In cost, the full-Hessian variants are one to several orders of magnitude more expensive: 
 their worst-case costs reach $1.5\times10^{7}$ flops for \textsf{H\_PROJECT} and $2\times10^{7}$ for \textsf{H\_MIRROR}, 
 and even the cheapest full-Hessian option, \textsf{H\_GMW}, has a median cost roughly two orders above that of \textsf{PM\_GMW},
@@ -495,13 +479,13 @@ indicating less iteration is needed to solve the same number of instances.
 The decomposition-cost distribution in Figure~\ref{fig:flop-profile-inertia} draws the distinction more finely. 
 Inertia correction is the cheapest of the three in the worst case, 
 with a maximum cost of $2.4\times10^{4}$ flops, 
-below both \textsf{PM\_GMW} ($6.5\times10^{4}$) and \textsf{PM\_MIRROR} ($9.4\times10^{5}$).
+below both \textsf{PM\_GMW} ($5.7\times10^{4}$) and \textsf{PM\_MIRROR} ($9.4\times10^{5}$).
 In terms of median cost, however, \textsf{INERTIA\_LM} and \textsf{PM\_GMW} are essentially on par, with \textsf{PM\_GMW} marginally lower. 
 Their robustness differs more clearly, however: \textsf{INERTIA\_LM} fails on $15$ instances, against $7$ for \textsf{PM\_GMW} and $4$ for \textsf{PM\_MIRROR}.
 
 The comparison thus no longer reduces to an even trade-off between \textsf{INERTIA\_LM} and \textsf{PM\_GMW}.
 \textsf{INERTIA\_LM} retains a single advantage, the lowest worst-case cost, but a narrow one:
-a factor of roughly $2.7$ below \textsf{PM\_GMW}, against which \textsf{PM\_GMW} is in turn
+a factor of roughly $2.4$ below \textsf{PM\_GMW}, against which \textsf{PM\_GMW} is in turn
 slightly cheaper at every quartile of the distribution and solves eight more instances.
 
 Inertia correction is therefore preferable only where a hard bound on the per-decomposition cost
@@ -520,11 +504,190 @@ albeit at a substantially higher worst-case cost.
 \end{figure}
 
 \section{Discussion}
+\label{sec:discussion}
+The comparison in Section~\ref{sec:comparison} ranked the methods by the number of instances they leave unsolved.
+That number alone, however, says nothing about \emph{how} a method fails or \emph{where} it fails,
+and both turn out to be more informative than the count itself.
+This section therefore resolves the same failures along two further axes.
+Section~\ref{subsec:failure_status} splits them by the status with which the solve terminated,
+which separates a numerical breakdown of the regularized recursion from a mere exhaustion of the iteration budget.
+Section~\ref{subsec:failure_category} splits them by the OCP each instance was collected from,
+which identifies what distinguishes the hard instances from the easy ones
+and explains why the full Hessian family performs as poorly as it does.
 
-\subsection{What kind problem is hard or easy}
+\subsection{Failure by status}
+\label{subsec:failure_status}
+A run that does not converge terminates in one of three ways, 
+which we record as its exit status and Figure~\ref{fig:failures-by-status} breaks down the failures of each method accordingly:
 
-\subsection{Why Full Hessian fail and bad}
+\begin{itemize}
+    \item \emph{Unregularized}: the Cholesky factorization fails \emph{again} after the regularization has been applied, 
+    usually caused by numerical indefiniteness.
+    \item \emph{Max iterations reached}: the residuals did not fall below their tolerances within the budget $i_\mathrm{max}=120$.
+    \item \emph{NaN encountered}: an infinite or undefined value appeared in the residuals, so that the iterate itself has overflowed.
+\end{itemize}
 
-\subsection{Ablation on funnel line search}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/experiment/discussion/qp_failures_by_status.pdf}
+    \caption{Failures of each method by exit status over the $175$-instance test set.
+    The bars are stacked by status and annotated with the total number of unsolved instances
+    and the corresponding share of the test set.}
+    \label{fig:failures-by-status}
+\end{figure}
+
+In Figure~\ref{fig:failures-by-status}, the \textsf{M\_PROJECT} is the only method experiencing numerical breakdowns,
+with $116$ of its $175$ instances unsolved.
+$112$ of its $116$ failures stem from numerical issue, while only $4$ exhaust the iteration budget.
+This confirms the analysis in Section~\ref{sec:fail_minimal_perturbation}, 
+where ill-conditioning propagates into numerical indefiniteness or overflow.
+Adopting either remedy identified there resolves these breakdowns: 
+abandoning the minimum-perturbation rule (\textsf{M\_MIRROR}, \textsf{M\_GMW}) 
+or adding the cost-to-go correction (\textsf{PM\_PROJECT}) eliminates all NaN and unregularized failures,
+leaving only iteration-limit terminations ($18$, $22$, and $14$ failures, respectively).
+Combining both remedies, as done in \textsf{PM\_MIRROR} and \textsf{PM\_GMW}, further reduces the remaining iteration-limit failures.
+ 
+The full Hessian family also breaks down, failing on $5$, $6$, and $6$ instances across variants,
+but these counts remain largely uniform, with the family instead distinguished by max iteration reached ($27$, $34$, and $53$).
+Neither the backward induction nor the block regularization itself is at fault, 
+but due to the cost-to-go matrix $P_k$, which is not modified by any \textsf{H} strategy.
+
+Near convergence in IPM, the barrier term $\Lambda_k T_k^{-1}$ grows extremely large as the slack variables approach zero.
+Through the backward Riccati recursion, this directly drives $\|P_k\|_2$ to become very large.
+Although the roundoff error generated in the Schur complement update remains of normal relative size, 
+the 2-norm condition number $\kappa_2(P_k)$ inflates so large that $\kappa_2(P_k) \epsilon_{\mathrm{mach}} \ge 1$, where $\epsilon_{\mathrm{mach}}$ denotes the machine precision.
+Consequently, such a matrix cannot be represented as positive definite in double precision, 
+and $P_k$ is computed as indefinite regardless of how it is assembled.
+
+The Riccati-based methods experience the same indefiniteness in $P_k$, yet their execution does not rely on $P_k \succ 0$:
+enforcing $\tilde{M}_k \succ 0$ immediately prior to Cholesky factorization ensures a factorizable system.
+The solver exit status therefore records whether indefiniteness is explicitly detected rather than whether it occurs in intermediate quantities.
+In this context the \textsf{PM} formulations outperform the plain \textsf{M} variants, which leave $P_{k+1}$ untouched,
+because stage-wise regularization of $P_{k+1}$ suppresses the backward accumulation of numerical indefiniteness across the horizon.
+
+Accordingly, for the six methods that never suffer factorization breakdowns,
+namely the Riccati-based methods other than \textsf{M\_PROJECT} together with \textsf{INERTIA\_LM},
+all failures reduce strictly to exhausted iteration limits,
+which plausibly reflect an inadequate regularization scale or an ineffective search direction.
+
+\subsection{Failure by category}
+\label{subsec:failure_category}
+Figure~\ref{fig:failures-by-category} resolves the same failures by the OCP each instance was collected from.
+The cell entries are the numbers of unsolved instances and the shading is the failure rate within the column,
+so that categories of different size remain comparable,
+and the eight columns are ordered by size and sum to the $175$ instances of the test set.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/experiment/discussion/qp_failures_by_category.pdf}
+    \caption{Failures of each method by OCP category.
+    The cell entries give the number of unsolved instances and the shading gives the failure rate within the column,
+    where $n_\mathcal{P}$ is the number of instances collected from that OCP.
+    The rows are ordered by total failure count and the columns by size.}
+    \label{fig:failures-by-category}
+\end{figure}
+
+The first thing the figure shows is that 
+failures of the stronger methods concentrate in the \textsl{Acrobot} column.
+It accounts for all failures of \textsf{PM\_MIRROR} ($4/15$) and \textsf{PM\_GMW} ($7/15$), 
+and the majority for \textsf{PM\_PROJECT} ($8/14$) and \textsf{INERTIA\_LM} ($6/15$).
+Across all ten methods, \textsl{Acrobot} failures vary narrowly between $4$ and $10$ 
+despite total failures ranging from $4$ to $116$, indicating that these failures stem from instance difficulty rather than regularization.
+Notably, the four instances unsolved by \textsf{PM\_MIRROR} are unsolved by all ten methods, hence, \textsf{PM\_MIRROR} solves the union of all solved instances across the benchmark.
+
+
+Further, by combining the Figure~\ref{fig:indefinite_qp_scatter},
+we could speculate what makes that the instance hard is neither depth nor width on its own, but their conjunction.
+Among the six instances where the reduced Hessian has very negative eigenvalues,
+the two \textsl{Crane} instances have low indefinite rates ($0.05$ and $0.07$) 
+despite reaching  $|\lambda_{\min}| \approx 1.4\times10^{4}$, every method except \textsf{M\_PROJECT} and \textsf{H\_GMW} solves both,
+indicating the case that a large correction is needed, a deep but isolated indefinite stage is corrected once and the recursion recovers.
+In contrast, the four unsolved \textsl{Acrobot} instances sustain $|\lambda_{\min}| > 250$ across $0.33$ to $0.53$ of the horizon.
+Applying large correction repeatedly over many stages on the Hessian perturbs the Newton system, preventing the solver from converging within the iteration budget.
+While Figure~\ref{fig:indefinite_qp_scatter} shows that most instances are either narrow-and-deep or broad-and-moderate, 
+\textsl{Acrobot} uniquely combines both attributes, defining the empirical limit of solvability on this benchmark.
+
+Interestingly, in the heatmap, \textsl{Flying robot} appears as a single dark column for the full Hessian family,
+where \textsf{H\_PROJECT}, \textsf{H\_MIRROR} and \textsf{H\_GMW} fail on $19$, $20$ and $20$ of the $20$ instances,
+while every Riccati-based method except \textsf{M\_PROJECT} solves all of them. 
+We can further refer to the Figure~\ref{fig:indefinite_source_signature} for explanation.
+In \textsl{Flying robot}, 
+indefiniteness is confined to the cost-to-go matrix $P$ (median $|\lambda_{\min}(P)| \approx 1.5\times10^{3}$) and 
+affects only $\sim 2\%$ of stages, while $R_k \succ 0$ holds throughout.
+Because full Hessian methods cannot access the intermediate recursion matrix $P$, 
+they enforce positive definiteness indirectly by perturbing $\tilde{Q}_k$ across the entire horizon.
+This unnecessary alteration of the unaffected $98\%$ of stages severely perturbs the Newton system, causing iteration-budget exhaustion.
+This is the sharpest single piece of evidence for the premise of Section~\ref{sec:riccati_primal_reg},
+namely that the indefiniteness should be treated where it surfaces in the recursion rather than on the full Hessian. 
+
+\textsf{INERTIA\_LM} exhibits characteristics intermediate between full Hessian and Riccati-based methods.
+It adds a uniform shift $\delta_w I$ to both $\tilde{Q}_k$ and $\tilde{R}_k$, 
+which is algebraically equal to adding directly into $P$ in the Riccati recursion.
+It thereby succeeds to solve $17$ of the $20$ \textsl{Flying robot} instances.
+By providing a non-minimal perturbation and adjusting both $P$ and $\tilde{M}$ simultaneously, 
+its overall solve rate aligns with the \textsf{PM} family rather than the \textsf{H} family.
+Its primary limitation, however, is the absence of stage-wise localization: 
+the scalar shift $\delta_w$ must match the magnitude of the global minimum negative eigenvalue and is applied across all time steps.
+This global over-regularization accounts for its remaining failures on instances with high indefinite-stage rates 
+($4$ in \textsl{Dubins car}, $2$ in \textsl{Robot arm}, and $6$ in \textsl{Acrobot}).
+
+The heatmap also refines the \textsf{M} versus \textsf{PM} comparison of Section~\ref{sec:comparison}.
+On \textsl{Flying robot} the plain \textsf{M} methods are already perfect,
+because $R_k$ is positive definite there and the indefinite-stage rate is so low that a single local correction is applied and the recursion moves on.
+Their failures appear instead on \textsl{Dubins car} ($7$ for \textsf{M\_GMW}), \textsl{Crane}, \textsl{Robot arm} and \textsl{Moonlander}.
+Three of these four are the OCPs dominated by the \emph{both} case, where $R_k$ and $P_{k+1}$ are indefinite at the same stage and the correction is triggered repeatedly.
+\textsf{PM\_GMW} clears all four of these columns, and \textsf{PM\_MIRROR} clears them as well.
+The benefit of regularizing the cost-to-go matrix is therefore driven by width rather than by depth:
+it matters precisely when the correction is applied often enough for the contamination of $P_k$ to accumulate across stages,
+which is the propagation predicted in Section~\ref{sec:fail_minimal_perturbation}.
+
+Together, these results address both central questions of this chapter.
+First, intractable instances require the conjunction of large negative eigenvalues and high temporal width, a regime confined here to \textsl{Acrobot}.
+Second, full Hessian methods underperform because enforcing the condition $\tilde{H}_k \succ 0$ is overly conservative, 
+imposing it globally alters state curvature even when the indefiniteness is confined to small rate of stages, as in \textsl{Flying robot}.
+Conversely, regularizing directly within the Riccati recursion resolves both limitations by modifying only the indefinite matrices at the specific stages where non-positive eigenvalues arise.
+
+
+% Table~\ref{tab:failure_signature} summarizes this per method.
+% The median depth over the instances a method solves is essentially the same for all of them, around $3$,
+% whereas the median depth over the instances it fails on orders the methods exactly as the iteration profiles
+% of Section~\ref{sec:comparison} did.
+% The methods therefore do not differ in which easy instances they solve.
+% They differ only in how deep the negative curvature is allowed to become before they give up,
+% and \textsf{PM\_MIRROR} pushes that limit two to three orders of magnitude beyond the full Hessian family.
+% \textsf{M\_PROJECT} is the one row that must be read differently,
+% since its failures are the breakdowns of Section~\ref{subsec:failure_status} rather than instances defeated by depth,
+% which is also why it is the only method whose solved instances have a markedly lower median depth than the others.
+
+% \begin{table}[H]
+% \centering
+% \caption{Signature of the unsolved instances.
+% For each method, the median depth $|\lambda_{\min}|$ of the reduced Hessian over the instances it fails on
+% and over the instances it solves,
+% together with the median indefinite-stage rate of its failed instances outside \textsl{Acrobot}.
+% Depth and rate are taken from the benchmark analysis of Section~\ref{sec:benchmark_analysis}.}
+% \label{tab:failure_signature}
+% \vspace{0.5em}
+% \begin{tabular}{lcccc}
+%     \toprule
+%     \textbf{Method} & \textbf{Unsolved} & \begin{tabular}[b]{@{}c@{}}$\mathrm{med}\,|\lambda_{\min}|$\\(failed)\end{tabular}
+%     & \begin{tabular}[b]{@{}c@{}}$\mathrm{med}\,|\lambda_{\min}|$\\(solved)\end{tabular}
+%     & \begin{tabular}[b]{@{}c@{}}med.\ rate\\(failed, no \textsl{Acrobot})\end{tabular} \\
+%     \midrule
+%     \textsf{PM\_MIRROR}  & $4$   & $3.1\times10^{3}$ & $3.5$ & -- \\
+%     \textsf{PM\_GMW}     & $7$   & $5.7\times10^{2}$ & $3.4$ & -- \\
+%     \textsf{PM\_PROJECT} & $14$  & $8.1\times10^{1}$ & $3.4$ & $0.85$ \\
+%     \textsf{INERTIA\_LM} & $15$  & $2.7\times10^{1}$ & $3.3$ & $0.80$ \\
+%     \textsf{M\_MIRROR}   & $18$  & $2.2\times10^{1}$ & $3.2$ & $0.43$ \\
+%     \textsf{M\_GMW}      & $20$  & $1.8\times10^{1}$ & $3.4$ & $0.80$ \\
+%     \addlinespace
+%     \textsf{H\_PROJECT}  & $32$  & $5.3$             & $3.4$ & $0.03$ \\
+%     \textsf{H\_MIRROR}   & $40$  & $5.3$             & $3.4$ & $0.04$ \\
+%     \textsf{H\_GMW}      & $58$  & $6.9$             & $3.1$ & $0.07$ \\
+%     \addlinespace
+%     \textsf{M\_PROJECT}  & $116$ & $5.7$             & $0.3$ & $0.20$ \\
+%     \bottomrule
+% \end{tabular}
+% \end{table}
 
 \end{document}

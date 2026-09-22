@@ -162,7 +162,7 @@ The eight OCPs are named and characterized as follows:
     parallel-parking maneuver, a lateral displacement returning to the initial
     heading, within a narrow corridor imposed by state-box constraints, with a
     terminal equality constraint on the full pose.
-    \item \textbf{Furuta pendulum:} Adapted from \cite{furuta1992swing}.
+    \item \textbf{Furuta:} Adapted from \cite{furuta1992swing}.
     A rotary inverted pendulum with
     experimentally identified parameters and joint damping, actuated by a single
     base-arm torque. The pendulum is swung up and stabilized at the upright
@@ -241,14 +241,9 @@ The collection strategy consists of two steps: \emph{generate} and \emph{collect
     By restricting the maximum number of SQP iterations, we can selectively collect indefinite QPs that exhibit an indefinite reduced Hessian.
 \end{enumerate}
 
-In the collect step, QPs are all with two failling status code from \texttt{acados}, code \texttt{2} for max iterations reached and code \texttt{4} for infeasible QP.
-
-The QPs with code \texttt{2} are from limiting the number of SQP iterations to prevent the solver moving towards the neighborhood of the OCP solution,
-the function \texttt{qp\_diagnostics} from the class \texttt{AcadosOcpSolver} is called to check the definiteness of the reduced Hessian, 
-and only the QPs with indefinite reduced Hessians are collected.
-
-The QPs with code \texttt{4} are from the failing of the Riccati recursion in \texttt{HPIPM},
-this is achieved by setting the Riccati algorithm in HPIPM as classical Riccati recursion, i.e. \texttt{ric\_alg = 0}, 
+In the collect step, QPs are all with one failing status code from \texttt{acados}, code \texttt{4} for infeasible QP,
+which indicating the indefinite reduced Hessian causing the failing of the Riccati recursion in \texttt{HPIPM}.
+This is achieved by setting the Riccati algorithm in HPIPM as classical Riccati recursion, i.e. \texttt{ric\_alg = 0}, 
 instead of the square-root version \cite{frisonAlgorithmsMethodsHighPerformance},
 which requires the reduced Hessian to be positive definite in order to proceed with the Riccati recursion.
 So when the HPIPM fails to proceed with the Riccati recursion, it indicates that the reduced Hessian is indefinite, and the corresponding QP is collected.
@@ -280,7 +275,7 @@ the per-problem counts are reported in Table~\ref{tab:collected_qps} and range f
     \end{tabular}
 \end{table}
 
-The QPs are stored in \texttt{json} format and are available at \url{https://github.com/acados/ocp_qp_dataset_collection}.
+The QPs are stored in \texttt{json} format and are available at \url{https://github.com/Pandatheon/Primal-dual_IPM.git}.
 
 \section{Benchmark Analysis}
 \label{sec:benchmark_analysis}
@@ -312,29 +307,29 @@ They spread over more than seven orders of magnitude in depth ($|\lambda_{\min}|
 And the coverage is strongly problem-dependent: each OCP occupies a characteristic region of the depth--width plane rather than scattering uniformly.
 
 Two complementary major patterns can be observed.
-Problems that are indefinite in only a small fraction of their stages, such as \texttt{overhead\_crane},
-\texttt{free\_flying\_robot} and \texttt{furuta\_cons}, nevertheless reach very deep negative curvature:
+Problems that are indefinite in only a small fraction of their stages, such as \textsl{Crane},
+\textsl{Flying robot} and \textsl{Furuta}, nevertheless reach very deep negative curvature:
 their indefinite-stage rates stay below $0.30$ (with medians of $0.05$, $0.02$ and $0.10$, respectively),
 while $|\lambda_{\min}|$ reaches up to $10^{2}$--$10^{4}$.
-Conversely, problems with a high indefinite-stage rate, \texttt{dubins\_car\_parallel\_parking} and \texttt{robot},
+Conversely, problems with a high indefinite-stage rate, \textsl{Dubins car} and \textsl{Robot arm},
 with rates ranging from $0.47$--$1.0$, tend to exhibit only moderate depth,
 with $|\lambda_{\min}|$ clustered around $10^{-1}$--$10^{1}$.
 Broad and deep indefiniteness thus appear to occur largely separately rather than together.
 
-Some problems also fall in the middle, such as \texttt{moonlander} and
-\texttt{acrobot}, which occupy intermediate indefinite-stage rates
-(roughly $0.07$--$0.53$). \texttt{moonlander} keeps its depth in a narrow band
-($|\lambda_{\min}|$ between $10^{0}$ and $10^{2}$), whereas \texttt{acrobot}
+Some problems also fall in the middle, such as \textsl{Moonlander} and
+\textsl{Acrobot}, which occupy intermediate indefinite-stage rates
+(roughly $0.07$--$0.53$). \textsl{Moonlander} keeps its depth in a narrow band
+($|\lambda_{\min}|$ between $10^{0}$ and $10^{2}$), whereas \textsl{Acrobot}
 scatters over almost the entire depth range, from near-singular values around
 $10^{-2}$ up to nearly $10^{4}$. They neither confine their negative curvature
 to a few stages nor spread it across the whole horizon, and thus bridge the two
 extreme regimes rather than belonging clearly to either.
 
 Taken together, the eight OCPs cover a broad range of the depth--width plane:
-from narrow-but-deep (\texttt{overhead\_crane}, \texttt{free\_flying\_robot}, \texttt{furuta\_cons}),
-through intermediate (\texttt{moonlander}, \texttt{acrobot}),
-to broad-but-moderate (\texttt{dubins\_car\_parallel\_parking}, \texttt{robot}),
-with \texttt{pendulum\_cons} adding cases of very shallow negative curvature
+from narrow-but-deep (\textsl{Crane}, \textsl{Flying robot}, \textsl{Furuta}),
+through intermediate (\textsl{Moonlander}, \textsl{Acrobot}),
+to broad-but-moderate (\textsl{Dubins car}, \textsl{Robot arm}),
+with \textsl{Pendulum} adding cases of very shallow negative curvature
 ($|\lambda_{\min}|$ mostly below $10^{-1}$) at intermediate indefinite-stage rates.
 This spread indicates that the collected QP subproblems exercise indefiniteness across qualitatively different regimes rather than a single one.
 
@@ -371,7 +366,7 @@ with a secondary accumulation around rates of $0.33$--$0.55$ and a further group
 while only a single QP is indefinite in essentially all of its stages.
 
 This is consistent with the scatter plot: for most problems only a subset of stages become indefinite, whereas a few problems
-(\texttt{dubins\_car\_parallel\_parking}, \texttt{robot}) are indefinite across the majority of their stages.
+(\textsl{Dubins car}, \textsl{Robot arm}) are indefinite across the majority of their stages.
 
 \subsection{Source of Indefiniteness}
 \label{subsec:source}
@@ -414,24 +409,24 @@ While Figure~\ref{fig:indefinite_source_counts} gives the aggregate picture,
 Figure~\ref{fig:indefinite_source_signature} breaks the same classification down per problem and reveals a strongly problem-dependent and clean structure: 
 six of the eight OCPs are dominated by a single category ($\geq\!70\%$ of their stages),
 three of them almost exclusively so ($\geq\!90\%$),
-and only \texttt{acrobot} and \texttt{overhead\_crane} are genuinely mixed.
+and only \textsl{Acrobot} and \textsl{Crane} are genuinely mixed.
 
 As observed from Figure~\ref{fig:indefinite_source_signature},
 most of the problems are governed by the \emph{both} case, 
-including \texttt{moonlander} ($96\%$), \texttt{robot} ($92\%$), \texttt{dubins\_car\_parallel\_parking} ($76\%$)
-and \texttt{furuta\_cons} ($72\%$).
-Notably, three problems (\texttt{dubins\_car\_parallel\_parking}($n=581$), \texttt{robot}($n=404$) and \texttt{moonlander}($n=198$)), contribute by far the most indefinite stages, 
+including \textsl{Moonlander} ($96\%$), \textsl{Robot arm} ($92\%$), \textsl{Dubins car} ($76\%$)
+and \textsl{Furuta} ($72\%$).
+Notably, three problems, \textsl{Dubins car} ($n=581$), \textsl{Robot arm} ($n=404$) and \textsl{Moonlander} ($n=198$), contribute by far the most indefinite stages, 
 they largely account for the aggregate dominance of the \emph{both} case reported above. 
 
-The \emph{P only} case dominates the remaining problems: \texttt{free\_flying\_robot} is indefinite purely through the cost-to-go block ($100\%$),
-and \texttt{pendulum\_cons} nearly so ($87\%$). The two mixed problems lean the same way:
-\texttt{overhead\_crane} splits into $58\%$ \emph{P only} against $39\%$ \emph{both},
-and \texttt{acrobot} into $54\%$ \emph{P only} against $41\%$ \emph{both},
+The \emph{P only} case dominates the remaining problems: \textsl{Flying robot} is indefinite purely through the cost-to-go block ($100\%$),
+and \textsl{Pendulum} nearly so ($87\%$). The two mixed problems lean the same way:
+\textsl{Crane} splits into $58\%$ \emph{P only} against $39\%$ \emph{both},
+and \textsl{Acrobot} into $54\%$ \emph{P only} against $41\%$ \emph{both},
 so that even where no single category dominates, the cost-to-go block is the more frequent one.
 Taken over all stages, the cost-to-go block is indefinite in the large majority of cases, 
 whereas the \emph{R only} case is marginal:
-it appears in only four problems and is negligible for \texttt{robot}, \texttt{acrobot} and \texttt{overhead\_crane} (all below $5\%$), 
-with \texttt{dubins\_car\_parallel\_parking} being the sole problem where isolated $R$-block indefiniteness is substantial ($24\%$ of its stages,
+it appears in only four problems and is negligible for \textsl{Robot arm}, \textsl{Acrobot} and \textsl{Crane} (all below $5\%$), 
+with \textsl{Dubins car} being the sole problem where isolated $R$-block indefiniteness is substantial ($24\%$ of its stages,
 accounting for $140$ of the $158$ \emph{R only} stages in the whole benchmark). 
 Indefiniteness therefore predominantly involves the cost-to-go block, 
 either alone or jointly with $R$, while $R$-block-only indefiniteness is the exception.

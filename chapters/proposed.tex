@@ -11,11 +11,14 @@
 \begin{document}
 
 \chapter{Primal Regularization for Indefinite Quadratic Programs}
-In this chapter, we turn our attention to the QPs with indefinite Hessian matrix, namely indefinte QPs.
-The chapter starts with a brief classification of the Hessian regularization in \ref{sec:hessian_reg},
-then we introduce the concept of Riccati-based primal regularization in \ref{sec:riccati_primal_reg},
-the Riccati-based primal regularization method is consecutively introduced based on an analysis of failing on minimum perturbation in \ref{sec:fail_minimal_perturbation}.
-We conclude the chapter with a proof of the asymptotic exactness of the proposed Riccati-based primal regularization method.
+In this chapter, we turn our attention to QPs with an indefinite Hessian matrix, namely indefinite QPs.
+Section~\ref{sec:hessian_reg} classifies the existing primal regularization approaches by the matrix they target.
+Section~\ref{sec:riccati_primal_reg} then develops the concept of Riccati-based primal regularization,
+which applies the correction stagewise inside the Riccati recursion.
+Section~\ref{sec:fail_minimal_perturbation} analyses why the minimum-perturbation rule fails in this setting,
+and derives an improved stage regularization strategy from that analysis.
+Section~\ref{sec:asymptotic_inactivity} concludes the chapter by proving that the proposed regularization
+becomes asymptotically inactive as the iterates approach the solution.
 
 \section{Primal regularization}
 \label{sec:hessian_reg}
@@ -23,7 +26,7 @@ In indefinite QPs, the regularization needs to be applied to the Hessian matrix 
 The resulting regularized reduced KKT system can be generally presented as:
 \begin{equation}
     \begin{bmatrix}
-     \tilde{H} + E & F^\top \\
+     \tilde{H}_i + E_i & F^\top \\
     F & 0
     \end{bmatrix}
     \begin{bmatrix}
@@ -35,30 +38,40 @@ The resulting regularized reduced KKT system can be generally presented as:
     r_{\mathrm{eq}}^i
     \end{bmatrix},
 \end{equation}
-where $E$ is the adjustment matrix for ensuring a positive definite Hessian.
-This process is referred to as primal regularization, and this section will briefly introduce its two types, 
-distinguished by the target matrix, i.e. the matrix that the adjustment $E$ is derived from and applied to, 
-as the full Hessian regularization and the reduced Hessian regularization.
+where $E_i$ is the adjustment matrix that renders the Hessian positive definite at the $i$-th iteration.
+This process is referred to as primal regularization.
+
+Two choices are left open by this formulation: 
+how the adjustment $E_i$ is computed, and which matrix it is derived from and applied to.
+The two are independent, and the first is common ground,
+since the same numerical strategies apply whichever matrix is targeted.
+Section~\ref{subsec:reg_strategies} therefore introduces these strategies first,
+after which Section~\ref{subsec:full_hessian} and Section~\ref{subsec:reduced_hessian}
+distinguish the two types of primal regularization by their target matrix,
+the full Hessian and the reduced Hessian.
 
 \subsection{Regularization Strategies}
 \label{subsec:reg_strategies}
-We would like to start with the numerical techniques used by both full Hessian regularization and reduced Hessian regularization by regarding the calculation of adjustment matrix $E$.
-
-There are several strategies for constructing the adjustment matrix $E$ to ensure a positive definite Hessian, commonly, it can be computed from \cite{nocedal2006numerical, mcsweeneyModifiedCholeskyDecomposition2017, More1978levenberg}
+Three families of strategies are commonly used to construct the adjustment matrix $E_i$
+\cite{nocedal2006numerical, mcsweeneyModifiedCholeskyDecomposition2017, More1978levenberg}:
 \begin{itemize}
-    \item Eigenvalue modification (EM): modifies the negative eigenvalues of $\tilde{H}$ .
-    \item Modified Cholesky factorization (MC): modifies the inertia of $\tilde{H}$.
-    \item Levenberg-Marquardt (LM): adds a scaled identity matrix to $\tilde{H}$.
+    \item Eigenvalue modification (EM): replaces the negative eigenvalues of $\tilde{H}_i$ through a spectral decomposition.
+    \item Modified Cholesky factorization (MC): corrects the inertia of $\tilde{H}_i$ by adjusting the diagonal pivots during factorization.
+    \item Levenberg--Marquardt (LM): adds a scaled identity matrix to $\tilde{H}_i$ until it becomes positive definite.
 \end{itemize}
+The families differ in how the correction is obtained, and therefore in cost:
+EM requires a full spectral decomposition, MC adjusts the pivots during the factorization itself,
+and LM applies a uniform shift without any decomposition at all.
+From these families we select four methods for this work:
+PROJECT and MIRROR from EM \cite{verschueren2017sparsity},
+GMW from MC \cite{gill1981practical},
+and inertia correction from LM \cite{wachter2006implementation}.
 
-We will mainly apply four commonly used strategies for regularization in this work, 
-two methods for EM (PROJECT, MIRROR) \cite{verschueren2017sparsity}, one method for MC (GMW) \cite{gill1981practical}, and one method for LM (Inertia Correction) \cite{wachter2006implementation}.
-
-Assuming a matrix $A$ can be eigenvalue decomposed as $A = V D_E V^\top$ and Cholesky factorized as $A = L D_I L^\top$, 
-where $V$ is an orthogonal matrix of eigenvectors, $L$ is a unit lower triangular matrix, 
-$D_E$ is a diagonal matrix of real eigenvalues, and $D_I$ is a diagonal matrix whose signs give the inertia of $A$
-
-The four methods can be summarized as follows:
+Assume a matrix $A$ admits the eigenvalue decomposition $A = V D_E V^\top$
+and the Cholesky factorization $A = L D_I L^\top$,
+where $V$ is an orthogonal matrix of eigenvectors, $L$ is a unit lower triangular matrix,
+$D_E$ is a diagonal matrix of real eigenvalues, and $D_I$ is a diagonal matrix whose signs give the inertia of $A$.
+In this notation, the four methods read as follows:
 \begin{itemize}
     \item \textbf{PROJECT} (Minimal eigenvalue modification):
     \begin{equation*}
@@ -78,20 +91,18 @@ The four methods can be summarized as follows:
     but may result in a large modification to the original matrix.
 
     \item \textbf{GMW} (Modified Cholesky factorization):
-    Instead of a spectral decomposition, GMW modifies the diagonal pivots on the fly during the $\mathrm{LD}\mathrm{L}^\top$ factorization.
-    At the $j$-th step, given the trial pivot $c_{jj}$ and the largest current off-diagonal $\theta_j = \max_{i>j}|c_{ij}|$, the pivot is bounded from below by
     \begin{equation*}
-        d_j^I = \max\!\left(\epsilon,\; |c_{jj}|,\; \frac{\theta_j^2}{\beta^2}\right),
-        \qquad
-        \beta^2 = \max\!\left(\gamma,\; \frac{\xi}{\sqrt{n^2 - 1}},\; \epsilon_M\right),
+        \mathrm{gmw}(A, \epsilon) := L D_I L^\top, \qquad D_I \succeq \epsilon I.
     \end{equation*}
-    where $\gamma = \max_i |a_{ii}|$, $\xi = \max_{i \neq j} |a_{ij}|$, and $\epsilon_M$ is the machine precision.
-    The term $\theta_j^2 / \beta^2$ bounds the entries of $L$ and thus the condition number of the factor, while the implied correction is $e_j = d_j^I - c_{jj} \geq 0$, giving $A + E = L D_I L^\top$.
+    Instead of a spectral decomposition, the factorization is carried out in place, and each diagonal pivot is raised,
+    whenever necessary, to keep it above $\epsilon$ and to bound the magnitude of the corresponding column of $L$ \cite{gill1981practical}.
+    Bounding the pivots from below therefore also bounds the condition number of the factor,
+    and the accumulated increments form a nonnegative diagonal correction $E$ with $A + E = L D_I L^\top$.
 
     This avoids the cost of an eigendecomposition and still guarantees positive definiteness, 
     but the resulting $E$ is generally not minimal and depends on the variable ordering, so it tends to over-modify $A$ compared with the eigenvalue-based methods.
 
-    \item \textbf{Inertia Correction} (Levenberg-Marquardt):
+    \item \textbf{Inertia Correction} (Levenberg--Marquardt):
     \begin{equation*}
         \mathrm{ic}(A, \Delta) := A + \Delta I, \qquad \Delta \geq 0.
     \end{equation*}
@@ -123,6 +134,7 @@ The full Hessian regularization is direct and usually simple to implement,
 but it can be too conservative without considering the definiteness of the reduced Hessian $\tilde{M}$, thus slow down the convergence.
 
 \subsection{Reduced Hessian regularization}
+\label{subsec:reduced_hessian}
 The reduced Hessian regularization take the reduced Hessian matrix $\tilde{M}$ as the target matrix.
 According to the Theorem \ref{thm:reduced_hessian_convexity}, which is mentioned in \cite{verschueren2017sparsity} (for proof, see \cite{nocedal2006numerical}):
 \begin{theorem}
@@ -159,13 +171,13 @@ second, Riccati recursion is used for regularizing the reduced Hessian $\tilde{M
 As mentioned in \cite{frisonAlgorithmsMethodsHighPerformance}, 
 the Riccati recursion can be interpreted as a block factorization of the KKT system in \eqref{eq:schur_comp_KKT}.
 In this subsection, we will further show that the Riccati recursion 
-can be regarded as the block $\mathrm{LD}\mathrm{L}^\top$ factorization of reduced Hessian $\tilde{M}^i$ in \eqref{eq:schur_comp_KKT_reduced},
+can be regarded as the block $\mathrm{LD}\mathrm{L}^\top$ factorization of reduced Hessian $\tilde{M}_i$ in \eqref{eq:schur_comp_KKT_reduced},
 which justifies the stage regularization on block reduced Hessian.
 
 From the perspective of the Riccati recursion, the backward pass can be concluded as follows:
 \begin{algorithm}[H]
 \caption{Backward Pass of Riccati Recursion}
-\label{alg:riccati_recursion}
+\label{alg:riccati_recursion_backward}
 \begin{algorithmic}[1]
 \State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$
 \Statex 
@@ -182,8 +194,8 @@ From the perspective of the Riccati recursion, the backward pass can be conclude
 We can find that $\tilde{M}_k = \tilde{R}_k + B_k^\top P_{k+1} B_k$ is exactly the block reduced Hessian obtained by Riccati recursion.
 In practice the inverse of $\tilde{M}_k$ is not computed directly; instead, the Cholesky factorization of $\tilde{M}_k$ is computed for efficiency.
 
-From the perspective of the reduced Hessian $\tilde{M}^i$ in \eqref{eq:schur_comp_KKT_reduced}, 
-eliminating the states through the dynamics leaves a dense reduced Hessian $\tilde{M}^i$ in the inputs $u_0, \dots, u_{N-1}$, 
+From the perspective of the reduced Hessian $\tilde{M}_i$ in \eqref{eq:schur_comp_KKT_reduced}, 
+eliminating the states through the dynamics leaves a dense reduced Hessian $\tilde{M}_i$ in the inputs $u_0, \dots, u_{N-1}$, 
 whose density stems from the coupling of any two stages via the state transition $\Phi_{i, j}$, defined as:
 \begin{align*}
     \Phi_{i, j} = \begin{cases}
@@ -192,16 +204,16 @@ whose density stems from the coupling of any two stages via the state transition
     \end{cases}
 \end{align*}
 
-The backward pass in Algorithm~\ref{alg:riccati_recursion} is exactly a block $\mathrm{LD}\mathrm{L}^\top$ factorization of this $\tilde{M}^i$, 
+The backward pass in Algorithm~\ref{alg:riccati_recursion} is exactly a block $\mathrm{LD}\mathrm{L}^\top$ factorization of this $\tilde{M}_i$, 
 carried out without ever forming it explicitly. The connection is made through the Schur complement: 
 each cost-to-go matrix $P_k$ is the Schur complement obtained by eliminating the states of the later stages, 
-so that the pivot block $\tilde{M}_k$ is precisely the Schur complement of stage $k$ in $\tilde{M}^i$ after all later stages have been eliminated. 
+so that the pivot block $\tilde{M}_k$ is precisely the Schur complement of stage $k$ in $\tilde{M}_i$ after all later stages have been eliminated. 
 Consequently, the recursion $P_k = \tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}_k^{-1} \Gamma_k$ is nothing but the successive formation of these Schur complements.
 
 Collecting the pivots $\tilde{M}_{N-1}, \dots, \tilde{M}_0$ into the block-diagonal factor $D$ and eliminating the stages in the same order as the backward pass, 
-from stage $N-1$ down to stage $0$, the block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian $\tilde{M}^i$ can be expressed as:
+from stage $N-1$ down to stage $0$, the block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian $\tilde{M}_i$ can be expressed as:
 \begin{align*}
-    \tilde{M}^i &= L
+    \tilde{M}_i &= L
     \begin{bmatrix}
     \tilde{M}_{N-1} & 0 & \cdots & 0 \\
     0 & \tilde{M}_{N-2} & \cdots & 0 \\
@@ -222,17 +234,17 @@ where the accumulated back-substitution coefficients, built from the feedback ga
     \end{bmatrix}.
 \end{align*}
 
-This establishes the connection between positive definiteness of the reduced Hessian $\tilde{M}^i$ and the positive definiteness of the block reduced Hessians $\tilde{M}_k$ obtained from Riccati recursion, 
+This establishes the connection between positive definiteness of the reduced Hessian $\tilde{M}_i$ and the positive definiteness of the block reduced Hessians $\tilde{M}_k$ obtained from Riccati recursion, 
 which justifies the stage regularization on block reduced Hessian $\tilde{M}_k$.
 
 \subsection{Stage Regularization in Riccati Recursion}
-With this connection, we can regularize the reduced Hessian $\tilde{M}^i$ without explicitly computing it, 
+With this connection, we can regularize the reduced Hessian $\tilde{M}_i$ without explicitly computing it, 
 but by stage-wisely applying the regularization to the block reduced Hessian  $\tilde{M}_k^i$ during the Riccati recursion,
 
 As mentioned in \ref{subsec:block_reduced_hessian}, 
 the Cholesky factorization of $\tilde{M}_k^i$ is computed for efficiency, which requires the positive definiteness of $\tilde{M}_k^i$.
-This can be regarded as a detection of the indefiniteness of the reduced Hessian $\tilde{M}^i$.
-And when the Cholesky factorization fails, which indicates that the reduced Hessian $\tilde{M}^i$ is indefinite,
+This can be regarded as a detection of the indefiniteness of the reduced Hessian $\tilde{M}_i$.
+And when the Cholesky factorization fails, which indicates that the reduced Hessian $\tilde{M}_i$ is indefinite,
 we can regularize the reduced Hessian block $\tilde{M}_k^i$ by adding a block adjust matrix $E_k^i$, i.e. $\tilde{M}_k^i + E_k^i$.
 The $E_k^i$ can be computed from the strategies mentioned in \ref{subsec:reg_strategies}.
 This gives a modification of the backward pass of Riccati recursion and can be concluded as follows:
@@ -260,8 +272,8 @@ This gives a modification of the backward pass of Riccati recursion and can be c
 \end{algorithmic}
 \end{algorithm}
 Since the block reduced Hessians $\tilde{M}_k$ are exactly the pivots of
-the block $\mathrm{L}^\top \mathrm{DL}$ factorization of $\tilde{M}^i$,
-enforcing the positive definiteness of every $\tilde{M}_k$ during the backward pass is equivalent to regularizing the reduced Hessian $\tilde{M}^i$ itself, 
+the block $\mathrm{L}^\top \mathrm{DL}$ factorization of $\tilde{M}_i$,
+enforcing the positive definiteness of every $\tilde{M}_k$ during the backward pass is equivalent to regularizing the reduced Hessian $\tilde{M}_i$ itself, 
 and thus recovers the SOSC in Theorem~\ref{thm:reduced_hessian_convexity}.
 The regularization is therefore applied only where it is needed while the structure-exploiting complexity of the Riccati recursion is preserved.
 
@@ -346,19 +358,17 @@ The resulting improved stage regularization strategy can be summarized as follow
 \caption{Backward Pass of Improved Modified Riccati Recursion}
 \label{alg:improved_modified_riccati_recursion}
 \begin{algorithmic}[1]
-\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$, $\lambda > 0$
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$, $\mathcal{E}(\cdot)$: MIRROR or Type-II strategy
 \Statex 
 \For{$k = N-1$ \textbf{down to} $0$}
-    \State $P_{k+1}^\mathrm{reg}$ \gets $P_{k+1}$ \Comment{Default with no regularization}
+    \State $P_{k+1}^\mathrm{reg} \gets P_{k+1}$ \Comment{Default with no regularization}
     \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1}^\mathrm{reg} B_k$
     \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
     \If{factorization fails}
-        \State $E_{k+1,P} \gets \mathcal{E}(P_{k+1})_{\lambda} - P_{k+1}$ \Comment{$\mathcal{E}(\cdot)$: MIRROR or Type-II strategy}
-        \State $P_{k+1}^\mathrm{reg}$ \gets $P_{k+1}$ + $E_{k+1,P}$ \Comment{Regularize cost-to-go matrix}
+        \State $P_{k+1}^\mathrm{reg} \gets \mathcal{E}(P_{k+1})$ \Comment{Regularize cost-to-go matrix}
         \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1}^\mathrm{reg} B_k$
-        \State $E_{k,M} \gets \mathcal{E}(\tilde{M}_k)_{\lambda} - \tilde{M}_k$
-        \State $\tilde{M}_k \gets \tilde{M}_k + E_{k,M}$ \Comment{Regularize reduced Hessian block}
-        \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
+        \State $\tilde{M}_k^\mathrm{reg} \gets \mathcal{E}(\tilde{M}_k)$ \Comment{Regularize reduced Hessian block}
+        \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k^\mathrm{reg})$
     \EndIf
     \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1}^\mathrm{reg} A_k$
     \Statex
@@ -372,25 +382,26 @@ The resulting improved stage regularization strategy can be summarized as follow
 \end{algorithm}
 
 In Algorithm~\ref{alg:improved_modified_riccati_recursion}, when the Cholesky factorization fails, the regularization acts at two levels. 
-The term $E_{k+1,P}$ proactively convexifies the cost-to-go matrix that enters the current stage, 
+Applying $\mathcal{E}(\cdot)$ to the cost-to-go matrix proactively convexifies the term that enters the current stage, 
 so that the negative-curvature propagation identified in the second insight is accounted for in $\tilde{M}_k$, $\Gamma_k$, and $P_k$ consistently. 
-In contrast, $E_{k,M}$ acts as a local safeguard on the reduced Hessian block and is to ensure that the Cholesky factorization succeeds.
-Both perturbations are constructed from the absolute values of the negative eigenvalues (the mirror strategy) rather than the minimum-modification rule, 
+Applying it again to the reduced Hessian block acts as a local safeguard, ensuring that the Cholesky factorization succeeds.
+Both corrections are produced by the same non-minimal strategy $\mathcal{E}(\cdot)$, MIRROR or Type-II, rather than by the minimum-modification rule, 
 which keeps the condition number of the regularized blocks bounded, as motivated by the first insight. 
 When no factorization failure occurs, the recursion reduces to the standard Riccati backward pass.
 
 
 \section{Asymptotic Inactivity of the Regularization}
+\label{sec:asymptotic_inactivity}
 In this section, 
-we will prove that the reduced Hessian regularization via Riccati recursion would be asymptotically inactive,
+we will prove that the reduced Hessian regularization via Riccati recursion is asymptotically inactive,
 which means that the regularization will be inactive when the iterates are sufficiently close to the optimal solution $(y^*, \lambda^*)$,
 following a similar proof strategy to \cite{absilNewtonKKTInteriorpointMethods2007}.
 
-We will start with the regularized KKT formulation where the null space method is applied before the Schur complement to the \eqref{eq:IPM_KKT_system},
-the resulting formulation is given as:
+We consider the regularized KKT formulation, and apply the null space method to \eqref{eq:IPM_KKT_system} first.
+The resulting formulation is given as:
 \begin{equation}
     \begin{bmatrix}
-    W & Z^\top G^\top\\
+    W_i & Z^\top G^\top\\
     GZ & -\Lambda_i^{-1}T_i\\
     \end{bmatrix}
     \begin{bmatrix}
@@ -405,83 +416,210 @@ the resulting formulation is given as:
 \end{equation}
 where
 \begin{align*}
-    W &= M + E^i, \\
-    r_{\mathrm{stat, redu}}^i &= Z^\top r_{\mathrm{stat}}^i - Z^\top H Y \Delta y_y, \\
-    \tilde{r}_{\mathrm{ineq, redu}}^i &=  r_{\mathrm{ineq}}^i - G Y \Delta y_y - \Lambda_i^{-1}r_{\mathrm{comp}}^i,
+    W_i &= Z^\top H Z + E_i = M + E_i, \\
+    r_{\mathrm{stat, redu}}^i &= Z^\top r_{\mathrm{stat}}^i + Z^\top H Y \Delta y_y, \\
+    \tilde{r}_{\mathrm{ineq, redu}}^i &=  r_{\mathrm{ineq}}^i + G Y \Delta y_y - \Lambda_i^{-1}r_{\mathrm{comp}}^i.
 \end{align*}
-this formulation eliminates the equality constraints, recasting the optimal control structure into a general QP form, 
-and yields a saddle-point system coupling the reduced primal variable $\Delta y_z$ (with regularized reduced Hessian $W$) and the dual variable $\Delta\lambda$.
+This formulation eliminates the equality constraints, recasting the optimal control structure into a general QP form, 
+and yields a saddle-point system coupling the reduced primal variable $\Delta y_z$ (with regularized reduced Hessian $W_i$) and the dual variable $\Delta\lambda$.
+Eliminating $\Delta\lambda$ by a further Schur complement recovers the complemented reduced Hessian of \eqref{eq:schur_comp_KKT_reduced} as:
+\begin{equation*}
+    \tilde{W}_i = W_i + Z^\top G^\top T_i^{-1}\Lambda_i G Z = \tilde{M}_i + E_i.
+\end{equation*}
 
 We will make the following assumptions for the proof:
 \begin{assumption}
+    \label{as:minimizer}
     $(y^*, \lambda^*)$ is a local (or global) minimizer for \eqref{eq:qp_problem}.
 \end{assumption}
 
 \begin{assumption}
+    \label{as:isolated}
     Each local minimizer $(y^*,\lambda^*)$ for \eqref{eq:qp_problem} is isolated.
 \end{assumption}
 
 \begin{assumption}
+    \label{as:licq}
     Linear independence constraint qualification (LICQ) holds at the minimizer $(y^*, \lambda^*)$.
 \end{assumption}
 
 \begin{assumption}
+    \label{as:strict_comp}
     Strict complementarity holds at the minimizer $(y^*, \lambda^*)$.
 \end{assumption}
 
-The Assumptions 1-3 imply the second order sufficient condition (SOSC) for local optimality,
-so we have the following lemma \ref{lem:SOSC}:
+Assumptions~\ref{as:minimizer}--\ref{as:licq} imply the second order sufficient condition (SOSC) for local optimality,
+so we have the following Lemma~\ref{lem:SOSC}:
 \begin{lemma}
     \label{lem:SOSC}
-    Under Assumptions 1-3, for all $v \in C(y^*,\lambda^*) \setminus \{0\}$, it holds that $v^\top H v > 0$.
+    Under Assumptions~\ref{as:minimizer}--\ref{as:licq}, for all $v \in C(y^*,\lambda^*) \setminus \{0\}$, it holds that $v^\top H v > 0$.
 \end{lemma}
 
 \begin{proof}
-    With Assumption 1, The second order necessary condition (SONC) for local optimality holds, which states that for all $v \in C(y^*,\lambda^*)$, we have $v^\top H v \ge 0$.
+    With Assumption~\ref{as:minimizer}, the second order necessary condition (SONC) for local optimality holds, which states that for all $v \in C(y^*,\lambda^*)$, we have $v^\top H v \ge 0$.
 
     We proceed by contradiction. Suppose there exists $v \in C(y^*,\lambda^*) \setminus \{0\}$ such that $v^\top H v = 0$. 
     Consider the point $y(\alpha) = y^* + \alpha v$ for $\alpha > 0$. Because the constraints are linear and $v$ is in the critical cone, $y(\alpha)$ remains feasible for sufficiently small $\alpha$. 
 
-    Since the objective function of \ref{eq:qp_problem} is quadratic. Expanding $f(y(\alpha))$ yields:
-    $$f(y(\alpha)) = f(y^*) + \alpha \nabla f(y^*)^\top v + \frac{1}{2} \alpha^2 v^\top H v$$
+    Since the objective function of \eqref{eq:qp_problem} is quadratic, expanding $f(y(\alpha))$ yields:
+    \begin{equation*}
+        f(y(\alpha)) = f(y^*) + \alpha \nabla f(y^*)^\top v + \frac{1}{2} \alpha^2 v^\top H v
+    \end{equation*}
 
     As $\nabla f(y^*)^\top v = 0$, given the assumption that $v^\top H v = 0$, the equation reduces exactly to $f(y(\alpha)) = f(y^*)$. 
-    This implies that $y(\alpha)$ is also a local minimizer, which directly contradicts Assumption 2. Therefore, $v^\top H v > 0$ must hold.
-    \label{proof:SOSC}
+    This implies that $y(\alpha)$ is also a local minimizer, which directly contradicts Assumption~\ref{as:isolated}. Therefore, $v^\top H v > 0$ must hold.
 \end{proof}
 
 \begin{proposition}
     \label{prop:vanish}
-    Under Assumption 1-4, given the sequence $\{W^i\}$ constructed by the algorithm, as \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$,
-    $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large.
+    Under Assumptions~\ref{as:minimizer}--\ref{as:strict_comp}, given the sequence $\{\tilde{W}_i\}$ constructed by the Riccati-based regularization, as $\{(y_i, \lambda_i)\} \to (y^*, \lambda^*)$,
+    $\tilde{W}_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large.
 \end{proposition}
 
 \begin{proof}
-    Under Assumption 4, the critical cone $C(y^*,\lambda^*)$ reduces to the tangent space of the active constraints. 
-    Therefore, we have $C(y^*,\lambda^*) = \{v \mid F v = 0 ,G_{\mathcal{A}} v = 0\}$.
+    Under Assumption~\ref{as:strict_comp}, the critical cone $C(y^*,\lambda^*)$ reduces to the tangent space of the active constraints. 
+    Therefore, we have $C(y^*,\lambda^*) = \{v \mid F v = 0,\ G_{\mathcal{A}} v = 0\}$.
 
-    For any $ v \in \{v \mid \|v\| = 1 \}$, we have the corresponding quadratic form of the reduced Hessian as:
+    For any $v$ with $\|v\| = 1$, write $d = Zv \in \{d \mid Fd = 0\} \setminus \{0\}$
+    and let $G_j$ denote the $j$-th row of $G$.
+    The corresponding quadratic form of the reduced Hessian reads:
     \begin{align*}
-        v^\top \tilde{M}^i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
-                             &= d^\top H d + \sum_{j} \frac{\lambda_j}{s_j} (G_j d)^2 \\
-                             &= d^\top H d + \sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2
+        v^\top \tilde{M}_i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
+                             &= d^\top H d + \sum_{j} \frac{\lambda_j^i}{t_j^i} (G_j d)^2 \\
+                             &= d^\top H d + \sum_{j \in \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j d)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j d)^2
     \end{align*}
-    where $d = Zv \in \{d \mid Ad = 0\} \setminus \{0\}$. 
 
-    We now proceed by contradiction, Assume $\exists v_i \in \{v \mid \|v\| = 1 \}, v_i \rightarrow \bar{v} : v_i^\top \tilde{M}^i v_i \leq 0$.
-    We can distinguish two cases:
+    We now proceed by contradiction. Assume there exists a sequence $v_i$ with $\|v_i\| = 1$ and, passing to a subsequence if necessary, $v_i \to \bar{v}$
+    such that $v_i^\top \tilde{M}_i v_i \leq 0$ for all $i$.
+    Writing $d_i = Z v_i$ and $\bar{d} = Z \bar{v}$, so that $d_i \to \bar{d}$, we can distinguish two cases:
 
-    For $G_{\mathcal{A}}\bar{d}=0$, this indicates $d_i \in C(y^*,\lambda^*) \setminus \{0\}$. $d_i^\top H d_i > 0$ follows by Lemma \ref{lem:SOSC}.
-    Rest of the terms are non-negative, so we have $\bar{v}^\top \tilde{M}^i \bar{v}> 0$, contradict with assumption.
+    For $G_{\mathcal{A}}\bar{d}=0$, the limit direction satisfies $\bar{d} \in C(y^*,\lambda^*) \setminus \{0\}$,
+    so $\bar{d}^\top H \bar{d} > 0$ follows by Lemma~\ref{lem:SOSC}.
+    Since the remaining terms are non-negative, $v_i^\top \tilde{M}_i v_i \ge d_i^\top H d_i$ 
+    with $d_i^\top H d_i \to \bar{d}^\top H \bar{d} > 0$.
+    Hence $v_i^\top \tilde{M}_i v_i > 0$ for all sufficiently large $i$, contradicting the assumption.
 
-    For $G_{\mathcal{A}}\bar{d} \neq 0$, the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 \rightarrow \infty$, 
-    which dominates the other two terms, and thus $v_i^\top \tilde{M}^i v_i \rightarrow \infty > 0$, contradict with assumption.
+    For $G_{\mathcal{A}}\bar{d} \neq 0$, Assumption~\ref{as:strict_comp} gives $\lambda_j^i \to \lambda_j^* > 0$ and $t_j^i \to 0$ for $j \in \mathcal{A}$,
+    so the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j d_i)^2 \rightarrow \infty$, 
+    which dominates the other two terms, and thus $v_i^\top \tilde{M}_i v_i \rightarrow \infty$, contradicting the assumption.
 
-    Therefore, we can conclude that $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
+    Therefore, we can conclude that $\tilde{W}_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
 \end{proof}
 
-Proposition~\ref{prop:vanish} shows the regularization is asymptotically inactive: once the iterates are close to $(y^*,\lambda^*)$, $E^i=0$ and the regularized recursion coincides
+Proposition~\ref{prop:vanish} shows the regularization is asymptotically inactive: once the iterates are close to $(y^*,\lambda^*)$, $E_i=0$ and the regularized recursion coincides
 with the unregularized one. The solver thus recovers the exact Newton step and inherits the local convergence rate of the underlying interior-point method, without the regularization affecting its asymptotic behavior.
+
+
+
+
+% \section{Asymptotic Inactivity of the Regularization}
+% \label{sec:asymptotic_inactivity}
+% In this section, 
+% we will prove that the reduced Hessian regularization via Riccati recursion would be asymptotically inactive,
+% which means that the regularization will be inactive when the iterates are sufficiently close to the optimal solution $(y^*, \lambda^*)$,
+% following a similar proof strategy to \cite{absilNewtonKKTInteriorpointMethods2007}.
+
+% We will start with the regularized KKT formulation, where the null space method is applied to \eqref{eq:IPM_KKT_system} before the Schur complement.
+% The resulting formulation is given as:
+% \begin{equation}
+%     \begin{bmatrix}
+%     W & Z^\top G^\top\\
+%     GZ & -\Lambda_i^{-1}T_i\\
+%     \end{bmatrix}
+%     \begin{bmatrix}
+%     \Delta y_z \\
+%     \Delta \lambda \\
+%     \end{bmatrix} = -
+%     \begin{bmatrix}
+%     r_{\mathrm{stat, redu}}^i \\
+%     \tilde{r}_{\mathrm{ineq, redu}}^i \\
+%     \end{bmatrix},
+%     \label{eq:reduced_KKT_system_schur}
+% \end{equation}
+% where
+% \begin{align*}
+%     W &= M + E_i, \\
+%     r_{\mathrm{stat, redu}}^i &= Z^\top r_{\mathrm{stat}}^i - Z^\top H Y \Delta y_y, \\
+%     \tilde{r}_{\mathrm{ineq, redu}}^i &=  r_{\mathrm{ineq}}^i - G Y \Delta y_y - \Lambda_i^{-1}r_{\mathrm{comp}}^i.
+% \end{align*}
+% This formulation eliminates the equality constraints, recasting the optimal control structure into a general QP form, 
+% and yields a saddle-point system coupling the reduced primal variable $\Delta y_z$ (with regularized reduced Hessian $W$) and the dual variable $\Delta\lambda$.
+
+% We will make the following assumptions for the proof:
+% \begin{assumption}
+%     \label{as:minimizer}
+%     $(y^*, \lambda^*)$ is a local (or global) minimizer for \eqref{eq:qp_problem}.
+% \end{assumption}
+
+% \begin{assumption}
+%     \label{as:isolated}
+%     Each local minimizer $(y^*,\lambda^*)$ for \eqref{eq:qp_problem} is isolated.
+% \end{assumption}
+
+% \begin{assumption}
+%     \label{as:licq}
+%     Linear independence constraint qualification (LICQ) holds at the minimizer $(y^*, \lambda^*)$.
+% \end{assumption}
+
+% \begin{assumption}
+%     \label{as:strict_comp}
+%     Strict complementarity holds at the minimizer $(y^*, \lambda^*)$.
+% \end{assumption}
+
+% Assumptions~\ref{as:minimizer}--\ref{as:licq} imply the second order sufficient condition (SOSC) for local optimality,
+% so we have the following Lemma~\ref{lem:SOSC}:
+% \begin{lemma}
+%     \label{lem:SOSC}
+%     Under Assumptions~\ref{as:minimizer}--\ref{as:licq}, for all $v \in C(y^*,\lambda^*) \setminus \{0\}$, it holds that $v^\top H v > 0$.
+% \end{lemma}
+
+% \begin{proof}
+%     With Assumption~\ref{as:minimizer}, the second order necessary condition (SONC) for local optimality holds, which states that for all $v \in C(y^*,\lambda^*)$, we have $v^\top H v \ge 0$.
+
+%     We proceed by contradiction. Suppose there exists $v \in C(y^*,\lambda^*) \setminus \{0\}$ such that $v^\top H v = 0$. 
+%     Consider the point $y(\alpha) = y^* + \alpha v$ for $\alpha > 0$. Because the constraints are linear and $v$ is in the critical cone, $y(\alpha)$ remains feasible for sufficiently small $\alpha$. 
+
+%     Since the objective function of \eqref{eq:qp_problem} is quadratic, expanding $f(y(\alpha))$ yields:
+%     \begin{equation*}
+%         f(y(\alpha)) = f(y^*) + \alpha \nabla f(y^*)^\top v + \frac{1}{2} \alpha^2 v^\top H v
+%     \end{equation*}
+
+%     As $\nabla f(y^*)^\top v = 0$, given the assumption that $v^\top H v = 0$, the equation reduces exactly to $f(y(\alpha)) = f(y^*)$. 
+%     This implies that $y(\alpha)$ is also a local minimizer, which directly contradicts Assumption~\ref{as:isolated}. Therefore, $v^\top H v > 0$ must hold.
+% \end{proof}
+
+% \begin{proposition}
+%     \label{prop:vanish}
+%     Under Assumptions~\ref{as:minimizer}--\ref{as:strict_comp}, given the sequence $\{W_i\}$ constructed by the algorithm, as $\{(y_i, \lambda_i)\} \to (y^*, \lambda^*)$,
+%     $W_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large.
+% \end{proposition}
+
+% \begin{proof}
+%     Under Assumption~\ref{as:strict_comp}, the critical cone $C(y^*,\lambda^*)$ reduces to the tangent space of the active constraints. 
+%     Therefore, we have $C(y^*,\lambda^*) = \{v \mid F v = 0 ,G_{\mathcal{A}} v = 0\}$.
+
+%     For any $ v \in \{v \mid \|v\| = 1 \}$, we have the corresponding quadratic form of the reduced Hessian as:
+%     \begin{align*}
+%         v^\top \tilde{M}_i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
+%                              &= d^\top H d + \sum_{j} \frac{\lambda_j}{s_j} (G_j d)^2 \\
+%                              &= d^\top H d + \sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2
+%     \end{align*}
+%     where $d = Zv \in \{d \mid Ad = 0\} \setminus \{0\}$. 
+
+%     We now proceed by contradiction. Assume $\exists v_i \in \{v \mid \|v\| = 1 \}, v_i \rightarrow \bar{v} : v_i^\top \tilde{M}_i v_i \leq 0$.
+%     We can distinguish two cases:
+
+%     For $G_{\mathcal{A}}\bar{d}=0$, this indicates $d_i \in C(y^*,\lambda^*) \setminus \{0\}$. $d_i^\top H d_i > 0$ follows by Lemma~\ref{lem:SOSC}.
+%     The rest of the terms are non-negative, so we have $\bar{v}^\top \tilde{M}_i \bar{v}> 0$, contradicting the assumption.
+
+%     For $G_{\mathcal{A}}\bar{d} \neq 0$, the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 \rightarrow \infty$, 
+%     which dominates the other two terms, and thus $v_i^\top \tilde{M}_i v_i \rightarrow \infty > 0$, contradicting the assumption.
+
+%     Therefore, we can conclude that $W_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
+% \end{proof}
+
+% Proposition~\ref{prop:vanish} shows the regularization is asymptotically inactive: once the iterates are close to $(y^*,\lambda^*)$, $E_i=0$ and the regularized recursion coincides
+% with the unregularized one. The solver thus recovers the exact Newton step and inherits the local convergence rate of the underlying interior-point method, without the regularization affecting its asymptotic behavior.
 
 
 % \subsection{Local Quadratic Convergence Rate for Quadratic Programs}
@@ -553,8 +691,8 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 % \end{proof}
 
 % \begin{lemma}
-%     Under Assumption 1-4, given the sequence $\{W^i\}$ constructed by the algorithm, as \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$,
-%     $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large.
+%     Under Assumption 1-4, given the sequence $\{W_i\}$ constructed by the algorithm, as \{$(y_i, \lambda_i)$\} $\rightarrow$ $(y^*, \lambda^*)$,
+%     $W_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large.
 % \end{lemma}
 
 % \begin{proof}
@@ -563,22 +701,22 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 
 %     We then proceed with the reduced Hessian. For any $ v \in \{v \mid \|v\| = 1 \}$, we have:
 %     \begin{align*}
-%         v^\top \tilde{M}^i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
+%         v^\top \tilde{M}_i v &= d^\top (H + G^\top T_i^{-1} \Lambda_i  G) d \\
 %                              &= d^\top H d + \sum_{j} \frac{\lambda_j}{s_j} (G_j d)^2 \\
 %                              &= d^\top H d + \sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2
 %     \end{align*}
 %     where $d = Zv \in \{d \mid Ad = 0\} \setminus \{0\}$. 
 
-%     We now proceed by contradiction, Assume $\exists v_i \in \{v \mid \|v\| = 1 \}, v_i \rightarrow \bar{v} : v_i^\top \tilde{M}^i v_i \leq 0$.
+%     We now proceed by contradiction, Assume $\exists v_i \in \{v \mid \|v\| = 1 \}, v_i \rightarrow \bar{v} : v_i^\top \tilde{M}_i v_i \leq 0$.
 %     We can distinguish two cases:
 
 %     For $G_{\mathcal{A}}\bar{d}=0$, this indicates $d_i \in C(y^*,\lambda^*) \setminus \{0\}$. $d_i^\top H d_i > 0$ follows by Lemma 1.
-%     Rest of the terms are non-negative, so we have $\bar{v}^\top \tilde{M}^i \bar{v}> 0$, contradict with assumption.
+%     Rest of the terms are non-negative, so we have $\bar{v}^\top \tilde{M}_i \bar{v}> 0$, contradict with assumption.
 
 %     For $G_{\mathcal{A}}\bar{d} \neq 0$, the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j}{s_j} (G_j d)^2 \rightarrow \infty$, 
-%     which dominates the other two terms, and thus $v_i^\top \tilde{M}^i v_i \rightarrow \infty > 0$, contradict with assumption.
+%     which dominates the other two terms, and thus $v_i^\top \tilde{M}_i v_i \rightarrow \infty > 0$, contradict with assumption.
 
-%     Therefore, we can conclude that $W^i = \tilde{M}^i = Z^\top \tilde{H}^i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
+%     Therefore, we can conclude that $W_i = \tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large, i.e., $E_i=0$.
 % \end{proof}
 
 
@@ -605,7 +743,7 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 % and establish the local quadratic convergence by showing that the conditions in Proposition 3 hold for the iterates generated by the algorithm.
 
 % \begin{lemma}(Nocedal).
-%     Under Assumption 4, when \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$, $\sigma_i$ $\mu_i$ = O($||\delta^N||^4$).
+%     Under Assumption 4, when \{$(y_i, \lambda_i)$\} $\rightarrow$ $(y^*, \lambda^*)$, $\sigma_i$ $\mu_i$ = O($||\delta^N||^4$).
 % \end{lemma}
 
 % \begin{proof}
@@ -629,7 +767,7 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 % \end{proof}
 
 % \begin{lemma}
-%     Under Assumption 4, when \{$(y^i, \lambda^i)$\} $\rightarrow$ $(y^*, \lambda^*)$, the affine step size of primal step and dual step satisfy
+%     Under Assumption 4, when \{$(y_i, \lambda_i)$\} $\rightarrow$ $(y^*, \lambda^*)$, the affine step size of primal step and dual step satisfy
 %     \begin{equation*}
 %         |1-\alpha_p| = O(\|\delta^N\|), \qquad |1-\alpha_d| = O(\|\delta^N\|).
 %     \end{equation*}
@@ -710,8 +848,8 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 % \end{proof}
 
 % \begin{theorem}
-%     Under Assumption 1-4, Let $\{y^i\}$, $\{\lambda^i\}$ as sequences constructed by algorithm, 
-%     $\{(y^i, \lambda^i)\}$ converges to the solution $(y^*, \lambda^*)$ with local quadratic convergence rate.
+%     Under Assumption 1-4, Let $\{y_i\}$, $\{\lambda_i\}$ as sequences constructed by algorithm, 
+%     $\{(y_i, \lambda_i)\}$ converges to the solution $(y^*, \lambda^*)$ with local quadratic convergence rate.
 % \end{theorem}
 
 % \begin{proof}
@@ -720,7 +858,7 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 %     \begin{equation}
 %         \underbrace{
 %             \begin{bmatrix}
-%             M + E^i & Z^\top G^\top\\
+%             M + E_i & Z^\top G^\top\\
 %             GZ & -\Lambda_i^{-1}T_i\\
 %             \end{bmatrix}
 %             \begin{bmatrix}
@@ -735,7 +873,7 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 %     \end{equation}
 
 %     Under Assumptions 1-4, $\frac{\partial \mathcal{M}}{\partial w}$ is invertible at $w^*$.
-%     By Lemma 2, $E^i=0$ for all $i$ sufficiently large,
+%     By Lemma 2, $E_i=0$ for all $i$ sufficiently large,
 %     so the left-hand side coincides with the exact Newton Jacobian.
 %     By Lemma 4,
 %     $\sigma_i\mu_i = O(\|\delta^N\|^4)$. Consequently,$||\Delta w_i - \delta^N(w_i)|| = O(\|\delta^N(w^i)\|^4)$ for $w^i \to w^*$.
@@ -754,7 +892,7 @@ with the unregularized one. The solver thus recovers the exact Newton step and i
 %     where $\epsilon$ is on the order of machine precision.
 %     This truncation is only activated when the accuracy reaches $\mathcal{O}(\sqrt{\epsilon})$ and thus does not affect the asymptotic convergence rate analysis above.}
 
-%     Thus, we can conclude that the sequence $\{(y^i, \lambda^i)\}$ converges to $(y^*, \lambda^*)$ with local quadratic convergence rate.
+%     Thus, we can conclude that the sequence $\{(y_i, \lambda_i)\}$ converges to $(y^*, \lambda^*)$ with local quadratic convergence rate.
 % \end{proof}
 
 \end{document}

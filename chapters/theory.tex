@@ -111,7 +111,7 @@ Schur complement reduction can be applied to reduce the system \eqref{eq:IPM_KKT
 the symmetric system can be presented as:
 \begin{equation}
     \begin{bmatrix}
-        \tilde{H}^i & F^\top \\ F & 0
+        \tilde{H}_i & F^\top \\ F & 0
     \end{bmatrix}
     \begin{bmatrix}
         \Delta y \\ \Delta \pi
@@ -123,7 +123,7 @@ the symmetric system can be presented as:
     \label{eq:schur_comp_KKT}
 \end{equation}
 with
-$\tilde{H}^i = H + G^\top T_i^{-1}\Lambda_i G \succeq H$ and
+$\tilde{H}_i = H + G^\top T_i^{-1}\Lambda_i G \succeq H$ and
 $\tilde{r}_{\mathrm{stat}}^i = r_{\mathrm{stat}}^i + G^\top T_i^{-1}(\Lambda_i r_{\mathrm{ineq}}^i - r_{\mathrm{comp}}^i)$.
 Notably, the additional term in the Hessian $G^\top T_i^{-1}\Lambda_i G$ can be regarded as the curve contribution from active constraints,
 which is positive semidefinite. This term can already be interpreted as a kind of regularization in the problems.
@@ -133,15 +133,15 @@ the null space method can be sequentially applied to reduce the system.
 With $Y,Z$ spanning the range and null space of $F$, respectively, the primal step can be decomposed as $\Delta y = Y\,\Delta y_y + Z\,\Delta y_z$.
 This yields the Schur-complement based reduced-Hessian system:
 \begin{equation}
-    \tilde{M}^i \,\Delta y_z
+    \tilde{M}_i \,\Delta y_z
     = -\big( Z^\top \tilde{r}_{\mathrm{stat}}^i
-             + Z^\top \tilde{H}^i\, Y\,\Delta y_y \big),
+             + Z^\top \tilde{H}_i\, Y\,\Delta y_y \big),
     \label{eq:schur_comp_KKT_reduced}
 \end{equation}
 where the equality Jacobian $F$ is eliminated by $Z^\top$ (with $Z^\top F^\top=0$), 
 and feasibility fixes the range-space component $\Delta y_y = -(FY)^{-1} r_{\mathrm{eq}}^i$,
-the complemented reduced Hessian $\tilde{M}^i = Z^\top \tilde{H}^i Z$ and the right-hand side $Z^\top \tilde{r}_{\mathrm{stat}}^i + Z^\top \tilde{H}^i Y \Delta y_y$.
-This formulation exposes the connection between the reduced Hessian $\tilde{M}^i$ and the original Hessian $\tilde{H}$.
+the complemented reduced Hessian $\tilde{M}_i = Z^\top \tilde{H}_i Z$ and the right-hand side $Z^\top \tilde{r}_{\mathrm{stat}}^i + Z^\top \tilde{H}_i Y \Delta y_y$.
+This formulation exposes the connection between the reduced Hessian $\tilde{M}_i$ and the original Hessian $\tilde{H}$.
 
 \section{Efficient Solution with Riccati Recursion}
 \label{sec:riccati_recursion}
@@ -198,11 +198,11 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     \Statex 
     \Statex\textbf{// Backward recursion}
     \For{$k = N-1$ \textbf{down to} $0$}
-        \State $\tilde{M} \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
+        \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
         \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1} A_k$
-        \State $K_k \gets -\tilde{M}^{-1} \Gamma_k$
-        \State $k_k \gets -\tilde{M}^{-1} \left(\tilde{r}_{\mathrm{stat}, u}^k + B_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1})\right)$
-        \State $P_k \gets \tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}^{-1} \Gamma_k$
+        \State $K_k \gets -\tilde{M}_k^{-1} \Gamma_k$
+        \State $k_k \gets -\tilde{M}_k^{-1} \left(\tilde{r}_{\mathrm{stat}, u}^k + B_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1})\right)$
+        \State $P_k \gets \tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}_k^{-1} \Gamma_k$
         \State $p_k \gets \tilde{r}_{\mathrm{stat}, x}^k + A_k^\top (P_{k+1} r_{\mathrm{eq}}^k + p_{k+1}) + \Gamma_k^\top k_k$
     \EndFor
 
@@ -218,8 +218,8 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
 
     \end{algorithmic}
     \end{algorithm}
-    By applying the Riccati recursion, we implicitly solve the KKT system \eqref{eq:schur_comp_KKT_reduced} without explicitly forming the reduced Hessian $\tilde{M}^i$,
-    and the computational complexity is reduced from $\mathcal{O}(N^3)$ to $\mathcal{O}(N)$, where $N$ is the number of time steps in the optimal control problem.
+    By applying the Riccati recursion, we implicitly solve the KKT system \eqref{eq:schur_comp_KKT_reduced} without explicitly forming the reduced Hessian $\tilde{M}_i$,
+    and the computational complexity is reduced from $\mathcal{O}(N^3)$ to $\mathcal{O}(N)$, where $N$ is the horizon length.
 
 \section{Adaptive Barrier Update}
 \label{sec:update}
@@ -235,9 +235,9 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     In the stradetgy, the barrier parameter $\tau$ is defined as:
     \begin{equation}
         \tau_i = \sigma_i \mu_i, \qquad
-        \mu_i = \frac{t_i^\top \lambda_i}{m},
+        \mu_i = \frac{t_i^\top \lambda_i}{n_c},
     \end{equation}
-    where $\mu_i$ is the duality measure, $m$ is the number of inequality constraints, 
+    where $\mu_i$ is the duality measure, $n_c$ is the number of inequality constraints, 
     and $\sigma_i\in[0,1]$ is the centering parameter that controls the trade-off between centering and aggressive steps.
     And in each iteration, two solves of~\eqref{eq:IPM_KKT_system} that share the same left-hand side and differ only in the complementarity right-hand side are performed,
     which involves two steps: predictor step (affine scaling step), and corrector step.
@@ -259,14 +259,14 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     which is defined as:
     \begin{align}
         \sigma_i &= (\mu_{\mathrm{aff}}/\mu_i)^3 \label{eq:centering} \\
-        \mu_{\mathrm{aff}} &= \frac{(t_i + \alpha_{\mathrm{aff}}^{\mathrm{prim}} \Delta t_{\mathrm{aff}})^\top (\lambda_i + \alpha_{\mathrm{aff}}^{\mathrm{dual}} \Delta \lambda_{\mathrm{aff}})}{m},
+        \mu_{\mathrm{aff}} &= \frac{(t_i + \alpha_{\mathrm{prim}}^{\mathrm{aff}} \Delta t_{\mathrm{aff}})^\top (\lambda_i + \alpha_{\mathrm{dual}}^{\mathrm{aff}} \Delta \lambda_{\mathrm{aff}})}{n_c},
     \end{align}
-    where the step size $\alpha_{\mathrm{aff}}^{\mathrm{prim}}$ and $\alpha_{\mathrm{aff}}^{\mathrm{dual}}$ are determined 
+    where the step size $\alpha_{\mathrm{prim}}^{\mathrm{aff}}$ and $\alpha_{\mathrm{dual}}^{\mathrm{aff}}$ are determined 
     by ensuring that the updated slack variables and Lagrange multipliers remain positive, 
     i.e.
     \begin{align}
-        \alpha_{\mathrm{aff}}^{\mathrm{prim}} &= \min\left(1, \min_{j:\Delta t_{\mathrm{aff},j}<0} -\frac{t_{i,j}}{\Delta t_{\mathrm{aff},j}}\right), \\
-        \alpha_{\mathrm{aff}}^{\mathrm{dual}} &= \min\left(1, \min_{j:\Delta \lambda_{\mathrm{aff},j}<0} -\frac{\lambda_{i,j}}{\Delta \lambda_{\mathrm{aff},j}}\right).
+        \alpha_{\mathrm{prim}}^{\mathrm{aff}} &= \min\left(1, \min_{j:\Delta t_{\mathrm{aff},j}<0} -\frac{t_j^i}{\Delta t_{\mathrm{aff},j}}\right), \\
+        \alpha_{\mathrm{dual}}^{\mathrm{aff}} &= \min\left(1, \min_{j:\Delta \lambda_{\mathrm{aff},j}<0} -\frac{\lambda_j^i}{\Delta \lambda_{\mathrm{aff},j}}\right).
     \end{align}
 
     If $\mu_{\mathrm{aff}} \ll \mu_i$, the affine step achieves a substantial reduction in the duality gap, 
@@ -316,88 +316,97 @@ This formulation exposes the connection between the reduced Hessian $\tilde{M}^i
     In this section, we discuss the step size control employed in the primal-dual interior point solver.
     The fraction-to-the-boundary (FTB) rule is first introduced as a common strategy for step size control in IPM,
     which ensures that the updated slack variables and Lagrange multipliers remain positive.
-    Then, a funnel line search with backtracking is proposed to ensure a decrease in either the objective function or the constraint violation, 
+    Then, a two-phase line search with backtracking is proposed to ensure progress in either the objective function or the constraint violation, 
     particularly in nonconvex cases where the FTB rule may not be sufficient to guarantee convergence.
 
     \subsection{Fraction-to-the-Boundary Rule}
     The fraction-to-the-boundary (FTB) rule is a common strategy for step size control in primal-dual interior point methods.
-    The maximal step size $\alpha_{i, \mathrm{max}}^{\mathrm{prim}}$ and $\alpha_{i, \mathrm{max}}^{\mathrm{dual}}$ are computed 
+    The maximal step size $\alpha_{\mathrm{prim},\mathrm{max}}^{i}$ and $\alpha_{\mathrm{dual},\mathrm{max}}^{i}$ are computed 
     without violating the positivity of the slack variables and Lagrange multipliers, respectively, as:
     \begin{align}
-        \alpha_{i, \mathrm{max}}^{\mathrm{prim}} &= \min_{j:\Delta t_j<0} -\frac{t_{i,j}}{\Delta t_j}, \\
-        \alpha_{i, \mathrm{max}}^{\mathrm{dual}} &= \min_{j:\Delta \lambda_j<0} -\frac{\lambda_{i,j}}{\Delta \lambda_j}.
+        \alpha_{\mathrm{prim},\mathrm{max}}^{i} &= \min_{j:\Delta t_j<0} -\frac{t_j^i}{\Delta t_j}, \\
+        \alpha_{\mathrm{dual},\mathrm{max}}^{i} &= \min_{j:\Delta \lambda_j<0} -\frac{\lambda_j^i}{\Delta \lambda_j}.
     \end{align}
     Then, in practice, the actual step sizes are chosen as a fraction of the maximum step sizes, i.e.,
     \begin{align}
-        \alpha_i^{\mathrm{prim}} &= \min(1, \eta \alpha_{i, \mathrm{max}}^{\mathrm{prim}}),\\
-        \alpha_i^{\mathrm{dual}} &= \min(1, \eta \alpha_{i, \mathrm{max}}^{\mathrm{dual}}),
+        \alpha_{\mathrm{prim}}^{i} &= \min(1, \eta \alpha_{\mathrm{prim},\mathrm{max}}^{i}),\\
+        \alpha_{\mathrm{dual}}^{i} &= \min(1, \eta \alpha_{\mathrm{dual},\mathrm{max}}^{i}),
     \end{align}
     where $\eta \in (0, 1)$ is a parameter that controls the fraction of the maximum step size to be taken, 
     typically set to a value close to 1 to ensure sufficient progress while maintaining feasibility.
 
-    \subsection{Funnel Line Search with Backtracking}
-    \label{subsec:funnel_search}
+    \subsection{Two-Phase Line Search with Backtracking}
+    \label{subsec:two_phase_search}
     In nonconvex cases, the FTB rule may not be sufficient to guarantee convergence, as the search direction with FTB-controlled step size may not descend.
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.75\textwidth]{images/theory/funnel_qp.pdf}
-        \caption{Funnel (light gray) around the feasible set $\mathcal{F}$ (dark gray) of the QP.
-        Since the constraints $Ax \le b$ are linear, $\mathcal{F}$ is a polytope.
-        The solid outer boundary is the current funnel $\theta \le \theta_{\max}$, while
-        the dashed curve is the contracted funnel $\theta \le \theta_{\max}^{+}$ used at the next iteration, with $\theta_{\max}^{+} \le \theta_{\max}$.}
-        \label{fig:funnel_qp}
-    \end{figure}
+    A two-phase line search inspired by the funnel method \cite{kiesslingUnifiedFunnelRestoration2025} is applied on top of the FTB step size.
+    Denoting by $\theta = \lVert c \rVert$ the constraint violation at the current iterate and by $\rho = \nabla f^{\top} d$ the directional derivative of the objective along the search direction $d$,
+    the \emph{switching condition}:
+    \begin{equation}
+        \label{eq:switching}
+        \alpha_\mathrm{prim}(-\rho) > \kappa_s\,\theta^{2}, \qquad \kappa_s > 0,
+    \end{equation}
+    decides which of the two phases the trial step belongs to.
+    Because \eqref{eq:switching} involves only quantities of the current iterate and the trial step size, it is evaluated \emph{before} a candidate is formed.
 
-    A funnel line search inspired by the funnel method \cite{kiesslingUnifiedFunnelRestoration2025} is implemented after the FTB rule applied to the step size,
-    where the funnel is defined as a relaxation of the feasible set that allows a constraint violation up to a given upper bound $\theta_{\max} > 0$ as illustrated in Figure~\ref{fig:funnel_qp}.
-    Denoting by $\theta$ a measure of the constraint violation, the funnel is the set $\{x : \theta(x) \le \theta_{\max}\}$,
-    which for the linear constraints $Ax \le b$ of the QP is a polytope enclosing the feasible set $\mathcal{F}$.
-    Once a trial step is accepted, the bound is contracted to $\theta_{\max}^{+} \le \theta_{\max}$, 
-    so that the funnel progressively tightens around $\mathcal{F}$ across the iterations.
+    If \eqref{eq:switching} fails, the predicted objective decrease is small relative to the constraint violation,
+    so objective descent is not yet a meaningful measure of progress and the iterate is in the \emph{h-phase}.
+    The full FTB step is then accepted without any merit evaluation.
+    This is justified by the structure of the subproblem:
+    the constraints of the QP are affine and the Newton direction solves the corresponding rows of the linear system exactly, 
+    so $\theta(\alpha_\mathrm{prim}) = (1-\alpha_\mathrm{prim})\,\theta$ holds exactly along the step.
+    The constraint violation therefore decreases monotonically in $\alpha_\mathrm{prim}$, and the largest admissible step gives the fastest feasibility progress.
 
-    The funnel line search in this work is summarized in Algorithm \ref{alg:funnel_line_search}.
-    At each trial of the funnel line search, 
-    an candidate iterate $z^{+}$ is formed from $(\alpha^\mathrm{prim},\alpha^\mathrm{dual})$ and its objective $f^{+}$ and constraint violation $\theta^{+}=\lVert c^{+}\rVert$ are evaluated. 
-    The iterate is \emph{in the funnel} only if $\theta^{+}\le\theta_{\max}$, otherwise it is rejected and $\alpha^\mathrm{prim}$ is contracted. 
-    Inside the funnel, the \emph{switching condition} decides the step type: 
-    if it holds, sufficient objective progress is expected and an \emph{f-step} is taken, accepted when the Armijo condition is met; 
-    otherwise an \emph{h-step} targets feasibility, accepted when $\theta^{+}\le\kappa_h\theta_{\max}$, 
-    which also tightens the funnel via $\theta_{\max}\gets(1-\kappa)\theta^{+}+\kappa\theta_{\max}$. 
-    If neither is accepted, $\alpha^\mathrm{prim}$ is reduced and the search repeats.
+    If \eqref{eq:switching} holds, sufficient objective progress is expected and the iterate is in the \emph{f-phase}.
+    A candidate iterate $z^{+}(\alpha_\mathrm{prim})$ is formed in the primal variables $(x,u,s)$,
+    its objective $f^{+}$ is evaluated, and the step is accepted when the Armijo condition \cite{armijo1966minimization}
+    \begin{equation}
+        \label{eq:armijo}
+        f^{+} \le f + \gamma\,\alpha_\mathrm{prim}\,\rho, \qquad \gamma \in (0,1),
+    \end{equation}
+    is satisfied.
+    Otherwise the step size is contracted, $\alpha_\mathrm{prim} \gets \beta\,\alpha_\mathrm{prim}$ with $\beta \in (0,1)$, and the search repeats.
+    Contraction shrinks the left-hand side of \eqref{eq:switching}, so a trial that starts in the f-phase may switch to the h-phase after a few backtracks and terminate there.
+    If all $n_\mathrm{max}$ trials are rejected, the search reverts to the original FTB step size.
+    The dual step size $\alpha_\mathrm{dual}$ is left untouched throughout, as the merit function reads only the primal variables.
+    The procedure is summarized in Algorithm~\ref{alg:two_phase_line_search}.
 
     \begin{algorithm}[H]
-    \caption{Funnel line search}
-    \label{alg:funnel_line_search}
+    \caption{Two-phase line search}
+    \label{alg:two_phase_line_search}
     \begin{algorithmic}[1]
-    \State \textbf{Input:} iterate $z$, direction $d$, steps $\alpha^\mathrm{prim},\alpha^\mathrm{dual}$, $f$, $\theta=\lVert c\rVert$, $\theta_{\max}^0$, $\rho=\nabla f^{\top}d$
-    \State $\theta_{\max}$ = max($\theta_{\max}^0$, $\theta$)
+    \State \textbf{Input:} iterate $z$, direction $d$, FTB steps $\alpha_\mathrm{prim},\alpha_\mathrm{dual}$, $f$, $\theta=\lVert c\rVert$, $\rho=\nabla f^{\top}d$
+    \State $\alpha_{\mathrm{prim}}^{\mathrm{FTB}} \gets \alpha_\mathrm{prim}$
     \For{$\text{ls} = 1$ \textbf{to} $n_\mathrm{max}$}
-    \State form candidate $z^{+}(\alpha^\mathrm{prim},\alpha^\mathrm{dual})$
-    \State compute $f^{+}$, $\theta^{+}=\lVert c^{+}\rVert$
-    \State $\text{accepted} \gets \textbf{false}$
-    \If{$\theta^{+} \le \theta_{\max}$} \Comment{in funnel}
-        \If{$\alpha^\mathrm{prim}(-\rho) > \kappa_s\,\theta^{2}$} \Comment{switching}
-        \If{$f^{+} \le f + \gamma\,\alpha^\mathrm{prim}\,\rho$}
-            \State $\text{accepted} \gets \textbf{true}$ \Comment{f-step (Armijo)}
+        \If{$\alpha_\mathrm{prim}(-\rho) \le \kappa_s\,\theta^{2}$} \Comment{h-phase: feasibility dominates}
+            \State \textbf{break} \Comment{accept FTB-scaled step}
         \EndIf
-        \ElsIf{$\theta^{+} \le \kappa_h\,\theta_{\max}$}
-        \State $\theta_{\max} \gets (1-\kappa)\,\theta^{+} + \kappa\,\theta_{\max}$
-        \State $\text{accepted} \gets \textbf{true}$ \Comment{h-step}
+        \State form candidate $z^{+}(\alpha_\mathrm{prim})$
+        \State compute $f^{+}$
+        \If{$f^{+} \le f + \gamma\,\alpha_\mathrm{prim}\,\rho$} \Comment{f-phase: Armijo}
+            \State \textbf{break}
         \EndIf
-    \EndIf
-    \If{$\text{accepted}$} \textbf{break} \Else\ $\alpha^\mathrm{prim} \gets \beta\,\alpha^\mathrm{prim}$ \EndIf
+        \If{$\text{ls} = n_\mathrm{max}$}
+            \State $\alpha_\mathrm{prim} \gets \alpha_{\mathrm{prim}}^{\mathrm{FTB}}$ \Comment{all trials rejected: revert to the FTB step}
+        \Else
+            \State $\alpha_\mathrm{prim} \gets \beta\,\alpha_\mathrm{prim}$
+        \EndIf
     \EndFor
-    \State \Return $\alpha^\mathrm{prim},\ \alpha^\mathrm{dual} $
+    \State \Return $\alpha_\mathrm{prim},\ \alpha_\mathrm{dual}$
     \end{algorithmic}
     \end{algorithm}
 
-    Unlike \cite{kiesslingUnifiedFunnelRestoration2025}, 
-    whose switching condition is built on the second-order model reduction $\Delta m_f = -\tfrac12 d^\top H d - \nabla f^\top d$, 
-    we retain only the first-order term $-\nabla f^\top d$, in line with the Armijo condition \cite{armijo1966minimization}. 
-    The reason is the nonconvexity of the subproblem: 
-    since $H$ is generally indefinite, the sign of $d^\top H d$ is not controlled, 
-    so the second-order contribution to $\Delta m_f$ may be misleading rather than informative for classifying the step. 
-    To compensate for dropping the second-order term, the constant $\kappa_s$ is set to a small value, so that objective-reducing steps are not misclassified as h-type steps.
+    Two simplifications distinguish this scheme from the funnel method of \cite{kiesslingUnifiedFunnelRestoration2025}.
+    First, no funnel bound $\theta_{\max}$ is maintained.
+    In the funnel method, a trial iterate is admissible only if it stays inside the relaxed feasible set $\{z : \theta(z) \le \theta_{\max}\}$, and the bound is contracted whenever a feasibility step is accepted.
+    Here the constraints are affine, so $\theta(\alpha_\mathrm{prim}) = (1-\alpha_\mathrm{prim})\theta \le \theta$ for every $\alpha_\mathrm{prim} \in (0,1]$:
+    no trial step can increase the constraint violation, the funnel membership test is satisfied by construction and carries no information, and the h-phase acceptance test and the funnel update become redundant.
+
+    Second, the switching condition \eqref{eq:switching} is built on the first-order term $-\nabla f^{\top} d$ alone, in line with the Armijo condition \cite{armijo1966minimization},
+    whereas \cite{kiesslingUnifiedFunnelRestoration2025} uses the second-order model reduction $\Delta m_f = -\tfrac12 d^{\top} H d - \nabla f^{\top} d$.
+    The reason is the nonconvexity of the subproblem:
+    since $H$ is generally indefinite, the sign of $d^{\top} H d$ is not controlled,
+    so the second-order contribution to $\Delta m_f$ may be misleading rather than informative for classifying the step.
+    To compensate for dropping the second-order term, the constant $\kappa_s$ is set to a small value, so that objective-reducing steps are not misclassified as h-phase steps.
 
 \end{document}
