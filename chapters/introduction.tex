@@ -11,17 +11,92 @@
 
 \chapter{Introduction}
 \label{Chapter::Introduction}
-    This chapter outlines 
 
-\section{Numerical Optimal Control}
-    \subsection{Nonlinear Optimization}
-    \subsection{Optimality Conditions}
-    \subsection{Optimal Control Problem Formulation}
+\section{Motivation}
+\label{sec:motivation}
 
-\section{Relevant Solvers}
-    \subsection{acados}
-    \subsection{HPIPM}
-    \subsection{IPOPT}
+In the field of optimal control, 
+direct multiple shooting~\cite{bock1984multiple} is a widely used method for solving continuous-time optimal control problems,
+which transcribes the OCP into a nonlinear programming problem by discretizing the time horizon into multiple shooting intervals~\cite{Diehl2018}.
+
+This NLP is commonly solved by SQP, which computes each step from a QP subproblem 
+which inherits an optimal control structure that Riccati recursion can exploit \cite{rao1998application}.
+To retain the fast local convergence of SQP, 
+the QP subproblems are often formulated with the exact Hessian of the Lagrangian \cite{BoggsTolle1995},
+this could result in an indefinite Hessian thus a nonconvex QP as subproblem, 
+which is not guaranteed to have a unique solution and can cause the Riccati recursion to fail.
+
+A common remedy is to regularize at the SQP level,
+i.e.\ to modify the QP Hessian before the QP is passed to the solver.
+Such a correction is decided from the Hessian of the QP subproblem alone and therefore overlooks two aspects.
+First, inside an interior point method, the barrier term of the inequality constraints adds curvature to the Hessian,
+which can render the system well-defined even when the QP Hessian itself is indefinite.
+Second, when the correction targets the full Hessian, it ignores that positive definiteness of the reduced Hessian
+is already sufficient for the QP to have a unique solution.
+
+This thesis therefore regularizes at the QP level, inside the solver,
+where the correction is computed from the factorized matrices and applied only when indefiniteness is actually detected.
+
+\section{Contributions}
+\label{sec:contributions}
+The main contributions of this thesis are the following:
+\begin{enumerate}
+    \item \textbf{Riccati-based primal regularization}, which regularizes the reduced Hessian blocks
+    obtained from the Riccati recursion, only at the stages where the Cholesky factorization fails
+    (Section~\ref{sec:riccati_primal_reg}).
+
+    \item \textbf{An improved stage regularization strategy}, derived from showing that minimum perturbation
+    propagates negative curvature through the cost-to-go matrix to the preceding stages
+    (Section~\ref{sec:fail_minimal_perturbation}).
+
+    \item \textbf{A proof of asymptotic inactivity}, so that the local convergence rate of the interior point method is preserved
+    (Section~\ref{sec:asymptotic_inactivity}).
+
+    \item \textbf{A benchmark of $175$ indefinite OCP QPs} collected from the SQP iterations of eight OCPs,
+    with an analysis of where the indefiniteness originates (Chapter~\ref{Chapter::Benchmark}).
+
+    \item \textbf{A numerical comparison} on this benchmark, in which the best Riccati-based method leaves $4$ instances unsolved,
+    against $32$ to $59$ for full Hessian regularization and $15$ for inertia correction
+    (Section~\ref{sec:comparison}).
+\end{enumerate}
+
+\section{Related Solvers}
+\label{sec:related_solvers}
+This thesis builds on two open-source software packages for embedded optimal control, \texttt{acados} and HPIPM.
+
+\texttt{acados}~\cite{verschueren2020acadosmodularopensourceframework} is a modular framework for fast NMPC.
+It transcribes the OCP by direct multiple shooting, solves the resulting NLP by SQP or its real-time iteration variant,
+and passes the QP subproblems to one of several interfaced QP solvers.
+When the exact Hessian is used, \texttt{acados} handles indefiniteness at the SQP level:
+the QP Hessian can be regularized before the QP is passed to the solver or be replaced by a Gauss--Newton approximation.
+In this thesis, \texttt{acados} is used to generate the SQP iterates from which the benchmark QPs are collected (Section~\ref{sec:benchmark_construction}).
+
+HPIPM~\cite{frison2020hpipmhighperformancequadraticprogramming} is a primal--dual interior point solver
+for OCP-structured QPs and the default QP solver in \texttt{acados}.
+It solves the KKT system of each iteration by Riccati recursion, with a cost linear in the horizon length,
+and relies on high-performance linear algebra routines tailored to the small and medium-sized matrices of optimal control.
+HPIPM assumes a convex QP: the Riccati recursion requires the reduced Hessian blocks to be positive definite, so it fails on indefinite QPs.
+This failure is precisely the criterion by which the benchmark QPs are collected (Section~\ref{sec:benchmark_construction}),
+and the prototype solver used in the experiments reproduces the iteration behavior of HPIPM on convex QPs, 
+so that the regularization is the only difference between the two (Section~\ref{sec:prototype}).
+
+
+\section{Outline}
+\label{sec:outline}
+The remainder of this thesis is organized as follows.
+Chapter~\ref{Chapter::Theoretical_Background} introduces the primal--dual interior point method for OCP-structured QPs,
+the Riccati recursion used to solve its KKT system,
+and the barrier update and step size control strategies adopted in the solver.
+Chapter~\ref{Chapter::Primal_Regularization} classifies primal regularization by its target matrix,
+develops the Riccati-based primal regularization,
+derives the improved stage regularization strategy from the failure of minimum perturbation,
+and proves that the regularization is asymptotically inactive.
+Chapter~\ref{Chapter::Benchmark} constructs the benchmark of indefinite QPs from the SQP iterations of eight OCPs
+and analyzes how the indefiniteness is distributed over the stages and where it originates.
+Chapter~\ref{Chapter::Experiments} describes the prototype solver and the experiment setup,
+compares the Riccati-based methods with full Hessian regularization and inertia correction on the benchmark,
+and discusses the instances on which the methods fail.
+Finally, Chapter~\ref{Chapter::Conclusion} summarizes the results and outlines directions for future work.
 
 % You can use this to add content for standalone documents if you like
 % In this case, we would like to show the acronyms and references.

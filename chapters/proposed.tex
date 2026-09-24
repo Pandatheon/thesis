@@ -11,6 +11,7 @@
 \begin{document}
 
 \chapter{Primal Regularization for Indefinite Quadratic Programs}
+\label{Chapter::Primal_Regularization}
 In this chapter, we turn our attention to QPs with an indefinite Hessian matrix, namely indefinite QPs.
 Section~\ref{sec:hessian_reg} classifies the existing primal regularization approaches by the matrix they target.
 Section~\ref{sec:riccati_primal_reg} then develops the concept of Riccati-based primal regularization,
@@ -117,7 +118,7 @@ In this notation, the four methods read as follows:
 
 \subsection{Full Hessian regularization}
 \label{subsec:full_hessian}
-The full hessian regularization aims at the positive definiteness of the Hessian matrix $\tilde{H}$.
+The full hessian regularization take the full Hessian matrix $\tilde{H}$ as the target matrix.
 Commonly, in the optimal control structure, the full Hessian is regularized stage-wisely 
 by operating on the block Hessian matrix $\tilde{H}_k$ at $k$ stage,
 \begin{equation}
@@ -131,12 +132,15 @@ by operating on the block Hessian matrix $\tilde{H}_k$ at $k$ stage,
 where $E_k$ could be a diagonal matrix or a full matrix, depending on the regularization strategy mentioned in \ref{subsec:reg_strategies}.
 
 The full Hessian regularization is direct and usually simple to implement, 
-but it can be too conservative without considering the definiteness of the reduced Hessian $\tilde{M}$, thus slow down the convergence.
+but it can be too conservative without considering the definiteness of the reduced Hessian $\tilde{M}$, 
+thus slow down the convergence.
 
 \subsection{Reduced Hessian regularization}
 \label{subsec:reduced_hessian}
 The reduced Hessian regularization take the reduced Hessian matrix $\tilde{M}$ as the target matrix.
-According to the Theorem \ref{thm:reduced_hessian_convexity}, which is mentioned in \cite{verschueren2017sparsity} (for proof, see \cite{nocedal2006numerical}):
+According to the Theorem \ref{thm:reduced_hessian_convexity}, 
+which is mentioned in \cite{verschueren2017sparsity} (for proof, see \cite{nocedal2006numerical}):
+
 \begin{theorem}
 \label{thm:reduced_hessian_convexity}
 Assume that LICQ holds. The QP problem has a unique global optimum if and only if the reduced Hessian is positive definite:
@@ -147,10 +151,7 @@ Assume that LICQ holds. The QP problem has a unique global optimum if and only i
 
 The positive definiteness of the reduced Hessian is a necessary and sufficient condition for the QP admitting a unique global optimum.
 It is thus reasonable to derive the correction from the reduced Hessian $\tilde{M}$ instead of full Hessian $\tilde{H}$, 
-which yields a less conservative regularization that still effective. 
-In view of \eqref{eq:regularized_system}, a correction $E_k^r \succ 0$ derived from and applied to the reduced Hessian
-enters the KKT system as the adjustment matrix $E_k = Z_k E_k^r Z_k^\top$.
-
+which yields a less conservative regularization that still effective.
 However, from definition, 
 computing the reduced Hessian directly requires a null-space basis of the equality constraints,
 which can be achieved via condensing in optimal control problems \cite{frisonEfficientImplementationPartial2016}, 
@@ -164,7 +165,8 @@ and regularizes the reduced Hessian $\tilde{M}$ stage-wisely during the Riccati 
 In this section, we will introduce the idea and concept of Riccati-based primal regularization, 
 a stage-wise regularization method for the reduced Hessian $\tilde{M}$ based on the Riccati recursion in two sense:
 first, Riccati recursion is used for detecting the indefiniteness of the reduced Hessian $\tilde{M}$,
-second, Riccati recursion is used for regularizing the reduced Hessian $\tilde{M}$ stage-wisely to ensure a positive definite reduced Hessian $\tilde{M}$.
+second, Riccati recursion is used for regularizing the reduced Hessian $\tilde{M}$
+stage-wisely to ensure a positive definite reduced Hessian $\tilde{M}$.
 
 \subsection{Block Reduced Hessian From Riccati Recursion}
 \label{subsec:block_reduced_hessian}
@@ -392,7 +394,7 @@ When no factorization failure occurs, the recursion reduces to the standard Ricc
 
 \section{Asymptotic Inactivity of the Regularization}
 \label{sec:asymptotic_inactivity}
-In this section, 
+In this section,
 we will prove that the reduced Hessian regularization via Riccati recursion is asymptotically inactive,
 which means that the regularization will be inactive when the iterates are sufficiently close to the optimal solution $(y^*, \lambda^*)$,
 following a similar proof strategy to \cite{absilNewtonKKTInteriorpointMethods2007}.

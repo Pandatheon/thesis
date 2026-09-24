@@ -1,6 +1,7 @@
 # Ignore everything in build
 build/
 texmf-var/
+report/
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
