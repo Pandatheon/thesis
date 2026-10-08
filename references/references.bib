@@ -44,6 +44,45 @@ year={1995},}
       url={https://arxiv.org/abs/2003.02547}, 
 }
 
+@inproceedings{vanroye2023fatrop,
+  title={Fatrop: A fast constrained optimal control problem solver for robot trajectory optimization and control},
+  author={Vanroye, Lander and Sathya, Ajay and De Schutter, Joris and Decr{\'e}, Wilm},
+  booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={10036--10043},
+  year={2023},
+  organization={IEEE}
+}
+
+@article{verschueren2017sparsity,
+  title = {A {{Sparsity Preserving Convexification Procedure}} for {{Indefinite Quadratic Programs Arising}} in {{Direct Optimal Control}}},
+  author = {Verschueren, Robin and Zanon, Mario and Quirynen, Rien and Diehl, Moritz},
+  year = 2017,
+  month = jan,
+  journal = {SIAM Journal on Optimization},
+  volume = {27},
+  number = {3},
+  pages = {2085--2109},
+  issn = {1052-6234, 1095-7189},
+  doi = {10.1137/16M1081543},
+  urldate = {2025-09-05},
+  abstract = {Quadratic programs (QP) with an indefinite Hessian matrix arise naturally in some direct optimal control methods, e.g., as subproblems in a sequential quadratic programming scheme. Typically, the Hessian is approximated with a positive definite matrix to ensure having a unique solution; such a procedure is called regularization. We present a novel regularization method tailored for QPs with optimal control structure. Our approach exhibits three main advantages. First, when the QP satisfies a second order sufficient condition for optimality, the primal solution of the original and the regularized problem are equal. In addition, the algorithm recovers the dual solution in a convenient way. Second, and more importantly, the regularized Hessian bears the same sparsity structure as the original one. This allows for the use of efficient structure-exploiting QP solvers. As a third advantage, the regularization can be performed with a computational complexity that scales linearly in the length of the control horizon. We showcase the properties of our regularization algorithm on a numerical example for nonlinear optimal control. The results are compared to other sparsity preserving regularization methods.},
+  langid = {english},
+}
+
+@article{diehl2005real,
+  title   = {A real-time iteration scheme for nonlinear optimization in optimal feedback control},
+  author  = {Diehl, Moritz and Bock, Hans Georg and Schl{\"o}der, Johannes P.},
+  journal = {SIAM Journal on Control and Optimization},
+  volume  = {43}, number = {5}, pages = {1714--1736}, year = {2005},
+}
+
+@article{yildirim2002warm,
+  title   = {Warm-start strategies in interior-point methods for linear programming},
+  author  = {Yildirim, E. Alper and Wright, Stephen J.},
+  journal = {SIAM Journal on Optimization},
+  volume  = {12}, number = {3}, pages = {782--810}, year = {2002},
+}
+
 % ------------------------------------------------------------------------------------
 %                               Theoretical Background
 % ------------------------------------------------------------------------------------
@@ -212,22 +251,6 @@ eprint = {
   address   = {London}
 }
 
-@article{verschueren2017sparsity,
-  title = {A {{Sparsity Preserving Convexification Procedure}} for {{Indefinite Quadratic Programs Arising}} in {{Direct Optimal Control}}},
-  author = {Verschueren, Robin and Zanon, Mario and Quirynen, Rien and Diehl, Moritz},
-  year = 2017,
-  month = jan,
-  journal = {SIAM Journal on Optimization},
-  volume = {27},
-  number = {3},
-  pages = {2085--2109},
-  issn = {1052-6234, 1095-7189},
-  doi = {10.1137/16M1081543},
-  urldate = {2025-09-05},
-  abstract = {Quadratic programs (QP) with an indefinite Hessian matrix arise naturally in some direct optimal control methods, e.g., as subproblems in a sequential quadratic programming scheme. Typically, the Hessian is approximated with a positive definite matrix to ensure having a unique solution; such a procedure is called regularization. We present a novel regularization method tailored for QPs with optimal control structure. Our approach exhibits three main advantages. First, when the QP satisfies a second order sufficient condition for optimality, the primal solution of the original and the regularized problem are equal. In addition, the algorithm recovers the dual solution in a convenient way. Second, and more importantly, the regularized Hessian bears the same sparsity structure as the original one. This allows for the use of efficient structure-exploiting QP solvers. As a third advantage, the regularization can be performed with a computational complexity that scales linearly in the length of the control horizon. We showcase the properties of our regularization algorithm on a numerical example for nonlinear optimal control. The results are compared to other sparsity preserving regularization methods.},
-  langid = {english},
-}
-
 @article{wachter2006implementation,
   title     = {On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming},
   author    = {W{\"a}chter, Andreas and Biegler, Lorenz T.},
@@ -277,6 +300,26 @@ pages="105--116",
 isbn="978-3-540-35972-2"
 }
 
+@article{frasch2015parallel,
+  title   = {A parallel quadratic programming method for dynamic optimization problems},
+  author  = {Frasch, Janick V. and Sager, Sebastian and Diehl, Moritz},
+  journal = {Mathematical Programming Computation},
+  volume  = {7},
+  number  = {3},
+  pages   = {289--329},
+  year    = {2015},
+  doi     = {10.1007/s12532-015-0081-7},
+}
+
+
+@inproceedings{domahidi2012efficient,
+  title     = {Efficient interior point methods for multistage problems arising in receding horizon control},
+  author    = {Domahidi, Alexander and Zgraggen, Aldo U. and Zeilinger, Melanie N. and Morari, Manfred and Jones, Colin N.},
+  booktitle = {2012 IEEE 51st Conference on Decision and Control (CDC)},
+  pages     = {668--674},
+  year      = {2012},
+  doi       = {10.1109/CDC.2012.6426855},
+}
 
 % ------------------------------------------------------------------------------------
 %                                    Benchmark

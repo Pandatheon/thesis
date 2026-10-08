@@ -9,24 +9,26 @@
 % ----------------------------------------------------------------------------
 \begin{document}
 
-\chapter{Conclusion and Outlook} % Overview text
+\chapter{Conclusion and outlook} % Overview text
 \label{Chapter::Conclusion}
 
-This thesis regularized the indefinite QPs that arise in exact-Hessian SQP for NMPC at the QP level, inside the interior point solver,
-where the barrier curvature is already taken into account and only the reduced Hessian needs to be positive definite.
-We showed that the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
-so that indefiniteness is detected and corrected stage-wise wherever the Cholesky factorization of $\tilde{M}_k$ fails,
-while the linear complexity of the recursion in the horizon length is preserved.
-We further showed that the minimum-perturbation rule propagates negative curvature through the cost-to-go matrix to the preceding stages.
-This led to an improved strategy that uses a non-minimal correction and also regularizes the cost-to-go matrix,
-and we proved that the regularization becomes inactive close to the solution, so that the local convergence rate of the interior point method is retained.
+This thesis regularized the indefinite QPs of exact-Hessian SQP for NMPC inside the interior point solver,
+where the barrier curvature is already included and only the reduced Hessian has to be positive definite.
+Since the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
+indefiniteness is detected and corrected stage-wise wherever the Cholesky factorization of $\tilde{M}_k$ fails,
+and the recursion stays linear in the horizon length.
 
-On a benchmark of $175$ indefinite QPs from eight OCPs,
-whose analysis showed that the cost-to-go matrix is involved in most indefinite stages,
-\textsf{PM\_MIRROR} left $4$ instances unsolved and \textsf{PM\_GMW} $7$ at a lower cost,
-against $32$ to $59$ for full Hessian regularization and $15$ for inertia correction.
-The full Hessian methods failed on almost every \textsl{Flying robot} instance, where the indefiniteness is confined to the cost-to-go matrix at a few stages,
-and the instances left unsolved by all methods combine deep negative curvature with a large share of indefinite stages.
+We showed that a minimum-perturbation correction of $\tilde{M}_k$ adds a negative rank-one term to the cost-to-go matrix,
+which can make the preceding stages indefinite and ill-conditioned.
+The improved strategy therefore uses a non-minimal correction and also regularizes the cost-to-go matrix.
+We proved that the regularization becomes inactive close to the solution,
+so the local convergence rate of the interior point method is retained.
+
+In the benchmark of $175$ indefinite QPs from eight OCPs, the cost-to-go matrix is indefinite in most indefinite stages.
+With Mehrotra's probing, \textsf{PM\_MIRROR} left $4$ instances unsolved and \textsf{PM\_GMW} $8$ at a lower worst-case decomposition cost than \textsf{PM\_MIRROR},
+against $28$ to $57$ for full Hessian regularization and $11$ for inertia correction.
+The full Hessian methods failed on almost every \textsl{Flying robot} instance, where only the cost-to-go matrix is indefinite, and only at a few stages.
+The instances that no method solved combine deep negative curvature with a large share of indefinite stages.
 
 Several questions remain open:
 \begin{itemize}
