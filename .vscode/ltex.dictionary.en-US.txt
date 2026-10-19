@@ -20,3 +20,15 @@ regularizations
 stationarity
 quadratically
 infeasibility
+CONVEXIFY
+Jacobians
+homotopy
+nonsingular
+Jacobian
+nonnegative
+Frobenius
+cubically
+factorizations
+subproblem
+underactuated
+decompositions
