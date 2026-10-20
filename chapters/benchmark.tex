@@ -23,7 +23,7 @@ regarding definiteness in the indefinite \gls{OCP} \gls{QP} benchmark in Section
 \section{Benchmark construction}
 \label{sec:benchmark_construction}
 This section describes the construction of the indefinite \gls{QP} benchmark.
-We first formulate the \gls{QP} subproblems arising in the \gls{SQP} iterations of the \glspl{OCP},
+We first formulate the \gls{QP} subproblems from the \gls{SQP} iterations of the \glspl{OCP},
 then introduce the eight \gls{OCP} test problems,
 formulated as fixed-time regulator problems with quadratic stage costs and box constraints on the controls,
 and finally the collection pipeline.
@@ -63,10 +63,10 @@ and $\underline{g}_N \le \mathcal{C}_N x_N \le \bar{g}_N$ are the terminal inequ
 When using the exact Hessian of the Lagrangian in the \gls{SQP} iterations, the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ reads:
 \begin{align}
     H_k &= \nabla^2 \mathcal{L}(x, u, \pi, \lambda)  \notag \\
-        &= \begin{bmatrix} \mathcal{Q}_k & \mathcal{S}_k^{\top} \\ \mathcal{S}_k & \mathcal{R}_k \end{bmatrix} + \sum_{j=1}^{n_x} (\pi_k)_j \nabla^2 [f_k]_j(x_k,u_k) + \sum_{j=1}^{n_c} (\lambda_k)_j \nabla^2 [h_k]_j(x_k,u_k),
+        &= \begin{bmatrix} \mathcal{Q}_k & \mathcal{S}_k^{\top} \\ \mathcal{S}_k & \mathcal{R}_k \end{bmatrix} + \sum_{j=1}^{n_x} (\pi_k)_j \nabla^2 [f_k]_j(x_k,u_k) + \sum_{j=1}^{n_h} (\lambda_k)_j \nabla^2 [h_k]_j(x_k,u_k),
 \end{align}
-where $n_x$ is the dimension of states and $n_c$ is the number of nonlinear constraints, 
-$\pi_k$ and $\lambda_k$ are the Lagrange multipliers associated with the dynamics and nonlinear constraints, respectively.
+where $n_h$ is the number of nonlinear constraints,
+and $\pi_k$ and $\lambda_k$ are the Lagrange multipliers associated with the dynamics and nonlinear constraints, respectively.
 
 The definiteness of $H_k$ is thus determined by two parts,
 a constant cost block  $\left[\begin{smallmatrix}\mathcal{Q}_k & \mathcal{S}_k^{\top}\\ \mathcal{S}_k & \mathcal{R}_k\end{smallmatrix}\right]$
@@ -80,7 +80,7 @@ Consequently, the exact-Hessian \gls{QP} subproblem is in general nonconvex.
 As for $H_N$, neither the dynamics nor the affine terminal constraints add curvature in $x_N$,
 so $H_N = \mathcal{Q}_N \succeq 0$ is constant.
 
-Collecting the stage Hessians $H_k$ and Jacobians and linearizing the constraints of~\eqref{eq:ocp} at the current \gls{SQP} iterate yields a
+Collecting the stage Hessians $H_k$ and Jacobians and linearizing the constraints of Equation~\eqref{eq:ocp} at the current \gls{SQP} iterate yields a
 structured \gls{QP}. The subproblem takes the form:
 \begin{mini}[2]
     {\Delta x, \Delta u}
@@ -103,72 +103,62 @@ structured \gls{QP}. The subproblem takes the form:
     \addConstraint{\underline{\Delta x}_N}{\le J_N^{b,x} \Delta x_N \le \overline{\Delta x}_N,}
 \end{mini}
 where, at each stage $k$, $\Delta x_k \in \mathbb{R}^{n_x}$ and $\Delta u_k \in \mathbb{R}^{n_u}$
-denote the state and control deviation variables, and $N$ is the horizon length.
+denote the state and control deviation variables at stage $k$.
+Note that $\Delta x_k$ and $\Delta u_k$ here denote the \gls{SQP} step, 
+which the \gls{QP} solver treats as its decision variables $x_k$ and $u_k$ in Equation~\eqref{eq:ocp_qp}.
 
 All remaining quantities are obtained by linearizing the \gls{OCP} at the
-current \gls{SQP} iterate $(x_k,u_k)$ with multipliers $(\pi_k,\lambda_k)$:
-\begin{itemize}
-    \item $Q_k$, $R_k$, and $S_k$ are the state, control, and coupling blocks of the exact Lagrangian Hessian $H_k$.
-    $q_k=\mathcal{Q}_k(x_k-x_k^{\mathrm{ref}})+\mathcal{S}_k^{\top}(u_k-u_k^{\mathrm{ref}})$ and 
-    $r_k=\mathcal{R}_k(u_k-u_k^{\mathrm{ref}})+\mathcal{S}_k(x_k-x_k^{\mathrm{ref}})$ are the corresponding stage-cost gradients, 
-    and $Q_N$, $q_N$ are the terminal Hessian and gradient.
+current \gls{SQP} iterate $(x_k,u_k)$ with multipliers $(\pi_k,\lambda_k)$.
 
-    \item $A_k=\nabla_{x_k} f_k$ and $B_k=\nabla_{u_k} f_k$ are the Jacobians of the discretized dynamics,
-    and $c_k=f_k(x_k,u_k)-x_{k+1}$ is the dynamics residual at the current iterate. 
-    At a dynamically feasible iterate $c_k=0$.
+In the objective, $Q_k$, $R_k$ and $S_k$ are the state, control and coupling blocks of the exact Lagrangian Hessian $H_k$,
+and the stage-cost gradients are
+$q_k=\mathcal{Q}_k(x_k-x_k^{\mathrm{ref}})+\mathcal{S}_k^{\top}(u_k-u_k^{\mathrm{ref}})$ and
+$r_k=\mathcal{R}_k(u_k-u_k^{\mathrm{ref}})+\mathcal{S}_k(x_k-x_k^{\mathrm{ref}})$,
+with $Q_N$ and $q_N$ as the terminal Hessian and gradient.
 
-    \item $\Delta\bar{x}_0=\bar{x}_0-x_0$ is the residual of the initial equality constraint,
-    i.e.\ the solution needed to satisfy $x_0=\bar{x}_0$ after the step.
+In the equality constraints, $A_k=\nabla_{x_k} f_k$ and $B_k=\nabla_{u_k} f_k$ are the Jacobians of the discretized dynamics,
+$c_k=f_k(x_k,u_k)-x_{k+1}$ is the dynamics residual, which vanishes at a dynamically feasible iterate,
+and $\Delta\bar{x}_0=\bar{x}_0-x_0$ is the residual of the initial state constraint $x_0=\bar{x}_0$.
 
-    \item $J_k^{b,u}$ and $J_k^{b,x}$ are selection matrices picking out the bounded control and state components for box constraints,
-    with bounds $\underline{u}_k,\overline{u}_k$ and $\underline{x}_k,\overline{x}_k$.
-
-    \item $C_k=\left[\begin{smallmatrix}\mathcal{C}_k\\ \nabla_{x_k} h_k\end{smallmatrix}\right]$ and
-    $D_k=\left[\begin{smallmatrix}\mathcal{D}_k\\ \nabla_{u_k} h_k\end{smallmatrix}\right]$ stack the Jacobians of the affine and nonlinear path constraints,
-    with $\underline{d}_k=\left[\begin{smallmatrix}\underline{g}-\mathcal{C}_k x_k-\mathcal{D}_k u_k\\ \underline{h}-h_k(x_k,u_k)\end{smallmatrix}\right]$ and
-    $\overline{d}_k=\left[\begin{smallmatrix}\bar{g}-\mathcal{C}_k x_k-\mathcal{D}_k u_k\\ \bar{h}-h_k(x_k,u_k)\end{smallmatrix}\right]$;
-    these constraints couple states and controls.
-\end{itemize}
+In the inequality constraints, $J_k^{b,u}$ and $J_k^{b,x}$ are selection matrices that pick out the bounded controls and states,
+with bounds $\underline{u}_k,\overline{u}_k$ and $\underline{x}_k,\overline{x}_k$.
+The matrices $C_k=\left[\begin{smallmatrix}\mathcal{C}_k\\ \nabla_{x_k} h_k\end{smallmatrix}\right]$ and
+$D_k=\left[\begin{smallmatrix}\mathcal{D}_k\\ \nabla_{u_k} h_k\end{smallmatrix}\right]$
+stack the Jacobians of the affine and nonlinear path constraints, with the bounds
+\begin{equation*}
+    \underline{d}_k=\begin{bmatrix}\underline{g}-\mathcal{C}_k x_k-\mathcal{D}_k u_k\\ \underline{h}-h_k(x_k,u_k)\end{bmatrix}, \qquad
+    \overline{d}_k=\begin{bmatrix}\bar{g}-\mathcal{C}_k x_k-\mathcal{D}_k u_k\\ \bar{h}-h_k(x_k,u_k)\end{bmatrix}.
+\end{equation*}
 
 \subsection{Benchmark OCPs}
 In this subsection, we introduce the eight \glspl{OCP} used to construct the benchmark. 
 Each \gls{OCP} is based on a dynamic system provided in~\cite{Kiessling2026} 
 and formulated as a regulation or point-to-point transfer problem with problem-specific modifications, 
-which can be uniformly described with \eqref{eq:ocp}.
+which can be uniformly described with Equation~\eqref{eq:ocp}.
+
 The eight \glspl{OCP} are named and characterized as follows:
 \begin{itemize}
-    \item \textbf{Pendulum:} An inverted pendulum on a cart, actuated by a horizontal force.
-    It is steered from the downward to the upright equilibrium under an input bound and a mixed state--input constraint.
-    The stage cost contains a bilinear state--input term, which makes indefinite Hessians more likely.
+    \item \textbf{Pendulum:} Swing-up of an inverted pendulum on a cart under an input bound and a mixed state--input constraint.
     \item \textbf{Acrobot:} Adapted from \cite{spong1995swing}.
-    A two-link pendulum with joint friction, actuated only at the elbow.
-    Terminal equality constraints drive it between two prescribed configurations, an underactuated and strongly nonlinear maneuver.
+    An underactuated two-link pendulum moved between two prescribed configurations.
     \item \textbf{Dubins car:} Adapted from \cite{dubins1957curves}.
-    A kinematic unicycle with position and heading as states and forward velocity and turn rate as inputs.
-    It performs a parallel-parking maneuver in a narrow corridor given by state bounds, with a terminal equality constraint on the full pose.
+    Parallel parking of a kinematic unicycle in a narrow corridor.
     \item \textbf{Furuta:} Adapted from \cite{furuta1992swing}.
-    A rotary inverted pendulum with identified parameters and joint damping, actuated by a single torque on the base arm.
-    The pendulum is swung up and stabilized upright under tight torque limits on a non-uniform time grid.
+    Swing-up of a rotary inverted pendulum under tight torque limits.
     \item \textbf{Flying robot:} Adapted from \cite{betts2010practical}.
-    A planar free-flying robot driven by four nonnegative thrusters, which produce a net force along the body axis and a turning moment.
-    It is steered to zero position and orientation with a prescribed translational velocity, under linear constraints on the summed thrust.
+    A planar free-flying robot steered by four nonnegative thrusters.
     \item \textbf{Robot arm:} Adapted from \cite{betts2010practical}.
-    A three-degree-of-freedom arm (radial extension, rotation, elevation) with configuration-dependent inertia
-    and a cross-axis actuator coupling that is nonlinear in the inputs.
-    One joint angle is moved to a new set-point under state and input bounds; the input coupling makes the exact Hessian indefinite.
+    A three-degree-of-freedom arm moved to a new set-point, with nonlinear input coupling.
     \item \textbf{Crane:} Adapted from \cite{betts2010practical}.
-    An overhead crane with hoisting length, trolley position and swing angle as states, actuated by trolley and hoisting accelerations.
-    The load is moved between two rest positions under a swing-rate bound and a nonlinear constraint on the payload region.
+    An overhead crane moving a load between two rest positions.
     \item \textbf{Moonlander:} Adapted from \cite{meditch1964optimal}.
-    A planar lunar lander with translational and rotational motion under reduced gravity, actuated by two laterally offset thrusters.
-    It lands softly on a ground target with zero terminal velocity under nonnegative, bounded thrust.
+    Soft landing of a planar lunar lander with two thrusters.
 \end{itemize}
 
 \begin{table}[htbp]
     \centering
-    \caption{Summary of the evaluated \glspl{OCP}. The state dimension
-    $n_x$, control dimension $n_u$, and horizon length $N$ span a range
-    of common control problem scales.}
+    \caption{Summary of the evaluated \glspl{OCP} 
+    in common control problem scales.}
     \label{tab:ocp_problems}
     \begin{tabular}{l ccc}
         \toprule
@@ -208,19 +198,18 @@ The collection pipeline consists of two steps: \emph{generate} and \emph{collect
     We can selectively collect indefinite \glspl{QP} that exhibit an indefinite reduced Hessian.
 \end{enumerate}
 
-In the collect step, all \glspl{QP} share one failing status code from \texttt{acados}, code \texttt{4} for infeasible \gls{QP},
-which indicates that the indefinite reduced Hessian causes the failure of the Riccati recursion in HPIPM.
-This is intentionally achieved by setting the Riccati algorithm in HPIPM as classical Riccati recursion, i.e.\ \texttt{ric\_alg = 0}, 
-which requires the reduced Hessian to be \gls{PD} in order to proceed with the Riccati recursion,
-instead of the square-root version \cite{frisonAlgorithmsMethodsHighPerformance}, which requires the full Hessian to be \gls{PD}.
-When HPIPM fails to proceed with the Riccati recursion, it indicates that the reduced Hessian is indefinite,
-and the corresponding \gls{QP} is collected.
+In the collect step, HPIPM uses the classical Riccati recursion (\texttt{ric\_alg = 0}),
+which requires only the reduced Hessian to be \gls{PD},
+instead of the square-root version~\cite{frisonAlgorithmsMethodsHighPerformance}, which requires the full Hessian to be \gls{PD}.
+A failure of the recursion thus indicates an indefinite reduced Hessian, which \texttt{acados} reports as status \texttt{4} (infeasible \gls{QP}),
+and only the \glspl{QP} with this status are collected.
 
 For each problem, we limit the number of near-identical \glspl{QP},
 so that the number of instances per problem stays within a comparable range and the collected instances remain meaningful.
 We also use IPOPT~\cite{wachter2006implementation} as a reference solver and keep only the \glspl{QP} that it solves successfully.
-After this filtering, we obtain a total of $175$ indefinite \glspl{QP} from the eight \glspl{OCP},
-the per-problem counts are reported in Table~\ref{tab:collected_qps} and range from $15$ to $29$.
+After this filtering, we obtain a total of $175$ indefinite \glspl{QP} from the eight \glspl{OCP}.
+
+The per-problem counts are reported in Table~\ref{tab:collected_qps} and range from $15$ to $29$.
 These \glspl{QP} are stored in JSON format and are available at \url{https://github.com/Pandatheon/Primal-dual_IPM.git}.
 
 \begin{table}[htbp]
@@ -283,33 +272,6 @@ In the collected \glspl{QP}, wide and deep indefiniteness thus seldom occur toge
 \textsl{Pendulum} contributes \glspl{QP} with very shallow negative curvature at intermediate rates.
 The eight \glspl{OCP} thus cover narrow-but-deep, intermediate and wide-but-moderate indefiniteness.
 
-\begin{figure}[htbp]
-    \centering
-    \begin{minipage}[t]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/benchmark/indefiniteness_coverage_depth.pdf}
-        \subcaption{Depth: distribution of $|\nu_{\min}|$.}
-        \label{fig:indefinite_depth}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[t]{0.48\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/benchmark/indefiniteness_coverage_breadth.pdf}
-        \subcaption{Width: distribution of the indefinite-stage rate.}
-        \label{fig:indefinite_breadth}
-    \end{minipage}
-    \caption{Marginal distributions of depth and width over all collected QPs.}
-    \label{fig:indefinite_marginals}
-\end{figure}
-
-Figure~\ref{fig:indefinite_marginals} shows the marginal distributions of the same data.
-The depth histogram (Figure~\ref{fig:indefinite_depth}) peaks around $|\nu_{\min}| \approx 10$
-and thins out towards both ends.
-The negative curvature encountered during the \gls{SQP} iterations is therefore typically of moderate magnitude.
-The width histogram (Figure~\ref{fig:indefinite_breadth}) covers the full range up to~$1$,
-with a large share of \glspl{QP} indefinite in only a few stages, close to $40\%$.
-The remaining \glspl{QP} form smaller groups at intermediate and high rates.
-
 \subsection{Source of indefiniteness}
 \label{subsec:source}
 Recall that the reduced Hessian block at stage $k$, $M_k = R_k + B_k^\top P_{k+1}B_k$,
@@ -322,19 +284,6 @@ we classify every indefinite stage by which of $R_k$ and $P_{k+1}$ has a negativ
 and \emph{both} ($R_k, P_{k+1} \not\succeq 0$).
 Since $R_k, P_{k+1} \succeq 0$ would imply $M_k \succeq 0$, these three cases cover all indefinite stages.
 
-Figure~\ref{fig:indefinite_source_counts} aggregates all indefinite stages across the benchmark.
-In $1114$ of the $1571$ indefinite stages ($71\%$), \emph{both} $R$ and $P$ are indefinite.
-Of the remaining stages, $299$ ($19\%$) are \emph{P only} and $158$ ($10\%$) are \emph{R only}.
-In total, $P$ is indefinite in $1413$ stages ($90\%$) and $R$ in $1272$ ($81\%$).
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/benchmark/stage_indefiniteness_source.pdf}
-    \caption{Number of indefinite stages per category, \emph{R only}, \emph{P only} or \emph{both},
-    according to which of $R_k$ and $P_{k+1}$ has a negative eigenvalue.}
-    \label{fig:indefinite_source_counts}
-\end{figure}
-
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{images/benchmark/stage_indefiniteness_signature.pdf}
@@ -344,21 +293,20 @@ In total, $P$ is indefinite in $1413$ stages ($90\%$) and $R$ in $1272$ ($81\%$)
     \label{fig:indefinite_source_signature}
 \end{figure}
 
-Figure~\ref{fig:indefinite_source_signature} breaks the same classification down per problem.
-Six of the eight \glspl{OCP} are dominated by a single category ($\geq\!70\%$ of their stages),
-and only \textsl{Acrobot} and \textsl{Crane} are mixed.
+Figure~\ref{fig:indefinite_source_signature} shows this classification for each \gls{OCP}.
+In every \gls{OCP}, most indefinite stages involve $P$, either alone or together with $R$,
+and six of the eight \glspl{OCP} are dominated by a single category ($\geq\!70\%$ of their stages),
+with only \textsl{Acrobot} and \textsl{Crane} mixed.
 
 The \emph{both} case dominates \textsl{Moonlander} ($96\%$), \textsl{Robot arm} ($92\%$), \textsl{Dubins car} ($76\%$) and \textsl{Furuta} ($72\%$).
 The \emph{P only} case dominates \textsl{Flying robot} ($100\%$) and \textsl{Pendulum} ($87\%$),
 and is also the largest category in the two mixed problems,
 \textsl{Crane} ($58\%$ against $39\%$ \emph{both}) and \textsl{Acrobot} ($54\%$ against $41\%$ \emph{both}).
 The \emph{R only} case appears in four problems and is substantial only for \textsl{Dubins car} ($24\%$ of its stages),
-in \textsl{Robot arm}, \textsl{Acrobot} and \textsl{Crane} it stays below $5\%$.
-Among all, the \textsl{Flying robot} is the clearest case: all of its indefinite stages are \emph{P only}, 
+and in \textsl{Robot arm}, \textsl{Acrobot} and \textsl{Crane} it stays below $5\%$.
+
+Among all, \textsl{Flying robot} is the clearest case: all of its indefinite stages are \emph{P only}, 
 with $R_k \succ 0$ throughout.
 Its negative curvature thus enters the reduced Hessian only through the cost-to-go block, at isolated stages.
-
-In conclusion, the cost-to-go block is involved in $90\%$ of the indefinite stages,
-so a regularization strategy that merely enforces $M\succ 0$ would leave the negative curvature unaddressed in most stages.
 
 \end{document}

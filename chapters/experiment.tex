@@ -104,7 +104,7 @@ from their respective maximal step through the heuristic
     \alpha_{\mathrm{max}}, & \alpha_{\mathrm{max}} = 1,
   \end{cases}
 \end{equation}
-where $\alpha_{\mathrm{max}}\in(0,1]$ denotes the maximal step length from \eqref{eq:ftb_max_prim} or \eqref{eq:ftb_max_dual}, 
+where $\alpha_{\mathrm{max}}\in(0,1]$ denotes the maximal step length from Equation~\eqref{eq:ftb_max_prim} or Equation~\eqref{eq:ftb_max_dual},
 $\kappa_\eta = 0.99$ and $\hat{\eta} = 1-10^{-7}$.
 
 When $\alpha_{\mathrm{max}} < 1$, 
@@ -228,7 +228,8 @@ abandoning the minimum perturbation rule and correcting the cost-to-go matrix, s
 \textsf{PM\_PROJECT} only the second, and \textsf{PM\_MIRROR} and \textsf{PM\_GMW} apply both.
 
 \paragraph{Inertia Correction}
-The third category is the \gls{LM}-style inertia correction used in IPOPT~\cite{wachter2006implementation}, 
+The third category is the \gls{LM}-style inertia correction 
+widely used in IPOPT~\cite{wachter2006implementation}, Fatrop, DDP~\cite{tassa2012synthesis}
 which we denote by \textsf{INERTIA\_LM}.
 
 In this strategy, a scalar multiple of the identity $\delta_w I$ is added to each full Hessian block $\tilde{H}_k$, 
@@ -404,8 +405,8 @@ The Riccati-based methods are simultaneously more robust and cheaper than every 
 This generally supports regularizing the reduced Hessian by exploiting the stage-wise structure of the problem rather than the full Hessian. 
 
 \subsection{Comparison with inertia correction}
-Finally, we compare the recommended Riccati-based methods against inertia
-correction (\textsf{INERTIA\_LM}), which is widely used in practice.
+Finally, we compare the recommended Riccati-based methods against inertia correction (\textsf{INERTIA\_LM}), 
+which is the commonly used strategy in practice.
 
 The iteration profiles in Figure~\ref{fig:iter-profile-inertia} end close for the three regularized methods, 
 with \textsf{PM\_MIRROR} and \textsf{PM\_GMW} solving the most instances ($171$ and $167$) and \textsf{INERTIA\_LM} close behind ($164$). 
@@ -582,7 +583,7 @@ Based on the ablation in Section~\ref{subsec:ablation_mehrotra},
 this subsection explains why the ranking of Section~\ref{sec:comparison} reverses under the conditional Mehrotra corrector,
 i.e.\ why \textsf{PM\_MIRROR} loses far more instances than \textsf{INERTIA\_LM}.
 
-Recall \eqref{eq:schur_comp_KKT_reduced}. With simplified notation, the
+Recall Equation~\eqref{eq:schur_comp_KKT_reduced}. With simplified notation, the
 regularized system reads
 \begin{equation}
     (\tilde{M}_i + E_i) \Delta y_z = -r_i,

@@ -14,23 +14,33 @@
 {
     % Override language formatting for English abstract
     % Add paragraph indent as English paragraphs must be indented
-    \setlength{\parindent}{2em}
-    % Remove paragraph spacing as required in the English language
-    \setlength{\parskip}{0em}
+    % \setlength{\parindent}{2em}
+    % % Remove paragraph spacing as required in the English language
+    % \setlength{\parskip}{0em}
 
-    In nonlinear model predictive control, sequential quadratic programming (SQP) with the exact Hessian of the Lagrangian
-    produces quadratic programs (QPs) whose Hessian can be indefinite.
-    Structure-exploiting QP solvers require a positive definite Hessian,
-    so the Hessian is usually regularized before it is passed to the solver, which changes the solution of the QP.
-    This thesis instead handles the indefiniteness inside a primal--dual interior point solver,
-    where the barrier term already adds curvature on the constraints and only the reduced Hessian has to be positive definite.
+    \setlength{\parskip}{1em}
+    \setlength{\parindent}{0em}
 
-    We propose a primal regularization inside the Riccati recursion
-    that corrects the Hessian only at the stages where the factorization detects negative curvature,
-    so the cost stays linear in the horizon length.
-    We show that the minimum perturbation correction can make the preceding stages indefinite and ill-conditioned,
-    derive an improved strategy that also regularizes the cost-to-go matrix,
-    and prove that the regularization becomes inactive near the solution.
-    The methods are evaluated on a benchmark of $175$ indefinite QPs collected from the SQP iterations of eight optimal control problems.
+    In \gls{NMPC}, \gls{SQP} with the exact Hessian of the Lagrangian
+    produces \gls{QP} subproblems of which the full Hessian can be indefinite.
+    Structure-exploiting \gls{QP} solvers embedded in the \gls{SQP} solver often require a \gls{PD} full Hessian for carrying out iteration,
+    so the full Hessian is regularized at the \gls{SQP} level before it is passed to the solver,
+    which in general changes the solution of each \gls{QP} and thus, in real-time iteration, directly changes the feedback.
+
+    This thesis investigates the regularizations that handle the indefiniteness inside interior-point solvers.
+    By regularizing at the \gls{QP} level,
+    the solver can take advantage of the barrier term in the \gls{IPM} that adds curvature on the constraints as they become active, 
+    without extra estimation of the active set,
+    and the solver still returns the solution of the original \gls{QP} when the \gls{QP} is indefinite.
+
+    On the algorithmic side,
+    we propose a primal regularization inside the Riccati recursion, namely Riccati-based regularization,
+    which regularizes only at the stages where the Cholesky factorization fails.
+    We show that the minimum perturbation strategy can make the regularization fail,
+    derive an improved strategy, and prove that the regularization becomes inactive near the solution.
+    On the experimental side,
+    for evaluation, we build a benchmark of $175$ indefinite \gls{OCP} \glspl{QP}, collected from the \gls{SQP} iterations of eight \glspl{OCP}.
+    We implement the methods in a prototype solver that reproduces the iterations of HPIPM on convex \glspl{QP},
+    and compare them with full Hessian regularization and inertia correction in terms of robustness and estimated factorization cost.
 }
 \end{document}

@@ -12,23 +12,15 @@
 
 \chapter{Primal regularization for indefinite quadratic programs}
 \label{Chapter::Primal_Regularization}
-In this chapter, we turn our attention to the \glspl{QP} 
-with an indefinite full Hessian, namely the indefinite \glspl{QP}.
-In order to solve the indefinite \glspl{QP},
-the primal regularizations are considered and applied to the Hessian 
-for a descent direction when the iterates are feasible.
-We first review the numerical strategies to compute the correction in Section~\ref{sec:hessian_reg},
-and propose the reduced Hessian as the right target for the detection and the regularization.
-We then show in Section~\ref{sec:riccati_primal_reg} that 
-the Riccati recursion provides the reduced Hessian implicitly,
-and develop the Riccati-based primal regularization,
-which detects the indefiniteness and applies the correction stage-wise inside the recursion.
-Next, we analyze in Section~\ref{sec:fail_minimal_perturbation} 
-why the minimum perturbation rule fails in this setting,
+In this chapter, we focus on \glspl{QP} with indefinite full Hessian matrices, referred to as indefinite \glspl{QP}.
+We first review the numerical strategies to compute the adjustment matrix,
+and motivate the reduced Hessian as the target for the detection and the regularization in Section~\ref{sec:hessian_reg}.
+In Section~\ref{sec:riccati_primal_reg}, we then propose the Riccati-based primal regularization,
+which detects the indefiniteness and applies the regularization inside the recursion.
+Next, we analyze in Section~\ref{sec:fail_minimal_perturbation} why the minimum perturbation rule fails in this setting,
 and derive an improved stage regularization strategy from that analysis.
-Finally, we prove in Section~\ref{sec:asymptotic_inactivity} that,
-owing to the detection on the reduced Hessian,
-the regularization becomes asymptotically inactive as the iterates approach the solution.
+Finally, in Section~\ref{sec:asymptotic_inactivity}, we prove that,
+owing to the detection on the reduced Hessian, the regularization becomes asymptotically inactive as the iterates approach the solution.
 
 \section{Primal regularization}
 \label{sec:hessian_reg}
@@ -58,8 +50,7 @@ and finally the regularization on the full or the reduced Hessian in Section~\re
 
 \subsection{Regularization strategies}
 \label{subsec:reg_strategies}
-In order to construct the adjustment matrix $E_i$,
-three categories of strategies are commonly used,
+In order to construct the adjustment matrix $E_i$, three categories of strategies are commonly used,
 which are \gls{EM}, \gls{MC} and \gls{LM}
 \cite{nocedal2006numerical, mcsweeneyModifiedCholeskyDecomposition2017, More1978levenberg}.
 From these categories we select four methods to be implemented and compared:
@@ -108,16 +99,12 @@ and the smallest value for keeping the entries of the corresponding column of $L
 The increments form a nonnegative diagonal correction $E$ with $A + E = L D_I L^\top$,
 which avoids the cost of an eigendecomposition and still guarantees positive definiteness,
 but $E$ is generally not minimal and tends to over-modify $A$.
-The operation can be described as:
-    \begin{equation*}
-        \mathrm{gmw}(A, \epsilon) := L \max\big(\epsilon I,\ |D_I|,\ \text{bounding value}\big) L^\top.
-    \end{equation*}
 
 \paragraph{Inertia Correction.}
-In \gls{LM}, all decompositions or factorizations are abandoned,
-instead, a uniform multiple of the identity is added to shift every eigenvalue by the same amount.
-The shift avoids the cost of any extra operation and is easy to implement,
-however, because it acts equally in all directions, 
+In \gls{LM}, all decompositions or factorizations are abandoned.
+A uniform multiple of the identity is instead added to shift every eigenvalue by the same amount.
+The shift avoids the cost of any extra operation and is easy to implement.
+However, because it acts equally in all directions, 
 a shift large enough for a few negative eigenvalues also distorts the eigenvalues that were already positive.
 The operation can be described as:
     \begin{equation*}
@@ -128,10 +115,9 @@ or by repeatedly increasing $\Delta$ until every diagonal entry of $D_I$ is posi
 
 \subsection{Indefiniteness detection on reduced Hessian}
 \label{subsec:detection}
-Though the definiteness of the full Hessian $H$ is rather easy to detect and is sufficient for convexity,
-an equality-constrained \gls{QP} only requires the reduced Hessian to be \gls{PD} for convexity.
-The following theorem, stated in \cite{verschueren2017sparsity}
-(for a proof, see \cite{nocedal2006numerical}), makes this precise:
+Though the positive definiteness of the full Hessian $H$ is rather easy to detect and is sufficient for convexity,
+an equality-constrained \gls{QP} only requires the reduced Hessian to be \gls{PD} for a unique global minimum.
+The following theorem, stated in \cite{verschueren2017sparsity} (for a proof, see \cite{nocedal2006numerical}), makes this precise:
 
 \begin{theorem}
 \label{thm:reduced_hessian_convexity}
@@ -141,10 +127,10 @@ Assume that \gls{LICQ} holds. A \gls{QP} with only equality constraints has a un
 \end{equation}
 \end{theorem}
 
-The positive definiteness of the reduced Hessian is, thus, a necessary and sufficient condition for 
+The positive definiteness of the reduced Hessian is thus a necessary and sufficient condition for 
 the equality-constrained \gls{QP} admitting a unique global optimum.
 
-Since the \gls{KKT} system after Schur complement~\eqref{eq:schur_comp_KKT} is that of an equality-constrained \gls{QP} as:
+Since the \gls{KKT} system after the Schur complement in Equation~\eqref{eq:schur_comp_KKT} is that of an equality-constrained \gls{QP} as:
 \begin{mini}[2]
     {\Delta y}
     {\frac{1}{2} \Delta y^\top \tilde{H}_i \Delta y + (\tilde{r}_{\mathrm{stat}}^i)^\top \Delta y}
@@ -153,7 +139,7 @@ Since the \gls{KKT} system after Schur complement~\eqref{eq:schur_comp_KKT} is t
     \addConstraint{F \Delta y + r_{\mathrm{eq}}^i}{= 0,}
 \end{mini}
 by Theorem~\ref{thm:reduced_hessian_convexity}, the step $\Delta y$ is the unique minimizer of this \gls{QP}
-if and only if $\tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$. 
+if and only if $\tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$.
 
 Based on this, a detection of the indefiniteness of $\tilde{M}_i$ is therefore preferable to that of $\tilde{H}_i$,
 which avoids false alarms when $\tilde{H}_i$ is indefinite but $\tilde{M}_i \succ 0$, and hence unnecessary regularization.
@@ -172,10 +158,9 @@ In optimal control, it is applied stage-wise to the block $\tilde{H}_k$ of each 
     \begin{bmatrix}
     \tilde{Q}_k & \tilde{S}_k^\top \\
     \tilde{S}_k & \tilde{R}_k
-    \end{bmatrix} + E_k \succ 0, \quad k = 0, 1, \ldots, N-1,
+    \end{bmatrix} + E_k \succ 0, \quad k = 0, 1, \ldots, N-1.
 \end{equation}
-this is simple to implement,
-each $E_k$ depends only on $\tilde{H}_k$, requiring neither the constraints nor a null-space basis, 
+This is simple to implement, each $E_k$ depends only on $\tilde{H}_k$, requiring neither the constraints nor a null-space basis, 
 and it guarantees a descent direction at infeasible iterates, 
 i.e.\ $\Delta y^\top \tilde{H}_i^\mathrm{reg} \Delta y > 0$ for $\Delta y = Y \Delta y_y + Z \Delta y_z$ with $\Delta y_y \neq 0$.
 However, it could be conservative when equality constraints are satisfied.
@@ -197,7 +182,7 @@ positive curvature in the null space is both necessary and sufficient for a desc
 
 \begin{proof}
     Since $r_{\mathrm{eq}}^i = 0$, the range-space component $\Delta y_y = -(FY)^{-1} r_{\mathrm{eq}}^i$ vanishes,
-    so $\Delta y = Z \Delta y_z$ and \eqref{eq:schur_comp_KKT_reduced} reduces to
+    so $\Delta y = Z \Delta y_z$ and Equation~\eqref{eq:schur_comp_KKT_reduced} reduces to
     $\tilde{M}_i \Delta y_z = -Z^\top \tilde{r}_{\mathrm{stat}}^i$. Hence
     \begin{equation}
         \label{eq:reduced_descent}
@@ -206,13 +191,13 @@ positive curvature in the null space is both necessary and sufficient for a desc
     \end{equation}
 
     For sufficiency, if $\tilde{M}_i \succ 0$, then $\tilde{M}_i^{-1} \succ 0$,
-    and the \gls{RHS} of \eqref{eq:reduced_descent} is negative for every $Z^\top \tilde{r}_{\mathrm{stat}}^i \neq 0$.
+    and the \gls{RHS} of Equation~\eqref{eq:reduced_descent} is negative for every $Z^\top \tilde{r}_{\mathrm{stat}}^i \neq 0$.
 
     For necessity, we proceed by contraposition.
     Suppose that $\tilde{M}_i$ is not \gls{PD}.
     Being nonsingular, it has an eigenpair $(\nu, v)$ with $\nu < 0$.
     Since $Z$ has full column rank, $\tilde{r}_{\mathrm{stat}}^i = Z (Z^\top Z)^{-1} v$ satisfies $Z^\top \tilde{r}_{\mathrm{stat}}^i = v \neq 0$,
-    and \eqref{eq:reduced_descent} with $\tilde{M}_i^{-1} v = v/\nu$ gives
+    and Equation~\eqref{eq:reduced_descent} with $\tilde{M}_i^{-1} v = v/\nu$ gives
     $(\tilde{r}_{\mathrm{stat}}^i)^\top \Delta y = -v^\top v / \nu > 0$, so $\Delta y$ is an ascent direction for this residual.
 \end{proof}
 
@@ -234,16 +219,15 @@ We thus propose a Riccati-based primal regularization method,
 which naturally obtains the reduced Hessian $\tilde{M}_i$ implicitly via Riccati recursion.
 The Riccati recursion serves two purposes.
 First, it detects the indefiniteness of the reduced Hessian $\tilde{M}_i$ with Cholesky factorization as the sign.
-Second, it allows the reduced Hessian $\tilde{M}_i$ to be regularized stage-wise to 
-ensure a \gls{PD} reduced Hessian $\tilde{M}_i$ while preserving the sparse structure from \gls{OCP}.
+Second, it regularizes the reduced Hessian $\tilde{M}_i$ stage-wise to
+ensure a \gls{PD} reduced Hessian $\tilde{M}_i$ while preserving the sparse structure of the \gls{OCP}.
 
 \subsection{Block reduced Hessian from Riccati recursion}
 \label{subsec:block_reduced_hessian}
 In this subsection, we will restate and establish the connection between
 the Riccati recursion and the block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian $\tilde{M}_i$,
-which not only provides a way to compute the reduced Hessian $\tilde{M}_i$ implicitly, but also a way to detect the indefiniteness of $\tilde{M}_i$.
+which provides not only a way to compute the reduced Hessian $\tilde{M}_i$ implicitly, but also a way to detect the indefiniteness of $\tilde{M}_i$.
 
-From the perspective of the Riccati recursion, the backward pass proceeds in practice as follows:
 \begin{algorithm}[htbp]
 \caption{Backward Pass of Riccati Recursion}
 \label{alg:riccati_recursion_backward}
@@ -263,13 +247,15 @@ From the perspective of the Riccati recursion, the backward pass proceeds in pra
 \EndFor
 \end{algorithmic}
 \end{algorithm}
-One can notice,
-compared with Algorithm~\ref{alg:riccati_recursion}, the inverse $\tilde{M}_k^{-1}$ is not formed,
+
+From the perspective of the Riccati recursion, the backward pass proceeds 
+in practice as shown in Algorithm~\ref{alg:riccati_recursion_backward}.
+Compared with Algorithm~\ref{alg:riccati_recursion}, the inverse $\tilde{M}_k^{-1}$ is not formed,
 but $\tilde{M}_k$ is factorized by Cholesky factorization and $K_k$, $k_k$ follow from triangular solves,
 which is more efficient and succeeds only if $\tilde{M}_k \succ 0$.
 
 From the perspective of the block $\mathrm{LD}\mathrm{L}^\top$ factorization,
-recall that the second-order term of \eqref{eq:newton_qp} is stage-wise in optimal control:
+recall that the second-order term of Equation~\eqref{eq:newton_qp} is stage-wise in optimal control:
 \begin{equation*}
     \frac{1}{2} \sum_{k=0}^{N-1}
     \begin{bmatrix} \Delta x_k \\ \Delta u_k \end{bmatrix}^\top
@@ -277,30 +263,16 @@ recall that the second-order term of \eqref{eq:newton_qp} is stage-wise in optim
     \begin{bmatrix} \Delta x_k \\ \Delta u_k \end{bmatrix}
     + \frac{1}{2} \Delta x_N^\top \tilde{Q}_N \Delta x_N.
 \end{equation*}
-Condensing eliminates the states through the dynamics
-$\Delta x_{k+1} = A_k \Delta x_k + B_k \Delta u_k + r_{\mathrm{eq}}^k$ as:
+Condensing eliminates the states through the dynamics $\Delta x_{k+1} = A_k \Delta x_k + B_k \Delta u_k + r_{\mathrm{eq}}^k$
+and permutes the dense reduced Hessian $\tilde{M}_i$ in $\Delta u_0, \dots, \Delta u_{N-1}$.
+Since $\Delta u_{N-1}$ enters only the last stage term and $\Delta x_N$, its diagonal block is
 \begin{equation*}
-    \Delta x_l = \sum_{j=0}^{l-1} \Phi_{l,j+1} B_j \Delta u_j + \mathrm{const},
+    (\tilde{M}_i)_{N-1,N-1} = \tilde{R}_{N-1} + B_{N-1}^\top \tilde{Q}_N B_{N-1},
 \end{equation*}
-with the state transition
-\begin{align*}
-    \Phi_{l, j} = \begin{cases}
-    A_{l-1} A_{l-2} \cdots A_j, & \text{if } l > j, \\
-    I, & \text{if } l = j.
-    \end{cases}
-\end{align*}
-Substituting this into the second-order term and collecting the terms quadratic in $\Delta u$, 
-this gives the diagonal block and lower-triangular block of the dense reduced Hessian $\tilde{M}_i = Z^\top \tilde{H}_i Z$ w.r.t.\ $\Delta u_0, \dots, \Delta u_{N-1}$:
-\begin{align*}
-    (\tilde{M}_i)_{jj} &= \tilde{R}_j + \sum_{l=j+1}^{N} B_j^\top \Phi_{l,j+1}^\top \tilde{Q}_l \Phi_{l,j+1} B_j, \\
-    (\tilde{M}_i)_{kj} &= \tilde{S}_k \Phi_{k,j+1} B_j + \sum_{l=k+1}^{N} B_k^\top \Phi_{l,k+1}^\top \tilde{Q}_l \Phi_{l,j+1} B_j, \quad k > j.
-\end{align*}
+which is exactly $\tilde{M}_{N-1}$ in Algorithm~\ref{alg:riccati_recursion_backward} with $P_N = \tilde{Q}_N$.
 
-Ordering the inputs backward in time as $(\Delta u_{N-1}, \dots, \Delta u_0)$
-and eliminating them in this order,
-the pivot of $\Delta u_k$ is $\tilde{M}_k = \tilde{R}_k + B_k^\top P_{k+1} B_k$, 
-and the remaining Schur complement after eliminating $\Delta u_k$ is the reduced Hessian of the shorter problem on stages $0, \dots, k-1$ with terminal weight $P_k$.
-This gives the block $\mathrm{LD}\mathrm{L}^\top$ factorization
+After eliminating $\Delta u_{N-1}$, the Schur complement is the reduced Hessian of the problem on stages $0, \dots, N-2$ with terminal weight $P_{N-1}$, which has the same structure.
+Repeating this backward in time to $\Delta u_0$ gives the pivots $\tilde{M}_k$ and the block $\mathrm{LD}\mathrm{L}^\top$ factorization
 \begin{align*}
     \tilde{M}_i &= L
     \begin{bmatrix}
@@ -311,34 +283,24 @@ This gives the block $\mathrm{LD}\mathrm{L}^\top$ factorization
     \end{bmatrix}
     L^\top
 \end{align*}
-where the accumulated back-substitution coefficients, built from the feedback gains $K_k$ and the transitions $\Phi_{l, j}$, form the unit lower-triangular factor $L$:
-\begin{align*}
-    L = 
-    \begin{bmatrix}
-    I & 0 & \cdots & 0 & 0 \\
-    -B_{N-2}^\top K_{N-1}^\top & I & \cdots & 0 & 0 \\
-    -B_{N-3}^\top \Phi_{N-1, N-2}^\top K_{N-1}^\top & -B_{N-3}^\top K_{N-2}^\top & \cdots & 0 & 0 \\
-    \vdots & \vdots & \ddots & \vdots & \vdots \\
-    -B_0^\top \Phi_{N-1, 1}^\top K_{N-1}^\top & -B_0^\top \Phi_{N-2, 1}^\top K_{N-2}^\top & \cdots & -B_0^\top K_1^\top & I
-    \end{bmatrix}.
-\end{align*}
+where $L$ is unit lower triangular, with off-diagonal blocks built from the feedback gains $K_k$ and the dynamics.
 
 This confirms that the matrices $\tilde{M}_k$ from the Riccati recursion are the reduced Hessian blocks,
 i.e.\ the pivot blocks of $\tilde{M}_i$.
 And the equivalence of their positive definiteness is thus established by Sylvester's law of inertia,
 i.e.\ $\tilde{M}_i \succ 0$ if and only if every $\tilde{M}_k \succ 0$,
 which indicates the Cholesky factorizations of all $\tilde{M}_k$ in the backward pass succeed.
-We can therefore have the Riccati-based detection, as also used in Fatrop~\cite{vanroye2023fatrop}, 
-where the Riccati recursion performs the detection on the reduced Hessian without forming $\tilde{M}_i$ and at no extra cost.
+We can, therefore, have Riccati recursion as the indefiniteness detection, as also used in Fatrop~\cite{vanroye2023fatrop}.
 
 \subsection{Stage regularization in Riccati recursion}
 \label{subsec:stage_regularization}
 With this connection, we can regularize the reduced Hessian $\tilde{M}_i$, 
 while preserving the sparse structure of the \gls{KKT} system,
-by a stage-wise regularization strategy to each reduced Hessian block $\tilde{M}_k$ during the Riccati recursion.
+by a stage-wise regularization strategy applied to each reduced Hessian block $\tilde{M}_k$ during the Riccati recursion.
 
 Using the failure of Cholesky factorization as the sign,
-we can regularize the reduced Hessian block $\tilde{M}_k$ on the fly by adding a block adjustment matrix $E_k$ to it, i.e.\ $\tilde{M}_k + E_k$.
+we can regularize the reduced Hessian block $\tilde{M}_k$ on the fly 
+by adding a block adjustment matrix $E_k$ to it, i.e.\ $\tilde{M}_k + E_k$.
 This gives a modification of the backward pass of Riccati recursion as follows:
 \begin{algorithm}[htbp]
 \caption{Backward Pass of Modified Riccati Recursion}
@@ -363,6 +325,7 @@ This gives a modification of the backward pass of Riccati recursion as follows:
 \EndFor
 \end{algorithmic}
 \end{algorithm}
+
 The regularization is thus referred to as Riccati-based regularization 
 and is only applied to the stages where the reduced Hessian block is indefinite.
 
@@ -374,30 +337,30 @@ which would cause a severe condition number issue in the preceding stages due to
 This motivates us to propose an improved stage regularization strategy that avoids minimum perturbation and takes the propagation into account.
 
 \subsection{Failure of minimum perturbation regularization}
-In this subsection, we will show that the minimum perturbation strategy, e.g.\ PROJECT,
-which is commonly the first choice for regularization for the least modification of the original problem, 
-can cause a condition number issue in the stage regularization by introducing a general example.
+In this subsection, we show with a general example that the minimum perturbation strategy, e.g.\ PROJECT,
+which is commonly the first choice because it modifies the original problem the least,
+can cause a condition number issue in the stage regularization.
 
-Suppose at the stage $k$, the reduced Hessian block $\tilde{M}_k$ is not \gls{PD}.
+Suppose at stage $k$, the reduced Hessian block $\tilde{M}_k$ is not \gls{PD}.
 Without loss of generality, we can assume $\tilde{M}_k$ has only one negative eigenvalue $\nu_j$, and the corresponding eigenvector is $v_j$.
 The minimum perturbation strategy is applied as:
 \begin{equation}
     E_k = (-\nu_{j}+\epsilon) v_j v_j^\top,
 \end{equation}
-where the $\epsilon$ is a small positive value to ensure the positive definiteness of the regularized reduced Hessian block. 
+where $\epsilon$ is a small positive value to ensure the positive definiteness of the regularized reduced Hessian block. 
 
 By the Sherman--Morrison formula, the inverse of the regularized reduced Hessian block can be expressed as:
 \begin{align*}
     (\tilde{M}_k + E_k)^{-1} &= \tilde{M}_k^{-1} + \frac{\nu_j-\epsilon}{\epsilon \nu_j} v_j v_j^\top \\
                             &= \tilde{M}_k^{-1} + (\frac{1}{\epsilon} - \frac{1}{\nu_j}) v_j v_j^\top,
 \end{align*}
-and the update of cost-to-go matrix $P_k$ follows as:
+and the update of the cost-to-go matrix $P_k$ follows as:
 \begin{align}
     P_k &= \tilde{Q}_k + A_k^\top P_{k+1} A_k + \Gamma_k^\top K_k \notag \\
         &=\tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}_k^{-1} \Gamma_k - (\frac{1}{\epsilon} - \frac{1}{\nu_j}) \Gamma_k^\top v_j v_j^\top \Gamma_k \notag \\
-        &= P_k^{\mathrm{unreg}} - (\frac{1}{\epsilon} - \frac{1}{\nu_j}) \Gamma_k^\top v_j v_j^\top \Gamma_k,
+        &= P_k^{\mathrm{unreg}} - (\frac{1}{\epsilon} - \frac{1}{\nu_j}) \Gamma_k^\top v_j v_j^\top \Gamma_k.
 \end{align}
-note that this negative rank-one modification can already render $P_k$ itself indefinite, 
+Note that this negative rank-one modification can already render $P_k$ itself indefinite, 
 independently of its downstream effect on $\tilde{M}_{k-1}$. 
 And this can happen even when the perturbation on $\tilde{M}_k$ is moderate,
 provided that the negative-curvature direction $v_j$ is strongly coupled to the state, i.e.\ $\|\Gamma_k^\top v_j\|$ is large.
@@ -412,13 +375,13 @@ and the condition number of the regularized reduced Hessian block $\tilde{M}_{k-
 \end{equation}
 where $c = \frac{\|B_{k-1}^\top \Gamma_k^\top v_j\|^2}{\nu_{\min}(\tilde{M}_{k-1}^{\mathrm{unreg}})}$ is an $O(1)$ constant.
 
-Notably, as the $\epsilon$ is a small positive value,
-the presence of the negative rank-one update $-\frac{1}{\epsilon} z_j z_j^\top$ with $z_j = B_{k-1}^\top \Gamma_k^\top v_j$ will dominate,
+As $\epsilon$ is a small positive value,
+the presence of the negative rank-one update, scaled by roughly $\frac{1}{\epsilon}$, will dominate,
 not only severely deteriorating its condition number,
 but also likely making $\tilde{M}_{k-1}$ indefinite, which can further cause a domino effect through the stages.
 
 \subsection{Insights and improved stage regularization}
-This issue reveals two insights in stage regularization:
+This issue reveals two insights into stage regularization:
 \begin{itemize}
     \item The minimum modification objective \cite{fangModifiedCholeskyAlgorithms2007} is not the foremost consideration for stage regularization, 
     as it can cause a severe condition number issue in the preceding stages.
@@ -474,8 +437,8 @@ and then applies it again to the reduced Hessian block to act as a local safegua
 ensuring that the Cholesky factorization succeeds.
 
 Both corrections are produced by the same non-minimal strategy $\mathcal{E}(\cdot)$, MIRROR or Type-II, 
-rather than by the minimum modification rule, 
-which keeps the condition number of the regularized blocks bounded, as motivated by the first insight. 
+rather than by the minimum modification rule.
+This keeps the condition number of the regularized blocks bounded, as motivated by the first insight. 
 When no factorization failure occurs, the recursion reduces to the standard Riccati backward pass.
 
 \section{Asymptotic inactivity of the regularization}
@@ -487,15 +450,15 @@ we prove that any regularization triggered by this detection is asymptotically i
 i.e., it vanishes once the iterates are sufficiently close to the solution.
 The argument adapts that of \cite{absilNewtonKKTInteriorpointMethods2007} to the reduced Hessian $\tilde{M}_i$.
 
-We will start from the system \eqref{eq:schur_comp_KKT_reduced} and make the following assumptions for the proof:
+We will start from the system in Equation~\eqref{eq:schur_comp_KKT_reduced} and make the following assumptions for the proof:
 \begin{assumption}
     \label{as:minimizer}
-    $(y^*, \lambda^*)$ is a local (or global) minimizer for \eqref{eq:qp_problem}.
+    $(y^*, \lambda^*)$ is a local (or global) minimizer for the \gls{QP} in Equation~\eqref{eq:qp_problem}.
 \end{assumption}
 
 \begin{assumption}
     \label{as:isolated}
-    Each local minimizer $(y^*,\lambda^*)$ for \eqref{eq:qp_problem} is isolated.
+    Each local minimizer $(y^*,\lambda^*)$ for the \gls{QP} in Equation~\eqref{eq:qp_problem} is isolated.
 \end{assumption}
 
 \begin{assumption}
@@ -519,9 +482,9 @@ so we have the following Lemma~\ref{lem:SOSC}:
     With Assumption~\ref{as:minimizer}, the \gls{SONC} for local optimality holds, which states that for all $w \in C(y^*,\lambda^*)$, we have $w^\top H w \ge 0$.
 
     We proceed by contradiction. Suppose there exists $w \in C(y^*,\lambda^*) \setminus \{0\}$ such that $w^\top H w = 0$. 
-    Consider the point $y(\alpha) = y^* + \alpha w$ for $\alpha > 0$. Because the constraints are linear and $w$ is in the critical cone, $y(\alpha)$ remains feasible for sufficiently small $\alpha$. 
+    Consider the point $y(\alpha) = y^* + \alpha w$ for $\alpha > 0$. Because the constraints are linear and $w$ is in the critical cone, $y(\alpha)$ remains feasible for sufficiently small $\alpha$.
 
-    Since the objective function of \eqref{eq:qp_problem} is quadratic, expanding $f(y(\alpha))$ yields:
+    Since the objective function of Equation~\eqref{eq:qp_problem} is quadratic, expanding $f(y(\alpha))$ yields:
     \begin{equation*}
         f(y(\alpha)) = f(y^*) + \alpha \nabla f(y^*)^\top w + \frac{1}{2} \alpha^2 w^\top H w
     \end{equation*}
@@ -698,5 +661,56 @@ without the regularization affecting its asymptotic behavior.
 % with the unregularized one. 
 % The solver thus recovers the exact Newton step and inherits the local convergence rate of the underlying \gls{IPM}, 
 % without the regularization affecting its asymptotic behavior.
+
+% From the perspective of the block $\mathrm{LD}\mathrm{L}^\top$ factorization,
+% recall that the second-order term of Equation~\eqref{eq:newton_qp} is stage-wise in optimal control:
+% \begin{equation*}
+%     \frac{1}{2} \sum_{k=0}^{N-1}
+%     \begin{bmatrix} \Delta x_k \\ \Delta u_k \end{bmatrix}^\top
+%     \begin{bmatrix} \tilde{Q}_k & \tilde{S}_k^\top \\ \tilde{S}_k & \tilde{R}_k \end{bmatrix}
+%     \begin{bmatrix} \Delta x_k \\ \Delta u_k \end{bmatrix}
+%     + \frac{1}{2} \Delta x_N^\top \tilde{Q}_N \Delta x_N.
+% \end{equation*}
+% Condensing eliminates the states through the dynamics
+% $\Delta x_{k+1} = A_k \Delta x_k + B_k \Delta u_k + r_{\mathrm{eq}}^k$ as:
+% \begin{equation*}
+%     \Delta x_l = \sum_{j=0}^{l-1} \Phi_{l,j+1} B_j \Delta u_j + \mathrm{const},
+% \end{equation*}
+% with the state transition
+% \begin{align*}
+%     \Phi_{l, j} = \begin{cases}
+%     A_{l-1} A_{l-2} \cdots A_j, & \text{if } l > j, \\
+%     I, & \text{if } l = j.
+%     \end{cases}
+% \end{align*}
+% Substituting this into the second-order term, the diagonal block of the dense reduced Hessian $\tilde{M}_i = Z^\top \tilde{H}_i Z$ corresponding to $\Delta u_{N-1}$ is
+% \begin{equation*}
+%     (\tilde{M}_i)_{N-1,N-1} = \tilde{R}_{N-1} + B_{N-1}^\top \tilde{Q}_N B_{N-1},
+% \end{equation*}
+% which is exactly $\tilde{M}_{N-1}$ in the Riccati recursion with $P_N = \tilde{Q}_N$.
+% After eliminating $\Delta u_{N-1}$, the Schur complement is the reduced Hessian of the problem on stages $0, \dots, N-2$ with terminal weight $P_{N-1}$, which has the same structure.
+% Repeating this backward in time to $\Delta u_0$ gives the pivots $\tilde{M}_k = \tilde{R}_k + B_k^\top P_{k+1} B_k$ and the block $\mathrm{LD}\mathrm{L}^\top$ factorization
+% \begin{align*}
+%     \tilde{M}_i &= L
+%     \begin{bmatrix}
+%     \tilde{M}_{N-1} & 0 & \cdots & 0 \\
+%     0 & \tilde{M}_{N-2} & \cdots & 0 \\
+%     \vdots & \vdots & \ddots & \vdots \\
+%     0 & 0 & \cdots & \tilde{M}_{0}
+%     \end{bmatrix}
+%     L^\top
+% \end{align*}
+% where the accumulated back-substitution coefficients, built from the feedback gains $K_k$ and the transitions $\Phi_{l, j}$, form the unit lower-triangular factor $L$:
+% \begin{align*}
+%     L = 
+%     \begin{bmatrix}
+%     I & 0 & \cdots & 0 & 0 \\
+%     -B_{N-2}^\top K_{N-1}^\top & I & \cdots & 0 & 0 \\
+%     -B_{N-3}^\top \Phi_{N-1, N-2}^\top K_{N-1}^\top & -B_{N-3}^\top K_{N-2}^\top & \cdots & 0 & 0 \\
+%     \vdots & \vdots & \ddots & \vdots & \vdots \\
+%     -B_0^\top \Phi_{N-1, 1}^\top K_{N-1}^\top & -B_0^\top \Phi_{N-2, 1}^\top K_{N-2}^\top & \cdots & -B_0^\top K_1^\top & I
+%     \end{bmatrix}.
+% \end{align*}
+
 
 \end{document}
