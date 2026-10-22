@@ -15,30 +15,25 @@
 \section{Motivation}
 \label{sec:motivation}
 
-In the field of \gls{NMPC},
-in each sampling period, 
-a nonlinear \gls{OCP} is solved to compute the optimal control input for the current state of the system.
-In order to solve the continuous-time \glspl{OCP},
+In \gls{NMPC}, a nonlinear \gls{OCP} is solved in each sampling period 
+to compute the optimal control input for the current state.
+To solve the continuous-time \glspl{OCP}, 
 direct multiple shooting~\cite{bock1984multiple} is a widely used method,
-which transcribes the \gls{OCP} into a \gls{NLP} by 
-discretizing the time horizon into multiple shooting intervals~\cite{Diehl2018}.
+which transcribes the \gls{OCP} into a \gls{NLP} by discretizing the time horizon into multiple shooting intervals~\cite{Diehl2018}.
+\Gls{SQP}~\cite{nocedal2006numerical} provides a suitable approach for solving the \gls{NLP} in real time,
+which linearizes at each iterate to obtain a \gls{QP} subproblem.
+The real-time iteration~\cite{diehl2005real} performs one \gls{SQP} iteration per sampling time and linearizes before the new state is known,
+so only the \gls{QP} solve lies between measurement and feedback.
+The \gls{QP} solve therefore require efficiency, for which the structure-exploiting solvers are usually used.
 
-\Gls{SQP} provides a suitable approach for solving the \gls{NLP} in real-time practice,
-which linearizes at each iterate to generate a \gls{QP} subproblem.
-In the real-time iteration~\cite{diehl2005real},
-one \gls{SQP} iteration is performed per sampling time, warm-started at the shifted previous solution and linearized before the new state is known,
-so only the \gls{QP} solve remains between measurement and feedback.
-The solving of the \gls{QP} subproblem therefore determines the feedback and the delay,
-and the structure-exploiting solvers are usually applied for solving with efficiency.
-
-Nevertheless, when the full Hessian of the \gls{QP} subproblems is provided by the exact Hessian of the Lagrangian \cite{BoggsTolle1995}, 
-it could be indefinite, thus indicating a nonconvex problem.
+Nevertheless, when the full Hessian of the \gls{QP} subproblems is provided 
+by the exact Hessian of the Lagrangian~\cite{BoggsTolle1995}, which could be indefinite.
 The structure-exploiting solvers embedded in the \gls{SQP},
 such as qpDUNES~\cite{frasch2015parallel}, FORCES~\cite{domahidi2012efficient} and HPIPM~\cite{frison2020hpipmhighperformancequadraticprogramming}, 
 however, fail to solve these \glspl{QP}, for they require convex \glspl{QP} with a \gls{PD} full Hessian.
 Though FORCES and HPIPM can in principle handle the nonconvex \glspl{QP} with an indefinite full Hessian as long as the reduced Hessian,
 i.e.\ the Hessian on the null space of the dynamics, is \gls{PD},
-the code optimization of both solvers still requires a \gls{PD} full Hessian, and thus convex \glspl{QP} are intended by the solvers instead of nonconvex \glspl{QP}.
+the code optimization of both solvers still requires a \gls{PD} full Hessian and thus targets convex \glspl{QP}.
 One method to use these solvers in this situation is to regularize at the \gls{SQP} level, 
 i.e.\ to regularize the full Hessian of the \gls{QP} before it is passed to the solver,
 which in general modifies the solution of the subproblems and in the real-time iteration the feedback itself.
@@ -51,18 +46,35 @@ It applies a backward sweep similar to Riccati recursion to transfer cost betwee
 and thus each stage keeps only the curvature it needs to be \gls{PD}, so the reduced Hessian remains invariant during this transfer.
 It also adds curvature by a quadratic penalty on the estimated active constraints with a tunable weight to make the reduced Hessian \gls{PD}.
 Together, the full Hessian becomes \gls{PD} while the augmented reduced Hessian stays unchanged. 
-Thus, the resulting \gls{QP} can keep the same primal solution if the active set is estimated correctly and the weight is large enough.
+The resulting \gls{QP} can thus keep the same primal solution if the active set is estimated correctly and the weight is large enough.
 In the case where the augmented reduced Hessian is indefinite, or the estimation misses some active constraints or the penalty weight is too small,
 the sweep can still reach a stage with negative curvature after adding the transferred cost and the penalty.
-At such stages, it falls back to SQP-level regularization by replacing the negative eigenvalues of the stage block 
+At such stages, it falls back to \gls{SQP}-level regularization by replacing the negative eigenvalues of the stage block 
 with small positive values and continues the sweep, which modifies the \gls{QP} and thus its solution.
 
-In the \gls{IPM}, however,
-the barrier term from the inequality constraints enables the addition of these curvatures inherently.
-Since the curvature contribution increases on the constraints that are becoming active and vanishes on the inactive ones, 
-estimation of the active set and tuning of the penalty weight can be avoided.
-So when the augmented reduced Hessian is \gls{PD},
-the barrier term can inherently make the reduced Hessian \gls{PD} without choosing a weight.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/introduction/regularization_overview.pdf}
+    \caption{Overview of possible regularizations in \gls{SQP}}
+\end{figure}
+
+In the \gls{IPM}~\cite{nocedal2006numerical}, however,
+the barrier term from the inequality constraints adds these curvatures inherently.
+Since the curvature contribution increases on the constraints that are becoming active and vanishes on the inactive ones,
+neither an estimate of the active set nor a penalty weight is needed.
+When the augmented reduced Hessian is \gls{PD}, the barrier term makes the reduced Hessian \gls{PD} by itself.
+As shown in the example of Figure~\ref{fig:toy_example}, the original reduced Hessian is indefinite.
+\gls{SQP}-level regularization generally yields a direction towards an approximate solution,
+whereas with the barrier term the reduced Hessian is \gls{PD}, 
+so the \gls{IPM} produces a direction towards the exact solution.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_landscape_both.pdf}
+    \caption{Newton step at an \gls{IPM} iterate of a \gls{QP} with indefinite reduced Hessian.}
+    \label{fig:toy_example}
+\end{figure}
+
 In other cases, such as in the early iterations, 
 where the augmented reduced Hessian fails to become \gls{PD}, a regularization to the Hessian is still needed.
 But if the regularization is made inside the solver, 
@@ -70,7 +82,7 @@ the solution of the original \gls{QP} remains, and thus an exact Newton step in 
 which differs from the approximate Newton step obtained by \gls{SQP}-level regularization, 
 and so does the feedback in real-time iteration.
 
-A structure-exploiting interior point \gls{QP} solver that handles indefiniteness at the QP level is 
+A structure-exploiting interior point \gls{QP} solver that handles indefiniteness at the \gls{QP} level is 
 therefore interesting as an alternative to regularizing at the \gls{SQP} level.
 And this leaves open how the correction should be made inside the solver.
 This thesis addresses this question for indefinite \glspl{QP} with optimal control structure.

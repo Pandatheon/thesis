@@ -32,3 +32,6 @@ factorizations
 subproblem
 underactuated
 decompositions
+IPOPT
+PMMIRROR
+INERTIALM

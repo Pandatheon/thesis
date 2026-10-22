@@ -245,7 +245,7 @@ where the block matrices $\tilde{Q}_k$, $\tilde{R}_k$, and $\tilde{S}_k$ contain
     \tilde{S}_k &= S_k + (G_k^u)^\top \Lambda_k T_k^{-1} G_k^x.
 \end{align*}
 
-This tridiagonal structure allows for efficient solution of the \gls{KKT} system using Riccati recursion \cite{rao1998application},
+This tridiagonal structure allows for efficient solution of the \gls{KKT} system using Riccati recursion~\cite{rao1998application},
 which consists of a backward and forward pass.
 The backward pass computes the feedback gains $K$ and cost-to-go matrices $P$, 
 while the forward pass computes the optimal state and control trajectories.

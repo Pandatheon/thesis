@@ -13,7 +13,7 @@
 \label{Chapter::Experiments}
 In this chapter, we evaluate the proposed regularization methods numerically and discuss the results.
 We begin in Section~\ref{sec:metrics} with the two metrics used throughout the comparison, 
-the iteration profile and the proxy unit estimation, which measure convergence behavior and factorization cost respectively.
+the iteration profile and the flop unit estimation, which measure convergence behavior and factorization cost respectively.
 Section~\ref{sec:prototype} then describes the prototype solver on which all experiments are run 
 and stresses that it reproduces the iteration behavior of HPIPM on convex \glspl{QP}, 
 so that any difference observed later can be attributed to the regularization rather than to the solver itself.
@@ -28,7 +28,7 @@ Section~\ref{sec:discussion} concludes the chapter by analyzing the failures and
 \label{sec:metrics}
 In this section, we will introduce the metrics used to evaluate the performance of different regularization strategies in our experiments.
 Since we care about both the convergence behavior and the factorization cost caused by different regularization methods, 
-we will use two complementary metrics: iteration profile and proxy unit estimation.
+we will use two complementary metrics: iteration profile and flop unit estimation.
 The former, iteration profile, is used to evaluate how many iterations each method takes to converge on a set of test instances, 
 while the latter, flop unit estimation, is approximated by the modified Cholesky factorizations of the reduced Hessian
 and is used to evaluate the factorization cost of each method.
@@ -231,7 +231,7 @@ abandoning the minimum perturbation rule and correcting the cost-to-go matrix, s
 
 \paragraph{Inertia correction}
 The third category is the \gls{LM}-style inertia correction 
-widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and DDP~\cite{tassa2012synthesis},
+widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl},,
 which we denote by \textsf{INERTIA\_LM}.
 
 In this category, a scalar multiple of the identity $\delta_w I$ is added to each full Hessian block $\tilde{H}_k$, 
@@ -363,7 +363,7 @@ we now compare them against the full Hessian regularizations.
 
 The iteration profile in Figure~\ref{fig:iter-profile-fullhessian} 
 shows that the two Riccati-based methods sit well above every full Hessian variant across the whole iteration budget,
-which indicating better performance in efficiency and robustness of two Riccati-based methods over full Hessian regularization. 
+which indicates better performance in efficiency and robustness of two Riccati-based methods over full Hessian regularization. 
 
 \begin{figure}[htbp]
     \centering
@@ -544,7 +544,7 @@ while every Riccati-based method except \textsf{M\_PROJECT} solves all of them.
 
 Since the full Hessian methods cannot directly act on $P_k$, 
 they perturb the $\tilde{H}_k$ over the whole horizon, including the $\tilde{Q}_k$, $\tilde{R}_k$ and $\tilde{S}_k$.
-This slows down the convergence and thus exhaust the iteration budget.
+This slows down the convergence and thus exhausts the iteration budget.
 The Riccati-based regularization avoids this by treating indefiniteness where it arises in the recursion.
 
 % \textsf{INERTIA\_LM} adds $\delta_w I$ to both $\tilde{Q}_k$ and $\tilde{R}_k$,
@@ -577,7 +577,7 @@ If $\delta_{\min}$ is the smallest shift for which it succeeds, then $\nu_{\min}
 The accepted $\delta$ usually is larger than $\delta_{\min}$, and $\nu_{\min}$ stays of the order of $\delta$.
 
 \textsf{PM\_MIRROR} modifies only the negative eigenvalues of $\tilde{M}_k$ and $P_k$,
-which allows $\nu_{\min}(\tilde{M}_i+E_i)$ to stay as small positive value.
+which allows $\nu_{\min}(\tilde{M}_i+E_i)$ to stay as a small positive value.
 \textsf{PM\_MIRROR} could thus reach a much longer step than \textsf{INERTIA\_LM} at the same $\|r_i\|$.
 
 As shown in Table~\ref{tab:step_metrics}, the median affine step of \textsf{PM\_MIRROR} is longer than that of \textsf{INERTIA\_LM}.
