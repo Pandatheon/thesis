@@ -35,3 +35,8 @@ decompositions
 IPOPT
 PMMIRROR
 INERTIALM
+Convexification
+convexification
+Levenberg
+Marquardt
+setpoint

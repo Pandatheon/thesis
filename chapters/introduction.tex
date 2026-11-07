@@ -20,93 +20,176 @@ to compute the optimal control input for the current state.
 To solve the continuous-time \glspl{OCP}, 
 direct multiple shooting~\cite{bock1984multiple} is a widely used method,
 which transcribes the \gls{OCP} into a \gls{NLP} by discretizing the time horizon into multiple shooting intervals~\cite{Diehl2018}.
-\Gls{SQP}~\cite{nocedal2006numerical} provides a suitable approach for solving the \gls{NLP} in real time,
-which linearizes at each iterate to obtain a \gls{QP} subproblem.
-The real-time iteration~\cite{diehl2005real} performs one \gls{SQP} iteration per sampling time and linearizes before the new state is known,
+\Gls{SQP}~\cite{nocedal2006numerical} provides a suitable approach for solving the \gls{NLP},
+which linearizes to obtain a \gls{QP} subproblem and solve it to obtain the search direction at each iterate.
+In the real-time iteration~\cite{diehl2005real},
+one \gls{SQP} iteration is performed per sampling time, with the linearization done before the new state is known,
 so only the \gls{QP} solve lies between measurement and feedback.
-The \gls{QP} solve therefore require efficiency, for which the structure-exploiting solvers are usually used.
+The \gls{QP} solve therefore requires efficiency, for which structure-exploiting solvers are usually used.
 
-Nevertheless, when the full Hessian of the \gls{QP} subproblems is provided 
-by the exact Hessian of the Lagrangian~\cite{BoggsTolle1995}, which could be indefinite.
-The structure-exploiting solvers embedded in the \gls{SQP},
+When the exact Hessian of the Lagrangian is used in \gls{QP} subproblems~\cite{BoggsTolle1995},
+the full Hessian of \gls{QP} subproblems could be indefinite.
+The \gls{QP} solvers embedded in the \gls{SQP} for exploiting the \gls{OCP} structure,
 such as qpDUNES~\cite{frasch2015parallel}, FORCES~\cite{domahidi2012efficient} and HPIPM~\cite{frison2020hpipmhighperformancequadraticprogramming}, 
-however, fail to solve these \glspl{QP}, for they require convex \glspl{QP} with a \gls{PD} full Hessian.
-Though FORCES and HPIPM can in principle handle the nonconvex \glspl{QP} with an indefinite full Hessian as long as the reduced Hessian,
-i.e.\ the Hessian on the null space of the dynamics, is \gls{PD},
-the code optimization of both solvers still requires a \gls{PD} full Hessian and thus targets convex \glspl{QP}.
-One method to use these solvers in this situation is to regularize at the \gls{SQP} level, 
-i.e.\ to regularize the full Hessian of the \gls{QP} before it is passed to the solver,
-which in general modifies the solution of the subproblems and in the real-time iteration the feedback itself.
+however, may fail to solve these \glspl{QP}, for they require convex \glspl{QP} with a positive definite full Hessian.
+One method to use these solvers in this situation is to regularize the full Hessian
+at the \gls{SQP} level before it is passed to the solver, while preserving the \gls{OCP} structure.
+Two common regularization methods mentioned in~\cite{verschueren2017sparsity}, i.e.\ project and mirror,
+are implemented in acados~\cite{verschueren2020acadosmodularopensourceframework} 
+and used to yield a positive definite full Hessian for the \gls{QP} solver.
+Both methods regularize based on the eigenvalues of the full Hessian and use a small positive value as a threshold.
+Project raises every eigenvalue to at least the threshold,
+while mirror replaces the negative eigenvalues with their absolute values, using the threshold as a lower bound.
+This, however, in general modifies the solution of the subproblems and also the feedback itself in the real-time iteration.
 
-Given that the augmented reduced Hessian, 
-i.e.\ the Hessian on the null space of the dynamics and the active constraints, is \gls{PD},
-CONVEXIFY~\cite{verschueren2017sparsity} can avoid the modification of the primal solution 
-when the full Hessian is not \gls{PD}.
-It applies a backward sweep similar to Riccati recursion to transfer cost between neighboring stages,
-and thus each stage keeps only the curvature it needs to be \gls{PD}, so the reduced Hessian remains invariant during this transfer.
-It also adds curvature by a quadratic penalty on the estimated active constraints with a tunable weight to make the reduced Hessian \gls{PD}.
-Together, the full Hessian becomes \gls{PD} while the augmented reduced Hessian stays unchanged. 
-The resulting \gls{QP} can thus keep the same primal solution if the active set is estimated correctly and the weight is large enough.
-In the case where the augmented reduced Hessian is indefinite, or the estimation misses some active constraints or the penalty weight is too small,
-the sweep can still reach a stage with negative curvature after adding the transferred cost and the penalty.
-At such stages, it falls back to \gls{SQP}-level regularization by replacing the negative eigenvalues of the stage block 
-with small positive values and continues the sweep, which modifies the \gls{QP} and thus its solution.
+Convexification~\cite{verschueren2017sparsity}, as a more advanced regularization method,
+applies a backward sweep similar to Riccati recursion for regularization.
+The sweep transfers cost between neighboring stages through the dynamics 
+and adds curvature from the estimated active inequality constraints with an estimated weight to each stage.
+The cost transfer keeps only the needed curvature for each stage to be positive definite 
+while leaving the reduced Hessian, i.e.\ the Hessian on the null space of the dynamics, unchanged.
+The added curvature makes the reduced Hessian positive definite 
+if the estimation of the active constraints and weight is correct and
+the fully reduced Hessian, i.e.\ the Hessian on the null space of the dynamics and the active constraints, is positive definite.
+This results in a positive definite full Hessian with the fully reduced Hessian unchanged,
+and the same primal solution of the original \gls{QP} is thus kept.
+But if the fully reduced Hessian is indefinite or the estimation is incorrect, 
+the backward sweep could still reach a stage with indefinite blocks,
+and convexification falls back to projecting the stage block, which modifies the \gls{QP} solution.
+In acados, only the cost transfer in convexification is implemented, 
+so it could fail to regularize with inequality constraints in practice.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{images/introduction/regularization_overview.pdf}
-    \caption{Overview of possible regularizations in \gls{SQP}}
+    \caption{Regularization overview of an indefinite \gls{QP} subproblem}
+    \label{fig:regularization_overview}
 \end{figure}
 
-In the \gls{IPM}~\cite{nocedal2006numerical}, however,
-the barrier term from the inequality constraints adds these curvatures inherently.
-Since the curvature contribution increases on the constraints that are becoming active and vanishes on the inactive ones,
-neither an estimate of the active set nor a penalty weight is needed.
-When the augmented reduced Hessian is \gls{PD}, the barrier term makes the reduced Hessian \gls{PD} by itself.
-As shown in the example of Figure~\ref{fig:toy_example}, the original reduced Hessian is indefinite.
-\gls{SQP}-level regularization generally yields a direction towards an approximate solution,
-whereas with the barrier term the reduced Hessian is \gls{PD}, 
-so the \gls{IPM} produces a direction towards the exact solution.
+In an interior-point \gls{QP} solver, however,
+the \gls{IPM} relaxes the complementarity from each inequality constraint by a barrier parameter.
+This adds weighted curvatures from inequality constraints to the Hessian inherently throughout the iterations,
+and the weight is the ratio of its multiplier to its slack, which changes according to the current iterate.
+So neither an estimate of the active set nor a penalty weight is needed.
+The reduced Hessian with curvature from inequality constraints would be positive definite,
+as long as the fully reduced Hessian is positive definite.
+
+\begin{example}[A \gls{QP} with indefinite reduced Hessian]
+\label{ex:toy}
+Consider an indefinite \gls{QP}
+\begin{mini}|l|
+  {u_0,u_1,x_1,x_2}
+  {\tfrac{1}{2}(u_0^2 - 3x_1^2 + u_1^2 + \tfrac{1}{2}x_2^2)}
+  {\label{eq:toy_qp}}
+  {}
+  \addConstraint{x_0}{=1}
+  \addConstraint{x_{1}}{=x_0 + u_0}
+  \addConstraint{x_{2}}{=x_1 + u_1}
+  \addConstraint{-1}{\le u_0 \le 1.}{}
+\end{mini}
+By eliminating the $x_1$ and $x_2$ using equality equation, 
+we have a \gls{QP} with Indefinite reduced Hessian as:
+\begin{mini}|l|
+  {u_0,u_1}
+  {\frac{1}{2}\begin{bmatrix}u_0\\u_1\end{bmatrix}^{\!\top}\!
+   \begin{bmatrix}-\tfrac{3}{2} & \tfrac{1}{2}\\[2pt] \tfrac{1}{2} & \tfrac{3}{2}\end{bmatrix}\!
+   \begin{bmatrix}u_0\\u_1\end{bmatrix}
+   + \begin{bmatrix}-\tfrac{5}{2}\\[2pt] \tfrac{1}{2}\end{bmatrix}^{\!\top}\!
+   \begin{bmatrix}u_0\\u_1\end{bmatrix}}
+  {\label{eq:toy_qp_reduced}}
+  {}
+  \addConstraint{-1}{\le u_0 \le 1.}{}
+\end{mini}
+
+Denote the objective of~\eqref{eq:toy_qp_reduced} by $f(u_0,u_1)$.
+For a fixed $u_0$, the minimizer of the objective over $u_1$ follows from
+\begin{equation*}
+  \frac{\partial f}{\partial u_1} = \tfrac{1}{2}u_0 + \tfrac{3}{2}u_1 + \tfrac{1}{2} = 0
+  \quad\Longrightarrow\quad
+  u_1^\star(u_0) = -\tfrac{1}{3}(u_0+1).
+\end{equation*}
+Substituting $u_1^\star(u_0)$ back into $f$ leaves a function of $u_0$ alone,
+\begin{equation*}
+  f\bigl(u_0,u_1^\star\bigr) = -\tfrac{5}{6}u_0^2 - \tfrac{8}{3}u_0 - \tfrac{1}{12}.
+\end{equation*}
+Since $f\bigl(u_0,u_1^\star\bigr)$ is concave, its minimum over $-1 \le u_0 \le 1$ lies on a bound,
+and comparing $f\bigl(-1, 0\bigr) = \tfrac{7}{4}$ with $f\bigl(1,-\frac{2}{3}\bigr)= -\tfrac{43}{12}$ gives
+the exact solution $(1, -\frac{2}{3})$.
+
+The contour lines of the reduced objective are shown in Figure~\ref{fig:toy_example_sqp}a
+with a saddle point in reduced space and the exact solution lying at $(1, -\frac{2}{3})$ on the constraint boundary.
+
+From an \gls{SQP} perspective, 
+this \gls{QP} can be treated as a subproblem which provides an \gls{SQP} step or an \gls{NLP} which provides a solution.
+For the former case, the \gls{SQP}-level regularization, mirror in this case, would modify the \gls{QP} before it is passed to the \gls{QP} solver.
+This generates an approximate solution for the QP subproblem, as shown in Figure~\ref{fig:toy_example_sqp}b,
+which is also an approximate Newton step for \gls{SQP}. 
+For completeness, Figure~\ref{fig:toy_example_sqp}c shows that,
+in the latter case, \gls{SQP} takes this approximate step first and needs several \gls{SQP} iterations to reach the exact solution.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_landscape_both.pdf}
-    \caption{Newton step at an \gls{IPM} iterate of a \gls{QP} with indefinite reduced Hessian.}
-    \label{fig:toy_example}
+    \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_sqp_level.pdf}
+    \caption{
+    Contour lines of a \gls{QP} with an indefinite reduced Hessian.
+    (a) shows the original objective, 
+    (b) shows the objective of the \gls{QP} after mirror if it is treated as a subproblem,
+    and (c) shows the \gls{SQP} iterates when the \gls{QP} is solved as an \gls{NLP} for completeness.}
+    \label{fig:toy_example_sqp}
 \end{figure}
 
-In other cases, such as in the early iterations, 
-where the augmented reduced Hessian fails to become \gls{PD}, a regularization to the Hessian is still needed.
-But if the regularization is made inside the solver, 
-the solution of the original \gls{QP} remains, and thus an exact Newton step in \gls{SQP} is preserved, 
-which differs from the approximate Newton step obtained by \gls{SQP}-level regularization, 
-and so does the feedback in real-time iteration.
+From a \gls{QP} perspective,
+we can exploit the curvature contributions from inequality constraints in the \gls{IPM}.
+As shown in Figure~\ref{fig:toy_example_ipm}b, 
+the curvature contributions from inequality constraints can make the reduced Hessian positive definite,
+and the local second-order model can thus produce a direction towards the exact solution without any extra work.
+The \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterations, as shown in Figure~\ref{fig:toy_example_ipm}c.
 
-A structure-exploiting interior point \gls{QP} solver that handles indefiniteness at the \gls{QP} level is 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_ipm_level.pdf}
+    \caption{
+    Contour lines of a \gls{QP} with an indefinite reduced Hessian.
+    (a) shows the original objective, 
+    (b) shows the local second-order model with curvature contributions from inequality constraints,
+    and (c) shows the \gls{IPM} iterates on the \gls{QP}.}
+    \label{fig:toy_example_ipm}
+\end{figure}
+
+\end{example}
+
+In other cases, such as in the early \gls{SQP} iterations,
+where the curvature contribution may not be enough to make the reduced Hessian positive definite, 
+a regularization to the Hessian is still needed.
+But if the regularization is made inside the solver, 
+the solution of the original \gls{QP} remains, and thus an exact Newton step in \gls{SQP} is preserved.
+
+A structure-exploiting interior-point \gls{QP} solver that handles indefiniteness at the \gls{QP} level is 
 therefore interesting as an alternative to regularizing at the \gls{SQP} level.
-And this leaves open how the correction should be made inside the solver.
-This thesis addresses this question for indefinite \glspl{QP} with optimal control structure.
+And this leaves open how the regularization should be made inside the solver.
+This thesis addresses this question for indefinite \glspl{QP} with \gls{OCP} structure.
 
 \section{Contributions}
 \label{sec:contributions}
 The main contributions of this thesis are the following:
 \begin{enumerate}
     \item \textbf{Riccati-based regularization}: 
-    we propose a regularization inside the Riccati recursion, i.e.\ Riccati-based regularization,
-    that exploits the \gls{OCP} structure of the problem, and regularizes the Hessian only when Cholesky factorization fails.
-    We further analyze why the minimum perturbation in this regularization fails,
+    This thesis investigates regularizations inside the interior-point \gls{QP} solvers.
+    The main focus is the proposed Riccati-based regularization,
+    which exploits the \gls{OCP} structure of the problem, and regularizes the Hessian only when Cholesky factorization fails.
+    This thesis further analyze why the minimum perturbation in this regularization fails,
     improve the regularization strategy,
     and prove the regularization to be inactive near the solution (Chapter~\ref{Chapter::Primal_Regularization}).
 
     \item \textbf{A benchmark of $175$ indefinite \gls{OCP} \glspl{QP}}:
-    we provide a pipeline for collecting \glspl{QP} from the \gls{SQP} iterations with acados~\cite{verschueren2020acadosmodularopensourceframework},
+    This thesis provides a pipeline for collecting \glspl{QP} from the \gls{SQP} iterations with acados,
     and collect $175$ \glspl{QP} from $8$ nonlinear \glspl{OCP},
     together with an analysis of the indefiniteness regarding the benchmark (Chapter~\ref{Chapter::Benchmark}).
 
     \item \textbf{Numerical comparison and ablation}:
-    We implement a prototype solver that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
+    This thesis implement a prototype solver that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
     and perform experiments with this solver on the benchmark to investigate the performance of the methods. 
-    In addition, we present an analysis of solving failures 
+    In addition, This thesis present an analysis of solving failures 
     and include ablation studies on the solver settings to show which components the results depend on~(Chapter~\ref{Chapter::Experiments}).
 \end{enumerate}
 
@@ -117,16 +200,16 @@ In Chapter~\ref{Chapter::Theoretical_Background},
 we start with theoretical background regarding the primal--dual \gls{IPM} for \gls{OCP}-structured \glspl{QP}, 
 where the Riccati recursion is used to solve the \glspl{QP}, 
 and introduce the barrier update and step size control strategies adopted in this work.
-In Chapter~\ref{Chapter::Primal_Regularization} 
+In Chapter~\ref{Chapter::Primal_Regularization},
 we propose the Riccati-based primal regularization,
 derive the improved stage regularization strategy from the failure of minimum perturbation,
 and prove that the regularization is asymptotically inactive.
-Chapter~\ref{Chapter::Benchmark} constructs 
-the benchmark of indefinite \glspl{QP} from the \gls{SQP} iterations of eight \glspl{OCP},
-and an analysis is presented about how the indefiniteness is distributed over the stages and where it originates.
-We carry out experiments in Chapter~\ref{Chapter::Experiments}.
-We first describe the prototype solver and the experiment setup,
-compare the Riccati-based methods with full Hessian regularization and inertia correction on the benchmark,
+Chapter~\ref{Chapter::Benchmark} presents 
+the benchmark of indefinite \glspl{QP} constructed from the \gls{SQP} iterations of eight \glspl{OCP},
+and analyzes about how the indefiniteness is distributed over the stages and where it originates.
+Chapter~\ref{Chapter::Experiments} first describes the prototype solver, the experiment setup,
+and the numerical results.
+The experiment compare the Riccati-based regularizations with full Hessian regularization and inertia correction on the benchmark,
 and discuss the instances on which the methods fail, with ablations for investigating which components the results depend on.
 Finally, Chapter~\ref{Chapter::Conclusion} summarizes the results and outlines directions for future work.
 

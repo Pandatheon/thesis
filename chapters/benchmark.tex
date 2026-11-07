@@ -11,12 +11,14 @@
 
 \chapter{A benchmark for indefinite OCP QPs} % Outline text
 \label{Chapter::Benchmark}
-In order to evaluate the performance of the proposed Riccati-based primal regularization, 
-especially in the context of the subproblems of \gls{SQP},
-in this chapter, we aim at constructing a benchmark of indefinite \gls{OCP} \glspl{QP} that arise in the \gls{SQP} iterations of \gls{NMPC} problems.
-We will first introduce the construction of the \gls{QP} benchmark, 
+The goal of this chapter is to provide test problems for evaluating the performance of the proposed Riccati-based primal regularizations
+on the subproblems of \gls{SQP}.
+To this end, we construct a benchmark of indefinite \gls{OCP} \glspl{QP}
+that arise in the \gls{SQP} iterations of \gls{NMPC} problems.
+First, in Section \ref{sec:benchmark_construction},
+We will introduce the construction of the \gls{QP} benchmark, 
 including the formulation of \gls{QP} subproblems in the benchmark, an overview of \gls{OCP} test problems 
-and the pipeline for collecting indefinite \glspl{QP} in Section \ref{sec:benchmark_construction}.
+and the pipeline for collecting indefinite \glspl{QP}.
 Then we will analyze the collected problem instances to gain a better understanding of characteristics
 regarding definiteness in the indefinite \gls{OCP} \gls{QP} benchmark in Section \ref{sec:benchmark_analysis}.
 
@@ -30,7 +32,8 @@ and finally the collection pipeline.
 
 \subsection{Formulation of QP subproblems from OCPs}
 \label{subsec:formulation}
-We will start from the formulation of the nonlinear \glspl{OCP} to obtain the resulting \gls{QP} subproblems that arise in the \gls{SQP} iterations.
+We will start from the formulation of the nonlinear \glspl{OCP} 
+to obtain the resulting \gls{QP} subproblems that arise in the \gls{SQP} iterations.
 In the benchmark, all \glspl{OCP} share the same structure: 
 a fixed-horizon, direct multiple-shooting \gls{OCP} 
 with a quadratic stage cost that penalizes deviations from given state and control references.
@@ -52,15 +55,12 @@ The mathematical formulation of the \glspl{OCP} is given as follows:
 \end{mini}
 
 where $x_{k+1}=f_k(x_k,u_k)$ is one integration step of the continuous dynamics over $[t_k,t_{k+1}]$.
-$\bar{x}_0$ is the given initial state,
-$\mathcal{Q}_k,\mathcal{R}_k,\mathcal{Q}_N\succeq 0$ are weighting matrices, 
-$\mathcal{S}_k$ is the coupling cost matrix,
-and $x_k^{\mathrm{ref}},u_k^{\mathrm{ref}}$ are the reference points. 
-$\mathcal{C}_k x_k + \mathcal{D}_k u_k$ includes the affine and box path constraints,
-$h_k(\cdot, \cdot)$ collects the nonlinear path constraints,
-and $\underline{g}_N \le \mathcal{C}_N x_N \le \bar{g}_N$ are the terminal inequality constraints.
+The given initial state is $\bar{x}_0$, $\mathcal{Q}_k,\mathcal{R}_k,\mathcal{Q}_N\succeq 0$ are weighting matrices, 
+$\mathcal{S}_k$ is the coupling cost matrix, and $x_k^{\mathrm{ref}},u_k^{\mathrm{ref}}$ are the reference points. 
+The term $\mathcal{C}_k x_k + \mathcal{D}_k u_k$ includes the affine and box path constraints,
+$h_k(\cdot, \cdot)$ collects the nonlinear path constraints, and $\underline{g}_N \le \mathcal{C}_N x_N \le \bar{g}_N$ are the terminal inequality constraints.
 
-When using the exact Hessian of the Lagrangian in the \gls{SQP} iterations, the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ reads:
+When using the exact Hessian of the Lagrangian in the \gls{SQP} iterations, the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ reads
 \begin{align}
     H_k &= \nabla^2 \mathcal{L}(x, u, \pi, \lambda)  \notag \\
         &= \begin{bmatrix} \mathcal{Q}_k & \mathcal{S}_k^{\top} \\ \mathcal{S}_k & \mathcal{R}_k \end{bmatrix} + \sum_{j=1}^{n_x} (\pi_k)_j \nabla^2 [f_k]_j(x_k,u_k) + \sum_{j=1}^{n_h} (\lambda_k)_j \nabla^2 [h_k]_j(x_k,u_k),
@@ -74,14 +74,15 @@ and an iterate-dependent cost from the two curvature terms.
 In the latter, each component Hessian $\nabla^2[f_k]_j$ and $\nabla^2[h_k]_j$ is symmetric but carries no definiteness guarantee, 
 and the associated multipliers $(\pi_k)_j$ and $(\lambda_k)_j$ may take arbitrary sign and magnitude during the \gls{SQP} iterations.
 
-The weighted sum $H_k$ is thus a general symmetric and typically indefinite matrix, in particular when the multipliers are large.
+The full Hessian blocks $H_k$ are thus a general symmetric and typically indefinite matrix, in particular when the multipliers are large.
 Consequently, the exact-Hessian \gls{QP} subproblem is in general nonconvex.
 
 As for $H_N$, neither the dynamics nor the affine terminal constraints add curvature in $x_N$,
 so $H_N = \mathcal{Q}_N \succeq 0$ is constant.
 
-Collecting the stage Hessians $H_k$ and Jacobians and linearizing the constraints of Equation~\eqref{eq:ocp} at the current \gls{SQP} iterate yields a
-structured \gls{QP}. The subproblem takes the form:
+Collecting the stage Hessians $H_k$ and Jacobians 
+and linearizing the constraints of \eqref{eq:ocp} at the current \gls{SQP} iterate 
+yields a structured \gls{QP}. The subproblem takes the form of
 \begin{mini}[2]
     {\Delta x, \Delta u}
     {\sum_{k=0}^{N-1} \left( \frac{1}{2}
@@ -104,8 +105,6 @@ structured \gls{QP}. The subproblem takes the form:
 \end{mini}
 where, at each stage $k$, $\Delta x_k \in \mathbb{R}^{n_x}$ and $\Delta u_k \in \mathbb{R}^{n_u}$
 denote the state and control deviation variables at stage $k$.
-Note that $\Delta x_k$ and $\Delta u_k$ here denote the \gls{SQP} step, 
-which the \gls{QP} solver treats as its decision variables $x_k$ and $u_k$ in Equation~\eqref{eq:ocp_qp}.
 
 All remaining quantities are obtained by linearizing the \gls{OCP} at the
 current \gls{SQP} iterate $(x_k,u_k)$ with multipliers $(\pi_k,\lambda_k)$.
@@ -131,10 +130,11 @@ stack the Jacobians of the affine and nonlinear path constraints, with the bound
 \end{equation*}
 
 \subsection{Benchmark OCPs}
+\label{subsec:benchmark_ocps}
 In this subsection, we introduce the eight \glspl{OCP} used to construct the benchmark. 
 Each \gls{OCP} is based on a dynamic system provided in~\cite{Kiessling2026} 
-and formulated as a regulation or point-to-point transfer problem with problem-specific modifications, 
-which can be uniformly described with Equation~\eqref{eq:ocp}.
+and formulated as a setpoint regulation problem with problem-specific modifications,
+which can be uniformly described with \eqref{eq:ocp}.
 
 The eight \glspl{OCP} are named and characterized as follows:
 \begin{itemize}
@@ -178,8 +178,8 @@ The eight \glspl{OCP} are named and characterized as follows:
 
 Besides the different physical systems,
 these \glspl{OCP} also cover different state and control dimensions, as shown in Table \ref{tab:ocp_problems}. 
-The state dimension $n_x$ ranges from $3$ to $6$, the control dimension $n_u$ from $1$ to $4$, and the horizon length $N$ from $15$ to $50$.
-This spread is chosen so that the benchmark spans a range of common problem scales in control problems.
+The state dimension $n_x$ ranges from $3$ to $6$, 
+the control dimension $n_u$ from $1$ to $4$, and the horizon length $N$ from $15$ to $50$.
 
 \subsection{Collection pipeline}
 Based on the eight \glspl{OCP}, 
@@ -198,13 +198,13 @@ The collection pipeline consists of two steps: \emph{generate} and \emph{collect
     We can selectively collect indefinite \glspl{QP} that exhibit an indefinite reduced Hessian.
 \end{enumerate}
 
-In the collect step, HPIPM uses the classical Riccati recursion (\texttt{ric\_alg = 0}),
-which requires only the reduced Hessian to be \gls{PD},
-instead of the square-root version~\cite{frisonAlgorithmsMethodsHighPerformance}, which requires the full Hessian to be \gls{PD}.
+In the collect step, HPIPM uses the classical Riccati recursion (\texttt{ric\_alg = 0})~\cite{frisonAlgorithmsMethodsHighPerformance},
+which requires only the reduced Hessian to be positive definite.
 A failure of the recursion thus indicates an indefinite reduced Hessian, which \texttt{acados} reports as status \texttt{4} (infeasible \gls{QP}),
 and only the \glspl{QP} with this status are collected.
 
-For each problem, we limit the number of near-identical \glspl{QP},
+For each problem, we identify the near-identical \glspl{QP} by comparing the solutions,
+and limit the number of those \glspl{QP},
 so that the number of instances per problem stays within a comparable range and the collected instances remain meaningful.
 We also use IPOPT~\cite{wachter2006implementation} as a reference solver and keep only the \glspl{QP} that it solves successfully.
 After this filtering, we obtain a total of $175$ indefinite \glspl{QP} from the eight \glspl{OCP}.
@@ -237,8 +237,8 @@ These \glspl{QP} are stored in JSON format and are available at \url{https://git
 In this section,
 we will analyze the collected instances regarding the definiteness in the benchmark.
 The distribution of indefiniteness is analyzed in Section \ref{subsec:distribution},
-which describes the magnitude and coverage of the indefinite reduced Hessians in the collected \glspl{QP},
-and the source of indefiniteness is analyzed in Section \ref{subsec:source}, 
+which describes the magnitude and coverage of the indefinite reduced Hessians in the collected \glspl{QP}.
+The source of indefiniteness is analyzed in Section \ref{subsec:source}, 
 which further illustrates the source of indefiniteness in the collected \glspl{QP} 
 by analyzing the eigenvalues of the reduced Hessian blocks at each stage.
 
@@ -251,10 +251,9 @@ and the \emph{width}, measured by the fraction of reduced Hessian blocks that ar
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{images/benchmark/indefiniteness_coverage_scatter.pdf}
-    \caption{Depth ($|\nu_{\min}|$ of the reduced Hessian, log scale)
-    versus width (indefinite-stage rate) of the collected QPs, colored by
-    OCP.}
+    \includegraphics[width=1.0\textwidth]{images/benchmark/indefiniteness_coverage_scatter.pdf}
+    \caption{Depth ($|\nu_{\min}|$, log scale) versus width (indefinite-stage rate) of the collected QPs,
+    colored by OCP. Grey lines mark the medians.}
     \label{fig:indefinite_qp_scatter}
 \end{figure}
 
@@ -274,22 +273,21 @@ The eight \glspl{OCP} thus cover narrow-but-deep, intermediate and wide-but-mode
 
 \subsection{Source of indefiniteness}
 \label{subsec:source}
-Recall that the reduced Hessian block at stage $k$, $M_k = R_k + B_k^\top P_{k+1}B_k$,
-is assembled from two parts, the control cost block $R$ and the cost-to-go block $P$.
+Recall that the reduced Hessian block, $\tilde{M}_k = \tilde{R}_k + B_k^\top P_{k+1}B_k$, at stage $k$, 
+is assembled from two parts, the control cost block $\tilde{R}_k$ and the cost-to-go block $P_{k+1}$.
 
 To investigate where the indefiniteness originates,
 we classify every indefinite stage by which of $R_k$ and $P_{k+1}$ has a negative eigenvalue:
-\emph{R only} ($R_k \not\succeq 0$, $P_{k+1} \succeq 0$),
+\emph{R only} ($\tilde{R}_k \not\succeq 0$, $P_{k+1} \succeq 0$),
 \emph{P only} ($P_{k+1} \not\succeq 0$, $R_k \succeq 0$),
-and \emph{both} ($R_k, P_{k+1} \not\succeq 0$).
-Since $R_k, P_{k+1} \succeq 0$ would imply $M_k \succeq 0$, these three cases cover all indefinite stages.
+and \emph{both} ($\tilde{R}_k, P_{k+1} \not\succeq 0$).
+Since $\tilde{R}_k, P_{k+1} \succeq 0$ would imply $M_k \succeq 0$, these three cases cover all indefinite stages.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{images/benchmark/stage_indefiniteness_signature.pdf}
-    \caption{Per-problem composition of stage indefiniteness. Each bar
-    shows, for one OCP, the share of stages that are \emph{R only},
-    \emph{both} and \emph{P only} ($n$ is the number of collected indefinite stages).}
+    \caption{Classification of the indefinite stages of each OCP into \emph{R only}, \emph{both} and \emph{P only}
+    ($n$ is the number of collected indefinite stages).}
     \label{fig:indefinite_source_signature}
 \end{figure}
 
@@ -306,7 +304,7 @@ The \emph{R only} case appears in four problems and is substantial only for \tex
 and in \textsl{Robot arm}, \textsl{Acrobot} and \textsl{Crane} it stays below $5\%$.
 
 Among all, \textsl{Flying robot} is the clearest case: all of its indefinite stages are \emph{P only}, 
-with $R_k \succ 0$ throughout.
+with $\tilde{R}_k \succ 0$ throughout.
 Its negative curvature thus enters the reduced Hessian only through the cost-to-go block, at isolated stages.
 
 \end{document}

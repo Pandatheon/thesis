@@ -12,11 +12,12 @@
 \chapter{Conclusion and outlook} % Overview text
 \label{Chapter::Conclusion}
 
-This thesis regularized the indefinite QPs of exact-Hessian SQP for NMPC inside the interior point solver,
+This thesis investigated the regularizations of indefinite QP subproblems 
+from exact-Hessian SQP for NMPC inside the interior point solver,
 where the barrier curvature is already included and only the reduced Hessian has to be positive definite.
 Since the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
 indefiniteness is detected and corrected stage-wise wherever the Cholesky factorization of $\tilde{M}_k$ fails,
-and the recursion stays linear in the horizon length.
+and the computational cost stays linear in the horizon length.
 
 We showed that a minimum perturbation correction of $\tilde{M}_k$ adds a negative rank-one term to the cost-to-go matrix,
 which can make the preceding stages indefinite and ill-conditioned.
@@ -30,17 +31,17 @@ against $28$ to $57$ for full Hessian regularization and $11$ for inertia correc
 The full Hessian methods failed on almost every \textsl{Flying robot} instance, where only the cost-to-go matrix is indefinite, and only at a few stages.
 The instances that no method solved combine deep negative curvature with a large share of indefinite stages.
 
-Several questions remain open:
-\begin{itemize}
-    \item \textbf{Regularization magnitude.} The eigenvalue floor $\epsilon$ is fixed,
-    and the remaining failures occur where large corrections are applied at many stages.
-    Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks or to the barrier parameter, could improve robustness.
-    \item \textbf{Other MPC formulations.} In time-optimal and economic MPC,
-    the cost provides little positive curvature, so indefiniteness is likely to be broader than in this benchmark.
-    Whether the ranking of the methods carries over remains to be tested.
-    \item \textbf{Embedding in SQP.} The QPs were solved in isolation with a Python prototype.
-    An implementation in HPIPM and \texttt{acados} is needed to compare against SQP-level regularization
-    in terms of SQP iterations, run time and closed-loop performance.
-\end{itemize}
+Several questions remain open.
+First, the regularization magnitude, set by the eigenvalue floor $\epsilon$, is fixed,
+and the remaining failures occur where large corrections are applied at many stages.
+Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks or to the barrier parameter, could improve robustness.
+Second, in time-optimal and economic MPC,
+the cost provides little positive curvature, so indefiniteness is likely to be broader than in this benchmark.
+Whether the ranking of the methods carries over remains to be tested.
+Finally, the QPs were solved in isolation with a Python prototype.
+An implementation in HPIPM and \texttt{acados} is needed for a run-time comparison,
+and, since the full step from the indefinite QP solution might be too aggressive,
+it remains to be investigated how the globalization mechanisms, such as a trust region and line search,
+should be designed for SQP with the indefinite QP solver for good closed-loop performance.
 
 \end{document}
