@@ -28,7 +28,7 @@ Finally, the adaptive barrier update and step size control strategies
 are discussed in Section~\ref{sec:update} and Section~\ref{sec:size_control} 
 with consideration of the nonconvex feature in this work.
 
-\section{Primal--dual interior point method}
+\section{Primal--dual interior--point method}
 \label{sec:ipm}
 Consider a \gls{QP} with equality and inequality constraints, of which the formulation can be written as
 
@@ -245,14 +245,14 @@ where the block matrices $\tilde{Q}_k$, $\tilde{R}_k$, and $\tilde{S}_k$ contain
 
 This tridiagonal structure allows for efficient solution of the \gls{KKT} system using Riccati recursion~\cite{rao1998application},
 which consists of a backward and forward pass.
-The backward pass computes the feedback gain $K$ and cost-to-go matrix $P$, 
+The backward pass computes the feedback gains $K_k$ and cost-to-go matrices $P_k$,
 while the forward pass computes the optimal state and control trajectories.
 The algorithmic details of the Riccati recursion are summarized in Algorithm~\ref{alg:riccati_recursion}.
 \begin{algorithm}[htbp]
-\caption{Riccati recursion for solving QP with OCP structure in \eqref{eq:ocp_qp}}
+\caption{Riccati recursion for solving a \gls{QP} with OCP structure in \eqref{eq:ocp_qp}}
 \label{alg:riccati_recursion}
 \begin{algorithmic}[1]
-\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_N^{\mathrm{stat}, x}$
 
 \Statex
 \Statex\textbf{// Backward recursion}
@@ -366,7 +366,7 @@ the term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1}$ cancels
 the second-order error that the affine step leaves in $t_j\lambda_j$,
 and $-\sigma_i\mu_i\mathbf{1}$ supplies the centering.
 This second solve returns the final direction $(\Delta y,\Delta\pi,\Delta\lambda,\Delta t)$ directly,
-and a step size control will follow to ensure the positivity of the slack variables and Lagrange multipliers for inequality.
+and a step size control will follow to ensure the positivity of the slack variables and Lagrange multipliers for the inequality constraints.
 
 \paragraph{Condition on corrector step.}
 In practice, the corrector step is usually applied conditionally.
@@ -391,7 +391,7 @@ Mehrotra's probing scheme \cite{nocedalAdaptiveBarrierUpdate2009a} drops the cor
 resulting in a more conservative approach for updating the barrier parameter $\tau$.
 
 In Mehrotra's probing,
-after one solve of the linear system with \eqref{eq:predictor_complementarity} as complementarity residual,
+after one solve of the linear system with \eqref{eq:predictor_complementarity} as the complementarity residual,
 another solve gives the so-called centering step, 
 and the corresponding complementarity residual at the \gls{RHS} is given by
 \begin{equation}
@@ -417,7 +417,7 @@ The iterate moves back to the central path instead of trying to decrease the inc
 In this section, we discuss the step size control employed in a primal--dual \gls{IPM}.
 The \gls{FTB} rule is first introduced as a common strategy for step size control in \glspl{IPM},
 which ensures that the updated slack variables and Lagrange multipliers remain positive.
-Then, a two-phase line search with backtracking for \glspl{QP} is introduced, which is 
+Then, a two-type line search with backtracking for \glspl{QP} is introduced, which is 
 simplified from the funnel line search method introduced in \cite{kiesslingUnifiedFunnelRestoration2025} for the nonconvex case.
 
 \subsection{Fraction-to-the-boundary rule}
@@ -437,16 +437,16 @@ Then, the actual step sizes are chosen as a fraction of the maximum step sizes, 
 where $\eta \in (0, 1)$ is a parameter that controls the fraction of the maximum step size to be taken,
 typically set to a value close to 1 to ensure sufficient progress while maintaining feasibility.
 
-\subsection{Two-phase line search for quadratic programs}
+\subsection{Two-type line search for quadratic programs}
 \label{subsec:two_phase_search}
 % In nonconvex cases, the effect of line search still can be investigated.
 A line search with backtracking can further reduce the step size for a sufficient decrease of the primal infeasibility.
 In the nonconvex case, the regularized direction is not the exact Newton step,
-and the \gls{FTB} step along a descent direction might still increase the barrier objective in a \gls{IPM}.
-We thus investigate a two-phase line search tailored for \glspl{QP} inspired by the funnel method,
-and the two-phase line search is executed after the \gls{FTB} part is performed. 
+and the \gls{FTB} step along a descent direction might still increase the barrier objective in an \gls{IPM}.
+We simplify the funnel method proposed in~\cite{kiesslingUnifiedFunnelRestoration2025} 
+to a two-type line search tailored for \glspl{QP}, and the two-type line search is executed after the \gls{FTB} part is performed. 
 
-In a \gls{IPM} for \gls{QP}, the objective $\phi$ used in the line search is the barrier objective
+In an \gls{IPM} for \glspl{QP}, the objective $\phi$ used in the line search is the barrier objective
 \begin{equation}
     \phi(y, t) = \frac{1}{2} y^\top H y + g^\top y - \tau \sum_{j=1}^{n_c} \ln t_j,
     \label{eq:barrier_objective}
@@ -485,7 +485,7 @@ The dual step size $\alpha_i^{\mathrm{dual}}$ is not changed.
 The procedure is summarized in Algorithm~\ref{alg:two_phase_line_search}.
 
 \begin{algorithm}[htbp]
-\caption{Two-phase line search}
+\caption{Two-type line search}
 \label{alg:two_phase_line_search}
 \begin{algorithmic}[1]
 \State \textbf{Input:} iterate $z_i$, direction $\Delta z$, \gls{FTB} steps $\alpha_i^{\mathrm{prim}},\alpha_i^{\mathrm{dual}}$, $\phi_i$, $\theta_i$, $\rho_i$

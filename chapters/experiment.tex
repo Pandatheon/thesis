@@ -37,13 +37,13 @@ and is used to evaluate the factorization cost of each method.
 \label{subsec:iteration_profile}
 The \emph{iteration profile} shows the number of test instances 
 that the method solves within a certain iteration budget.
-An instance where the method fails to solve within the max iteration budget $i_\mathrm{max}$ counts as unsolved.
+An instance that the method fails to solve within the max iteration budget $i_\mathrm{max}$ counts as unsolved.
 
 We plot the iteration profile as a curve, 
 with the iteration budget from $1$ to $i_\mathrm{max}$ on the horizontal axis 
 and the number of solved instances on the vertical axis.
 Different from the common performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
-which uses the iteration ratio to the best method as horizontal axis,
+which uses the iteration ratio to the best method as the horizontal axis,
 the iteration profile of a method does not depend on the other methods,
 by which we emphasize the ability of each method itself to solve the instances.
 
@@ -83,7 +83,7 @@ the ratios are considered as
 \omega_H \;=\; \left(\frac{n_x+n_u}{n_u}\right)^{3}.
 \end{equation}
 
-Thus, a modified Cholesky factorization of cost-to-go matrix costs $\omega_P$ units and an eigenvalue decomposition $27\omega_P$ units.
+Thus, a modified Cholesky factorization of the cost-to-go matrix costs $\omega_P$ units and an eigenvalue decomposition $27\omega_P$ units.
 
 Likewise, the two factorizations of a full Hessian block cost $\omega_H$ and $27\omega_H$ units.
 Since the full Hessian regularization modifies all $N$ blocks $\tilde{H}_k$ at once,
@@ -124,7 +124,7 @@ an unblocked full step can be taken without scaling by $\hat{\eta}$ so that
 the local quadratic convergence rate of the \gls{IPM} can be preserved.
 
 We further align the prototype solver with HPIPM in terms of the mode settings by defining a set of HPIPM settings, 
-referred to in the following presetting, whose values are listed in Table~\ref{tab:customized_settings}.
+referred to as the following presetting, whose values are listed in Table~\ref{tab:customized_settings}.
 
 \begin{table}[htbp]
 \caption{Detailed settings for the defined presetting.}
@@ -165,7 +165,7 @@ and the conditional Mehrotra's predictor--corrector is retained (\texttt{pred\_c
 
 To verify that the two implementations do agree, we collected $40$ convex \gls{QP} subproblems, 
 five from each of the $8$ \glspl{OCP} in the benchmark, 
-and compared the iteration behavior of the prototype solver against that of HPIPM with presetting. 
+and compared the iteration behavior of the prototype solver against that of HPIPM with the presetting. 
 The resulting iteration profiles are shown in Figure~\ref{fig:convex_iteration_profile}. 
 
 Both solvers solve all $40$ instances in the exact same number of iterations for each instance, 
@@ -178,7 +178,7 @@ rather than to the solver.
     \centering
     \includegraphics[width=0.80\textwidth]{images/experiment/convex_qp/iteration_qp_results_pos.pdf}
     \caption{Iteration profiles of the prototype solver and HPIPM on 40 convex \acrshortpl{QP}. 
-    Two curves coincide.}
+    The two curves coincide.}
     \label{fig:convex_iteration_profile}
 \end{figure}
 
@@ -203,7 +203,7 @@ which gives the three categories of \emph{full Hessian regularization}, \emph{Ri
 The \textsf{STRATEGY} is one of the numerical strategies of Section~\ref{subsec:reg_strategies},
 which are largely independent of the matrix they act on and can therefore be paired with each target.
 
-\paragraph{Full Hessian regularization}
+\paragraph{Full Hessian regularization.}
 The first category follows Section~\ref{subsec:full_hessian} and takes the full Hessian as the target matrix.
 The regularization is triggered by the failure of the Cholesky factorization in the Riccati recursion, 
 and is applied stage-wise to each full Hessian block.
@@ -211,7 +211,7 @@ The Riccati recursion is then re-attempted with the regularized full Hessian.
 Applying the three strategies of Section~\ref{subsec:reg_strategies} to each block $\tilde{H}_k$
 gives \textsf{H\_PROJECT}, \textsf{H\_MIRROR} and \textsf{H\_GMW}.
 
-\paragraph{Riccati-based regularization}
+\paragraph{Riccati-based regularization.}
 The second category is the one proposed in Section~\ref{sec:riccati_primal_reg} and acts on the reduced Hessian $\tilde{M}$.
 The algorithms are given in Algorithms~\ref{alg:modified_riccati_recursion} and \ref{alg:improved_modified_riccati_recursion},
 which differ in which matrices of the backward pass the adjustment is derived from and applied to, 
@@ -232,7 +232,7 @@ abandoning the minimum perturbation rule and correcting the cost-to-go matrix, s
 \textsf{M\_MIRROR} and \textsf{M\_GMW} apply only the first,
 \textsf{PM\_PROJECT} only the second, and \textsf{PM\_MIRROR} and \textsf{PM\_GMW} apply both.
 
-\paragraph{Inertia correction}
+\paragraph{Inertia correction.}
 The third category is the Levenberg--Marquardt-style inertia correction 
 widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl},
 which we denote by \textsf{INERTIA\_LM}.
@@ -261,7 +261,7 @@ Only the primal regularization from IPOPT is retained, as dual regularization is
     $\kappa_w^-$        & $1/3$      & Factor to decrease perturbation upon success \\
     $\kappa_w^+$        & $8$        & Factor to increase perturbation after inertia failure \\
     $\bar{\kappa}_w^+$  & $10^2$     & Accelerated scaling factor for severe indefiniteness \\
-    $\delta_{\text{LM}}$& $0.0$      & Initial Levenberg--Marquardt shift (unmodified matrix attempted first) \\
+    $\delta_{\text{LM}}$& $0.0$      & Initial Levenberg--Marquardt shift\\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -275,15 +275,15 @@ adds the same term to the reduced Hessian blocks $\tilde{M}_k$ and $P_k$ in the 
 Taken together, the three categories span ten methods,
 which all run on the same solver and benchmark and with the same settings.
 The barrier parameter is updated by Mehrotra's probing
-and the step size is controlled by the \gls{FTB} rule followed by the two-phase line search, 
-while the remaining settings are collected in Table~\ref{tab:general_settings}.
+and the step size is controlled by the \gls{FTB} rule followed by the two-type line search.
+The remaining settings are collected in Table~\ref{tab:general_settings}.
 
 \begin{table}[htbp]
 \centering
 \caption{Settings shared by all experiments.}
 \label{tab:general_settings}
 \vspace{0.5em}
-\begin{tabular}{ccp{7.5cm}}
+\begin{tabular}{ccp{8.5cm}}
     \toprule
     \textbf{Symbol} & \textbf{Value} & \textbf{Role} \\
     \midrule
@@ -292,15 +292,15 @@ while the remaining settings are collected in Table~\ref{tab:general_settings}.
     $\varepsilon_\mathrm{ineq}$ & $10^{-8}$ & Tolerance on the inequality residual \\
     $\varepsilon_\mathrm{comp}$ & $10^{-6}$ & Tolerance on the complementarity residual \\
     \addlinespace
-    $i_\mathrm{max}$   & $120$     & Iteration budget, beyond which the instance counts as unsolved \\
+    $i_\mathrm{max}$   & $120$     & Iteration budget \\
     $n_\mathcal{P}$    & $175$     & Nonconvex \gls{QP} instances in the test set \\
     \addlinespace
-    $\epsilon$         & $10^{-4}$ & Floor on the corrected eigenvalues and pivots, shared by all strategies \\
+    $\epsilon$         & $10^{-4}$ & Eigenvalue and pivot floor \\
     \addlinespace
     $\beta$           & $0.4$      & Backtracking factor, $\alpha_\mathrm{prim} \leftarrow \beta\alpha_\mathrm{prim}$ \\
     $n_\mathrm{max}$        & $10$        & Maximum backtracking iterations \\
     $\kappa_s$      & $10^{-1}$  & Switching constant, $\alpha_\mathrm{prim}(-\rho) > \kappa_s\,\theta^2$ \\
-    $\gamma$        & $10^{-4}$  & Armijo constant for f-type steps, $\phi^+ \le \phi_i + \gamma\,\alpha_\mathrm{prim}\rho$ \\
+    $\gamma$        & $10^{-4}$  & Armijo constant, $\phi^+ \le \phi_i + \gamma\,\alpha_\mathrm{prim}\rho$ \\
     \bottomrule
 \end{tabular}
 \end{table}
@@ -352,7 +352,7 @@ and the \textsf{PM} methods, which also act on $P_{k+1}$, cost more than their \
     \centering
     \includegraphics[width=0.8\textwidth]{images/experiment/Riccati-based_results/decomp_flop_worstcase_qp_results_riccati.pdf}
     \caption{Factorization cost per instance of the six Riccati-based methods, 
-    unsolved instances due to maximal iteration included (proxy units, log scale).
+    unsolved instances due to maximal iteration included.
     Annotations report the maximum observed cost and the number of unsolved instances.}
     \label{fig:flop-profile-riccati}
 \end{figure}
@@ -371,7 +371,7 @@ we now compare them against the full Hessian regularizations.
 
 The iteration profile in Figure~\ref{fig:iter-profile-fullhessian} 
 shows that the two Riccati-based methods sit well above every full Hessian variant across the whole iteration budget,
-which indicates better performance in efficiency and robustness of two Riccati-based methods over full Hessian regularization. 
+which indicates better performance in efficiency and robustness of the two Riccati-based methods over full Hessian regularization. 
 
 \begin{figure}[htbp]
     \centering
@@ -383,7 +383,7 @@ which indicates better performance in efficiency and robustness of two Riccati-b
 \end{figure}
 
 In Figure~\ref{fig:flop-profile-fullhessian}, 
-the two \textsf{PM} methods also outperform on the factorization cost.
+the two \textsf{PM} methods also outperform them on the factorization cost.
 The worst-case costs of \textsf{H\_PROJECT} and \textsf{H\_MIRROR} lie far above those of both Riccati-based methods,
 and even \textsf{H\_GMW}, the cheapest and least robust full Hessian method, has a higher median cost than \textsf{PM\_GMW}.
 
@@ -391,7 +391,7 @@ and even \textsf{H\_GMW}, the cheapest and least robust full Hessian method, has
     \centering
     \includegraphics[width=0.8\textwidth]{images/experiment/Full_Hessian_results/decomp_flop_worstcase_qp_results_riccati.pdf}
     \caption{Factorization cost per instance of the two strongest Riccati-based methods
-    against the full Hessian regularizations (proxy units, log scale).
+    against the full Hessian regularizations.
     Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
     \label{fig:flop-profile-fullhessian}
 \end{figure}
@@ -403,8 +403,8 @@ This supports regularizing the reduced Hessian by exploiting the stage-wise stru
 \label{subsec:comparison_inertia}
 Finally, we compare the recommended Riccati-based methods against inertia correction (\textsf{INERTIA\_LM}).
 
-In Figure~\ref{fig:iter-profile-inertia}, the three regularized methods end close together, indicating similar robustness of three methods.
-However, beyond about $30$ iterations the \textsf{PM\_MIRROR} and \textsf{PM\_GMW} sit clearly above \textsf{INERTIA\_LM}, 
+In Figure~\ref{fig:iter-profile-inertia}, the three regularized methods end close together, indicating similar robustness of the three methods.
+However, beyond about $30$ iterations \textsf{PM\_MIRROR} and \textsf{PM\_GMW} sit clearly above \textsf{INERTIA\_LM}, 
 indicating better efficiency of the two Riccati-based methods.
 
 \begin{figure}[htbp]
@@ -421,21 +421,20 @@ inertia correction is still the cheapest of the three in the worst case.
 In terms of median cost, however, \textsf{INERTIA\_LM} and \textsf{PM\_GMW} are approximately on par, 
 with \textsf{PM\_GMW} marginally lower. 
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/experiment/Inertia_correction_results/decomp_flop_worstcase_qp_results_riccati.pdf}
-    \caption{Factorization cost per instance of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
-    against inertia correction (proxy units, log scale).
-    Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
-    \label{fig:flop-profile-inertia}
-\end{figure}
-
 From the evidence of this benchmark, 
 inertia correction may be preferable where a bound on the worst-case factorization cost matters more than the number of solved instances.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.80\textwidth]{images/experiment/Inertia_correction_results/decomp_flop_worstcase_qp_results_riccati.pdf}
+    \caption{Factorization cost per instance of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
+    against inertia correction. Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
+    \label{fig:flop-profile-inertia}
+\end{figure}
+
 \subsection{Ablation on the conditional Mehrotra}
 \label{subsec:ablation_mehrotra}
-All results in previous sections used Mehrotra's probing.
+All results in the previous sections used Mehrotra's probing.
 To justify this choice, we rerun \textsf{PM\_MIRROR}, \textsf{PM\_GMW}, \textsf{INERTIA\_LM} and \textsf{H\_PROJECT}, 
 together with the unregularized baseline, using the conditional Mehrotra's predictor--corrector instead, 
 with all other settings unchanged.
@@ -459,25 +458,37 @@ Section~\ref{subsec:mehrotra_analysis} discusses why \textsf{PM\_MIRROR} loses f
 
 \subsection{Ablation on the line search}
 \label{subsec:ablation_line_search}
-The two-phase line search of Section~\ref{subsec:two_phase_search} was introduced for 
+The two-type line search of Section~\ref{subsec:two_phase_search} was introduced for 
 investigating the effect of line search on nonconvex \glspl{QP}.
 To isolate its contribution, we disable it, so that the \gls{FTB} step is taken directly,
 and rerun the same five methods as in the previous subsection with all other settings unchanged.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/experiment/ab_line_search_results/iteration_qp_results_riccati.pdf}
-    \caption{Iteration profile without the line search
-    of \textsf{PM\_MIRROR}, \textsf{PM\_GMW}, \textsf{INERTIA\_LM}, \textsf{H\_PROJECT} and the unregularized baseline.}
-    \label{fig:iter-profile-nols}
-\end{figure}
+\begin{table}[htbp]
+\centering
+\caption{Number of instances solved within $40$ and $120$ iterations without and with the line search.}
+\label{tab:solved-nols}
+\vspace{0.5em}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{$i_\mathrm{max} = 40$} &\multicolumn{2}{c}{$i_\mathrm{max} = 120$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+\textbf{Method} & \text{without} & \text{with} & \text{without} & \text{with} \\
+\midrule
+\textsf{PM\_MIRROR}     & $138$ & $137$ & $167$ & $171$ \\
+\textsf{PM\_GMW}        & $136$ & $136$ & $166$ & $167$ \\
+\textsf{INERTIA\_LM}    & $127$ & $129$ & $164$ & $164$ \\
+\textsf{H\_PROJECT}     & $120$ & $118$ & $146$ & $147$ \\
+\textsf{NO\_REGULARIZE} & $28$  & $31$  & $28$  & $31$  \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Figure~\ref{fig:iter-profile-nols} shows that the line search matters much less than the barrier update.
+Table~\ref{tab:solved-nols} shows that the line search matters much less than the barrier update.
 Only \textsf{PM\_MIRROR} clearly benefits from the line search, while the other methods solve almost the same number of instances,
-and the similar curves indicate that most iteration counts are identical on the instances solved in both settings.
+and the numbers solved within $40$ iterations are almost identical, so the line search does not accelerate convergence either.
 
 The ranking of Section~\ref{sec:comparison} therefore does not rely on the line search.
-The robustness and efficiency of the regularization method stem from itself.
+The robustness and efficiency of the regularization method stem from the method itself.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -501,8 +512,8 @@ A run that does not converge ends with one of three exit statuses, shown per met
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.70\textwidth]{images/experiment/discussion/qp_failures_by_status.pdf}
-    \caption{Unsolved instances per method on the $175$-instance test set, 
+    \includegraphics[width=0.85\textwidth]{images/experiment/discussion/qp_failures_by_status.pdf}
+    \caption{Unsolved instances per method on the $175$ instances, 
     stacked by exit status and annotated with the total and its share of the test set.}
     \label{fig:failures-by-status}
 \end{figure}
@@ -526,8 +537,7 @@ Near convergence, the barrier term $\Lambda_k T_k^{-1}$ grows large as the slack
 and enters $\tilde{M}_k$ both directly through $\tilde{R}_k$ and recursively through $P_{k+1}$.
 Once $\kappa_2(\tilde{M}_k)\,\epsilon_{\mathrm{mach}} \ge 1$, where $\epsilon_{\mathrm{mach}}$ denotes the machine precision, 
 rounding errors exceed the smallest eigenvalue of $\tilde{M}_k$, causing its Cholesky factorization to fail.
-
-For the full Hessian methods, although every $\tilde{H}_k^\mathrm{reg}$ is already positive definite,
+For the full Hessian regularizations, although every $\tilde{H}_k^\mathrm{reg}$ is already positive definite,
 the Cholesky factorization of $\tilde{M}_{k-1}$ could still fail due to rounding errors.
 The Riccati-based methods, however, correct $\tilde{M}_{k-1}$ itself whenever its factorization fails,
 so the indefiniteness is handled whether it stems from the problem or from rounding.
@@ -541,30 +551,23 @@ Deep but narrow indefiniteness, as in \textsl{Crane} and \textsl{Flying robot}, 
 both remain solvable, as \textsf{PM\_MIRROR} solves every instance of these four \glspl{OCP}.
 \textsl{Acrobot} is the only \gls{OCP} that combines both, and its four unsolved instances defeat every method within the iteration budget.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=1.0\textwidth]{images/experiment/discussion/qp_failures_by_category.pdf}
-    \caption{Unsolved instances per method and \acrshort{OCP};
-    $n_\mathcal{P}$ is the number of instances collected from that \acrshort{OCP}.}
-    \label{fig:failures-by-category}
-\end{figure}
-
 For the full Hessian methods, \textsl{Flying robot} is the hardest \gls{OCP},
 and, as Figure~\ref{fig:indefinite_source_signature} shows, its indefiniteness lies only in $P_k$ and at few stages.
 \textsf{H\_PROJECT}, \textsf{H\_MIRROR} and \textsf{H\_GMW} fail on $19$, $20$ and $20$ of its $20$ instances,
 while every Riccati-based method except \textsf{M\_PROJECT} solves all of them.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/experiment/discussion/qp_failures_by_category.pdf}
+    \caption{Unsolved instances per method and \acrshort{OCP} 
+    with $n_\mathcal{P}$ as the number of instances collected from that \acrshort{OCP}.}
+    \label{fig:failures-by-category}
+\end{figure}
+
 Since the full Hessian methods cannot directly act on $P_k$, 
 they perturb the $\tilde{H}_k$ over the whole horizon, including the $\tilde{Q}_k$, $\tilde{R}_k$ and $\tilde{S}_k$.
 This slows down the convergence and thus exhausts the iteration budget.
 The Riccati-based regularization avoids this by treating indefiniteness where it arises in the recursion.
-
-% \textsf{INERTIA\_LM} adds $\delta_w I$ to both $\tilde{Q}_k$ and $\tilde{R}_k$,
-% which in the Riccati recursion shifts both $P_k$ and $\tilde{M}_k$.
-% It therefore solves $18$ of the $20$ \textsl{Flying robot} instances,
-% and its total failure count is much closer to the \textsf{PM} methods than to the full Hessian ones.
-% Unlike the Riccati-based methods, however, its shift is not localized:
-% $\delta_w$ must be large enough for the most negative eigenvalue over all stages and is applied at every stage.
 
 \subsection{Analysis of the Mehrotra ablation}
 \label{subsec:mehrotra_analysis}
@@ -587,7 +590,6 @@ and thus in how long the regularized step is.
 \textsf{INERTIA\_LM} increases a uniform shift $\delta$ until the factorization succeeds. 
 If $\delta_{\min}$ is the smallest shift for which it succeeds, then $\nu_{\min}(\tilde{M}_i+E_i) \ge \delta-\delta_{\min}$.
 The accepted $\delta$ usually is larger than $\delta_{\min}$, and $\nu_{\min}$ stays of the order of $\delta$.
-
 \textsf{PM\_MIRROR} modifies only the negative eigenvalues of $\tilde{M}_k$ and $P_k$,
 which allows $\nu_{\min}(\tilde{M}_i+E_i)$ to stay as a small positive value.
 \textsf{PM\_MIRROR} could thus reach a much longer step than \textsf{INERTIA\_LM} at the same $\|r_i\|$.
@@ -623,9 +625,8 @@ For both steps, the \gls{FTB} rule then allows only a short step size,
 which keeps $\mu_{\mathrm{aff}}$ and $\mu_{\mathrm{cor}}$ close to $\mu$.
 The condition $\mu_{\mathrm{cor}} < 2\mu_{\mathrm{aff}}$ thus rarely detects this.
 The corrector step dominated by the inexactness from an affine step is, therefore, taken,
-which can not efficiently reduce the complementarity residual or the duality gap.
-
-In \textsf{INERTIA\_LM}, however, the second-order term is usually still comparable in size to the rest of the \gls{RHS},
+which cannot efficiently reduce the complementarity residual or the duality gap.
+In \textsf{INERTIA\_LM}, by contrast, the second-order term is usually still comparable in size to the rest of the \gls{RHS},
 so the conditional Mehrotra's predictor--corrector scheme remains effective,
 and the condition can still reject the corrector steps as shown in Table~\ref{tab:step_metrics}.
 The scheme thus makes progress as intended, and \textsf{INERTIA\_LM} loses far fewer instances than \textsf{PM\_MIRROR}.

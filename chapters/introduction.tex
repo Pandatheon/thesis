@@ -21,7 +21,7 @@ To solve the continuous-time \glspl{OCP},
 direct multiple shooting~\cite{bock1984multiple} is a widely used method,
 which transcribes the \gls{OCP} into a \gls{NLP} by discretizing the time horizon into multiple shooting intervals~\cite{Diehl2018}.
 \Gls{SQP}~\cite{nocedal2006numerical} provides a suitable approach for solving the \gls{NLP},
-which linearizes to obtain a \gls{QP} subproblem and solve it to obtain the search direction at each iterate.
+which linearizes to obtain a \gls{QP} subproblem and solves it to obtain the search direction at each iterate.
 In the real-time iteration~\cite{diehl2005real},
 one \gls{SQP} iteration is performed per sampling time, with the linearization done before the new state is known,
 so only the \gls{QP} solve lies between measurement and feedback.
@@ -68,17 +68,17 @@ so it could fail to regularize with inequality constraints in practice.
 
 In an interior-point \gls{QP} solver, however,
 the \gls{IPM} relaxes the complementarity from each inequality constraint by a barrier parameter.
-This adds weighted curvatures from inequality constraints to the Hessian inherently throughout the iterations,
-and the weight is the ratio of its multiplier to its slack, which changes according to the current iterate.
-So neither an estimate of the active set nor a penalty weight is needed.
+This adds weighted curvatures from inequality constraints to the Hessian inherently throughout the iterations.
+The weight changes according to the current iterate, 
+so neither an estimate of the active set nor a penalty weight is needed.
 The reduced Hessian with curvature from inequality constraints would be positive definite,
 as long as the fully reduced Hessian is positive definite.
 
-\begin{example}[A \gls{QP} with indefinite reduced Hessian]
+\begin{example}[A \gls{QP} with an indefinite reduced Hessian]
 \label{ex:toy}
 Consider an indefinite \gls{QP}
 \begin{mini}|l|
-  {u_0,u_1,x_1,x_2}
+  {x_0,u_0,x_1,u_1,x_2}
   {\tfrac{1}{2}(u_0^2 - 3x_1^2 + u_1^2 + \tfrac{1}{2}x_2^2)}
   {\label{eq:toy_qp}}
   {}
@@ -87,8 +87,8 @@ Consider an indefinite \gls{QP}
   \addConstraint{x_{2}}{=x_1 + u_1}
   \addConstraint{-1}{\le u_0 \le 1.}{}
 \end{mini}
-By eliminating the $x_1$ and $x_2$ using equality equation, 
-we have a \gls{QP} with Indefinite reduced Hessian as:
+By eliminating $x_0$, $x_1$ and $x_2$ using the equality constraints,
+we have a \gls{QP} with an indefinite reduced Hessian as:
 \begin{mini}|l|
   {u_0,u_1}
   {\frac{1}{2}\begin{bmatrix}u_0\\u_1\end{bmatrix}^{\!\top}\!
@@ -120,12 +120,12 @@ The contour lines of the reduced objective are shown in Figure~\ref{fig:toy_exam
 with a saddle point in reduced space and the exact solution lying at $(1, -\frac{2}{3})$ on the constraint boundary.
 
 From an \gls{SQP} perspective, 
-this \gls{QP} can be treated as a subproblem which provides an \gls{SQP} step or an \gls{NLP} which provides a solution.
-For the former case, the \gls{SQP}-level regularization, mirror in this case, would modify the \gls{QP} before it is passed to the \gls{QP} solver.
-This generates an approximate solution for the QP subproblem, as shown in Figure~\ref{fig:toy_example_sqp}b,
-which is also an approximate Newton step for \gls{SQP}. 
-For completeness, Figure~\ref{fig:toy_example_sqp}c shows that,
-in the latter case, \gls{SQP} takes this approximate step first and needs several \gls{SQP} iterations to reach the exact solution.
+this \gls{QP} can occur either as a subproblem that results in an \gls{SQP} step or as an \gls{NLP} that results in a solution.
+In the former case, the \gls{SQP}-level regularization, here mirror, modifies the \gls{QP} before it is passed to the \gls{QP} solver.
+The resulting solution, shown in Figure~\ref{fig:toy_example_sqp}b, is approximate for the \gls{QP} subproblem
+and also an approximate Newton step for \gls{SQP}.
+For completeness, Figure~\ref{fig:toy_example_sqp}c shows the latter case,
+where \gls{SQP} takes this approximate step first and needs several iterations to reach the exact solution.
 
 \begin{figure}[htbp]
     \centering
@@ -177,20 +177,20 @@ The main contributions of this thesis are the following:
     This thesis investigates regularizations inside the interior-point \gls{QP} solvers.
     The main focus is the proposed Riccati-based regularization,
     which exploits the \gls{OCP} structure of the problem, and regularizes the Hessian only when Cholesky factorization fails.
-    This thesis further analyze why the minimum perturbation in this regularization fails,
-    improve the regularization strategy,
-    and prove the regularization to be inactive near the solution (Chapter~\ref{Chapter::Primal_Regularization}).
+    This thesis further analyzes why the minimum perturbation in this regularization fails,
+    improves the regularization strategy,
+    and proves the regularization to be inactive near the solution (Chapter~\ref{Chapter::Primal_Regularization}).
 
     \item \textbf{A benchmark of $175$ indefinite \gls{OCP} \glspl{QP}}:
     This thesis provides a pipeline for collecting \glspl{QP} from the \gls{SQP} iterations with acados,
-    and collect $175$ \glspl{QP} from $8$ nonlinear \glspl{OCP},
+    and collects $175$ \glspl{QP} from $8$ nonlinear \glspl{OCP},
     together with an analysis of the indefiniteness regarding the benchmark (Chapter~\ref{Chapter::Benchmark}).
 
     \item \textbf{Numerical comparison and ablation}:
-    This thesis implement a prototype solver that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
-    and perform experiments with this solver on the benchmark to investigate the performance of the methods. 
-    In addition, This thesis present an analysis of solving failures 
-    and include ablation studies on the solver settings to show which components the results depend on~(Chapter~\ref{Chapter::Experiments}).
+    This thesis implements a prototype solver that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
+    and performs experiments with this solver on the benchmark to investigate the performance of the methods. 
+    In addition, this thesis presents an analysis of solving failures 
+    and includes ablation studies on the solver settings to show which components the results depend on~(Chapter~\ref{Chapter::Experiments}).
 \end{enumerate}
 
 \section{Outline}
@@ -206,10 +206,10 @@ derive the improved stage regularization strategy from the failure of minimum pe
 and prove that the regularization is asymptotically inactive.
 Chapter~\ref{Chapter::Benchmark} presents 
 the benchmark of indefinite \glspl{QP} constructed from the \gls{SQP} iterations of eight \glspl{OCP},
-and analyzes about how the indefiniteness is distributed over the stages and where it originates.
+and analyzes how the indefiniteness is distributed over the stages and where it originates.
 Chapter~\ref{Chapter::Experiments} first describes the prototype solver, the experiment setup,
 and the numerical results.
-The experiment compare the Riccati-based regularizations with full Hessian regularization and inertia correction on the benchmark,
+The experiments compare the Riccati-based regularizations with full Hessian regularization and inertia correction on the benchmark,
 and discuss the instances on which the methods fail, with ablations for investigating which components the results depend on.
 Finally, Chapter~\ref{Chapter::Conclusion} summarizes the results and outlines directions for future work.
 

@@ -21,19 +21,6 @@
 \selectchair{SYSCOP}
 \input{settings+/settings}  % Custom variables are located in settings+/variables.tex
 
-% Compile specific chapters only
-\includeonly{
-            chapters/abstract,
-            % chapters/acknowledgments,
-            settings+/front_matter/lists&indexes/acronyms,
-            chapters/introduction,
-            chapters/theory,
-            chapters/proposed,
-            chapters/benchmark,
-            chapters/experiment,
-            chapters/conclusion_outlook,
-            }
-
 % -----------------------------------------------------------------------------------
 % Information about the work and the author
 % -----------------------------------------------------------------------------------
@@ -94,13 +81,13 @@
     % Abstract in English and German
     \pagenumbering{Roman}  % I, II, III..
     \include{chapters/abstract}
-    \include{chapters/zusammenfassung}
+    % \include{chapters/zusammenfassung}
 
     % Table of contents
     \tableofcontents
 
     % List of Symbols & Acronyms
-    \include{settings+/front_matter/lists&indexes/symbols}
+    % \include{settings+/front_matter/lists&indexes/symbols}
     \include{settings+/front_matter/lists&indexes/acronyms}
 
     % List of Figures & Tables
@@ -108,7 +95,7 @@
     \include{settings+/front_matter/lists&indexes/tableindex}
 
     % List of C++,C,Python,... Code listings
-    \include{settings+/front_matter/lists&indexes/codeindex}
+    % \include{settings+/front_matter/lists&indexes/codeindex}
 
     % -------------------------------------------------------------------------------
     % Main Content
@@ -128,7 +115,7 @@
     \include{chapters/benchmark}
     \include{chapters/experiment}
     \include{chapters/conclusion_outlook}
-    \include{chapters/acknowledgments}
+    % \include{chapters/acknowledgments}
 
     % Bibliography
     \printbibliography[heading=bibintoc]                            \cleardoublepage

@@ -26,7 +26,7 @@ owing to the detection on the reduced Hessian, Riccati-based regularizations bec
 \label{sec:hessian_reg}
 In indefinite \glspl{QP}, the regularization needs to be applied to the Hessian matrix 
 to ensure a descent search direction in the \gls{IPM} when the constraints are satisfied.
-The resulting regularized \gls{KKT} system after Schur complement can be generally presented as
+The resulting regularized \gls{KKT} system after the Schur complement can be generally presented as
 \begin{equation}
     \begin{bmatrix}
      \tilde{H}_i + E_i & F^\top \\
@@ -58,23 +58,17 @@ project and mirror~\cite{verschueren2017sparsity} from eigenvalue modification,
 \gls{GMW}~\cite{gill1981practical} from modified Cholesky factorization,
 and inertia correction~\cite{wachter2006implementation} from Levenberg--Marquardt.
 
-Let $A$ be a symmetric matrix.
-The eigenvalue decomposition is admitted as $A = V D_E V^\top$,
+Let $A \in \mathbb{R}^{n\times n}$ be a symmetric matrix.
+$A$ admits the eigenvalue decomposition $A = V D_E V^\top$,
 where $V$ is orthogonal and $D_E$ is the diagonal matrix of eigenvalues.
 The modified Cholesky factorization $A = L D_I L^\top$, with $L$ unit lower triangular and $D_I$ diagonal,
 may not exist for an indefinite $A$, and \gls{GMW} therefore factorizes $A + E$ instead.
 In this notation, the four methods read as follows:
 
-Assume a matrix $A$ admits the eigenvalue decomposition $A = V D_E V^\top$
-and the modified Cholesky factorization $A = L D_I L^\top$,
-where $V$ is an orthogonal matrix of eigenvectors, $L$ is a unit lower triangular matrix,
-$D_E$ is a diagonal matrix of real eigenvalues, 
-and $D_I$ is a diagonal matrix whose signs give the inertia of $A$.
-In this notation, the four methods read as follows:
-
-\paragraph{Project and mirror}
-For both project and mirror, the eigenvalue decomposition $A = V D_E V^\top$ is first computed
-and then modify the eigenvalues in $D_E$ in different manners,
+\paragraph{Eigenvalue modification: project and mirror.}
+For both project and mirror, 
+the eigenvalue decomposition $A = V D_E V^\top$ is first computed,
+and the eigenvalues in $D_E$ are then modified in different manners,
 \begin{align*}
     \mathrm{project}(A, \epsilon) &:= V \max(\epsilon I, D_E) V^\top, \\
     \mathrm{mirror}(A, \epsilon) &:= V \max(\epsilon I, \lvert D_E\rvert) V^\top,
@@ -89,25 +83,29 @@ It preserves the magnitude of the curvature in all directions,
 which avoids the ill-conditioning of project at the cost of a larger perturbation
 when $\lvert\nu_{\min}\rvert > \epsilon$.
 
-\paragraph{\gls{GMW}.}
-% Among the modified Cholesky factorizations,
-% there are two types of strategies, Type-I and Type-II as introduced in~\cite{fangModifiedCholeskyAlgorithms2007}.
-% The most common strategy is a Type-II strategy \gls{GMW}, 
-% which requires neither the Gerschgorin bounds of Schnabel--Eskow
-% nor the block pivoting of Cheng--Higham~\cite{mcsweeneyModifiedCholeskyDecomposition2017}.
-% It directly performs the $\mathrm{LDL}^\top$ factorization and corrects its pivots,
-% whose signs give the inertia of $A$~\cite{gill1981practical}.
+\paragraph{Modified Cholesky factorization: \gls{GMW}.}
+A modified Cholesky factorization determines $E$ during the factorization itself,
+with four objectives~\cite{fangModifiedCholeskyAlgorithms2007}.
+First, $E$ should be zero if $A$ is sufficiently positive definite.
+Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
+$\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$ for some reasonable norm.
+Third, $A + E$ should be reasonably well-conditioned.
+Fourth, the cost should exceed that of the standard Cholesky factorization by only a small multiple of $n^2$ operations.
 
-Modified Cholesky factorizations fall into two types~\cite{fangModifiedCholeskyAlgorithms2007},
-which correct pivots $D_I$ similar as mirror and project correct eigenvalues.
+According to how they correct the pivots $D_I$, 
+similarly to how mirror and project correct eigenvalues,
+modified Cholesky factorizations fall into two types~\cite{fangModifiedCholeskyAlgorithms2007}.
 A Type-I strategy sets $\hat{D_I} = \max(\lvert D_I\rvert, \epsilon)$,
 whereas a Type-II strategy sets $\hat{D_I} = \max(D_I, \epsilon)$.
+Type-I thus corresponds to mirror and Type-II to project,
+so Type-I favors a well-conditioned $A+E$ and Type-II a small $\|E\|$.
+
 \gls{GMW} is the most common Type-I strategy and, 
-unlike the Type-II strategies of Schnabel--Eskow and Cheng--Higham,
+unlike the Type-II strategies of 
+Schnabel--Eskow~\cite{schnabelNewModifiedCholesky1990} and Cheng--Higham~\cite{chengModifiedCholeskyAlgorithm1998},
 requires neither Gerschgorin bounds nor block pivoting~\cite{mcsweeneyModifiedCholeskyDecomposition2017}.
 It directly performs the $\mathrm{LDL}^\top$ factorization and corrects its pivots,
 whose signs give the inertia of $A$~\cite{gill1981practical}.
-
 During the \gls{GMW} factorization,
 each pivot is replaced by the largest of three values:
 its absolute value which flips the value if negative and remains the same if positive,
@@ -120,8 +118,8 @@ The increments form a nonnegative diagonal correction $E$ with $A + E = L D_I L^
 which avoids the cost of an eigendecomposition and still guarantees positive definiteness,
 but $E$ is generally not minimal and tends to over-modify $A$.
 
-\paragraph{Inertia correction.}
-In the Levenberg--Marquardt strategy, all decompositions or factorizations are abandoned.
+\paragraph{Levenberg-Marquardt: inertia correction.}
+In this strategy, all decompositions or factorizations are abandoned.
 A uniform multiple of the identity is instead added to shift every eigenvalue by the same amount.
 The method is easy to implement, but, because it acts equally in all directions, 
 a shift large enough for a few negative eigenvalues also distorts the eigenvalues that were already positive.
@@ -129,7 +127,7 @@ The operation can be described as
     \begin{equation*}
         \mathrm{ic}(A, \Delta) := A + \Delta I, \qquad \Delta \geq 0.
     \end{equation*}
-In practice, $\Delta$ needs to be found by repeatedly increasing $\Delta$ until the Cholesky factorization of $A$ is successful.
+In practice, $\Delta$ needs to be found by repeatedly increasing $\Delta$ until the Cholesky factorization of $A + \Delta I$ is successful.
 
 \subsection{Indefiniteness detection on reduced Hessian}
 \label{subsec:detection}
@@ -144,7 +142,7 @@ Assume that \gls{LICQ} holds. A \gls{QP} with only equality constraints has a un
     M = Z^\top H Z \succ 0,
 \end{equation}
 \end{theorem}
-where the columns of $Z$ span the null space of equality constraint Jacobian$F$. 
+where the columns of $Z$ span the null space of the equality constraint Jacobian $F$. 
 The positive definiteness of the reduced Hessian is thus a necessary and sufficient condition for 
 the equality-constrained \gls{QP} admitting a unique global optimum.
 
@@ -182,8 +180,10 @@ In optimal control, it is applied stage-wise to the block $\tilde{H}_k$ of each 
     \end{bmatrix} + E_k \succ 0, \quad k = 0, 1, \ldots, N-1.
 \end{equation}
 As each $E_k$ depends only on $\tilde{H}_k$, this is simple to implement.
-It guarantees a descent direction at infeasible iterates, 
-i.e.\ $\Delta y^\top \tilde{H}_i^\mathrm{reg} \Delta y > 0$ for $\Delta y = Y \Delta y_y + Z \Delta y_z$ with $\Delta y_y \neq 0$.
+It ensures positive curvature in every direction, 
+i.e.\ $\Delta y^\top \tilde{H}_i^\mathrm{reg} \Delta y > 0$ 
+also for $\Delta y = Y \Delta y_y + Z \Delta y_z$ with $\Delta y_y \neq 0$, 
+which matters at infeasible iterates where $\Delta y$ leaves the null space of $F$.
 However, it could be conservative when equality constraints are satisfied.
 At an iterate with $r_i^{\mathrm{eq}} = 0$, $\Delta y$ lies in the null space of $F$,
 so only the curvature of $\tilde{H}_i$ within this subspace affects the step,
@@ -241,20 +241,19 @@ In Riccati-based regularizations, the Riccati recursion serves two purposes.
 First, it detects the indefiniteness of the reduced Hessian $\tilde{M}_i$ through the failure of Cholesky factorization,
 as shown in Section~\ref{subsec:block_reduced_hessian}.
 Second, it regularizes the reduced Hessian $\tilde{M}_i$ stage-wise to ensure a positive definite reduced Hessian $\tilde{M}_i$ 
-while preserving the \gls{OCP} structure,
-as described in Section~\ref{subsec:stage_regularization}
+while preserving the \gls{OCP} structure, as described in Section~\ref{subsec:stage_regularization}.
 
 \subsection{Reduced Hessian blocks from Riccati recursion}
 \label{subsec:block_reduced_hessian}
 In this subsection, we will restate and establish the connection between
 the Riccati recursion and the block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian $\tilde{M}_i$,
-which provides not only a way to compute the reduced Hessian $\tilde{M}_i$ implicitly, but also a way to detect the indefiniteness of $\tilde{M}_i$.
+which provides a way both to compute $\tilde{M}_i$ implicitly and to detect its indefiniteness.
 
 \begin{algorithm}[htbp]
 \caption{Backward pass of Riccati recursion}
 \label{alg:riccati_recursion_backward}
 \begin{algorithmic}[1]
-\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_N^{\mathrm{stat}, x}$
 \Statex 
 \For{$k = N-1$ \textbf{down to} $0$}
     \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
@@ -290,7 +289,6 @@ Since $\Delta u_{N-1}$ enters only the last stage term and $\Delta x_N$, its dia
     (\tilde{M}_i)_{N-1,N-1} = \tilde{R}_{N-1} + B_{N-1}^\top \tilde{Q}_N B_{N-1},
 \end{equation*}
 which is exactly $\tilde{M}_{N-1}$ in Algorithm~\ref{alg:riccati_recursion_backward} with $P_N = \tilde{Q}_N$.
-
 After eliminating $\Delta u_{N-1}$, the Schur complement is the reduced Hessian of the problem on stages $0, \dots, N-2$ with terminal weight $P_{N-1}$, which has the same structure.
 Repeating this backward in time to $\Delta u_0$ gives the block $\mathrm{LD}\mathrm{L}^\top$ factorization
 \begin{align*}
@@ -307,31 +305,29 @@ where $L$ is unit lower triangular, with off-diagonal blocks built from the feed
 
 This confirms that the matrices $\tilde{M}_k$ from the Riccati recursion are the diagonal blocks
 of the block $\mathrm{LD}\mathrm{L}^\top$ factorization of $\tilde{M}_i$.
-The equivalence of their positive definiteness is thus established by Sylvester's law of inertia,
-i.e.\ $\tilde{M}_i \succ 0$ if and only if every $\tilde{M}_k \succ 0$,
+By Sylvester's law of inertia, $\tilde{M}_i \succ 0$ if and only if every $\tilde{M}_k^i \succ 0$,
 which indicates the Cholesky factorizations of all $\tilde{M}_k$ in the backward pass succeed.
 We can, therefore, have Riccati recursion as the indefiniteness detection, as also used in Fatrop~\cite{vanroye2023fatrop}.
 
 \subsection{Stage regularization in Riccati recursion}
 \label{subsec:stage_regularization}
-With this connection, we can regularize the reduced Hessian $\tilde{M}_i$, 
-while preserving the sparse structure of the \gls{KKT} system,
-by a stage-wise regularization strategy applied to each reduced Hessian block $\tilde{M}_k$ during the Riccati recursion.
+With this connection, we can regularize $\tilde{M}_i$ stage-wise during the Riccati recursion,
+which preserves the sparse structure of the \gls{KKT} system.
+Whenever the Cholesky factorization of a block $\tilde{M}_k$ fails,
+we add a block adjustment matrix $E_k$ to it on the fly, i.e.\ use $\tilde{M}_k + E_k$.
+This modifies the backward pass as in Algorithm~\ref{alg:modified_riccati_recursion}.
 
-Whenever the Cholesky factorization of $\tilde{M}_k$ fails,
-we can regularize $\tilde{M}_k$ on the fly
-by adding a block adjustment matrix $E_k$ to it, i.e.\ $\tilde{M}_k + E_k$.
-This gives a modification of the backward pass of Riccati recursion as in Algorithm~\ref{alg:modified_riccati_recursion}.
 \begin{algorithm}[htbp]
 \caption{Backward pass of modified Riccati recursion}
 \label{alg:modified_riccati_recursion}
 \begin{algorithmic}[1]
-\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_N^{\mathrm{stat}, x}$, $\mathcal{E}(\cdot)$: strategy from Section~\ref{subsec:reg_strategies}
 \Statex 
 \For{$k = N-1$ \textbf{down to} $0$}
     \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
     \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
     \If{factorization fails}
+        \State $E_k \gets \mathcal{E}(\tilde{M}_k) - \tilde{M}_k$ \Comment{Compute block adjustment}
         \State $\tilde{M}_k \gets \tilde{M}_k + E_k$ \Comment{Apply regularization}
         \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
     \EndIf
@@ -345,18 +341,18 @@ This gives a modification of the backward pass of Riccati recursion as in Algori
 \EndFor
 \end{algorithmic}
 \end{algorithm}
-The regularization is thus referred to as Riccati-based regularization 
-and is only applied to the stages where the reduced Hessian block is indefinite.
-The block adjustment matrix $E_k$ can be derived by any strategies mentioned in Section~\ref{subsec:reg_strategies}.
+
+The regularization is thus referred to as Riccati-based regularization,
+and block adjustment matrices $E_k$ can be derived by any of the strategies mentioned in Section~\ref{subsec:reg_strategies}.
 
 \section{Improved stage regularization algorithm}
 \label{sec:fail_minimal_perturbation}
-In Section~\ref{subsec:min_perturbation_failure}, we analyze the case
-where the commonly used minimum perturbation strategy in regularization fails in stage regularization,
-which would cause a severe condition number issue in the preceding stages
-due to the propagation of the small curvature through the stages.
-This motivates the improved stage regularization strategy in Section~\ref{subsec:improved_stage_reg},
-which avoids minimum perturbation and takes the propagation into account.
+Section~\ref{subsec:min_perturbation_failure} analyzes the case
+where the commonly used minimum perturbation strategy fails in stage regularization,
+which would severely ill-condition the preceding stages
+due to the propagation of the small curvature.
+This motivates the improved stage regularization in Section~\ref{subsec:improved_stage_reg},
+which avoids minimum perturbation and accounts for the propagation.
 
 \subsection{Failure of minimum perturbation regularization}
 \label{subsec:min_perturbation_failure}
@@ -400,48 +396,42 @@ where $c = \frac{\|B_{k-1}^\top \Gamma_k^\top v_j\|^2}{\nu_{\min}(\tilde{M}_{k-1
 
 As $\epsilon$ is a small positive value,
 the presence of the negative rank-one update, scaled by roughly $\frac{1}{\epsilon}$, will dominate,
-not only severely deteriorating its condition number,
-but also likely making $\tilde{M}_{k-1}$ indefinite, 
-which can further cause the need for successively large regularizations through the stages and numerical explosion in the end.
+deteriorating the condition number of $\tilde{M}_{k-1}$, and also likely making it indefinite,
+which can further cause the need for successively larger regularizations through the stages and numerical explosion in the end.
 
 \subsection{Insights and improved stage regularization}
 \label{subsec:improved_stage_reg}
 This issue reveals two insights into stage regularization:
 \begin{enumerate}
-    \item The minimum modification objective \cite{fangModifiedCholeskyAlgorithms2007} is not the foremost consideration for stage regularization, 
-    as it can cause a severe condition number issue in the preceding stages.
-    A trade-off between perturbation norm and condition number must be carefully treated.
-    \item The cost-to-go matrix $P_k$ must be incorporated into the regularization design, 
-    as the severity of propagation depends on the coupling structure between stages, 
-    which a purely local scheme cannot capture.
+    \item A larger perturbation norm needs to be considered for a reasonable condition number, 
+    similar to the discussion in~\cite{gill1981practical}.
+    \item The cost-to-go matrices $P_k$ need to be incorporated into the regularization design, 
+    as a purely local scheme cannot capture the severity of propagation.
 \end{enumerate}
 
 From the first insight, instead of the minimum perturbation strategy,
 an intuitive, but effective, approach is to use the absolute value of the negative eigenvalues or $\mathrm{LDL}^\top$ pivots as the perturbation magnitude,
 which can avoid the severe condition number issue in the preceding stages.
-When it comes to the eigenvalue modification, this corresponds to the mirror strategy,
-and when it comes to the modified Cholesky factorization,
-this corresponds to the Type-II strategy, of which \gls{GMW} is a common representative.
+This corresponds to mirror in eigenvalue modification 
+and to the Type-I strategy, of which \gls{GMW} is a common representative, in modified Cholesky factorization.
+From the second insight, we can incorporate the cost-to-go matrices $P_k$ into the algorithm,
+so that the propagation of the small curvature can be taken into account in the regularization.
+The resulting improved stage regularization algorithm is summarized in Algorithm~\ref{alg:improved_modified_riccati_recursion}.
 
-From the second insight, we can incorporate the cost-to-go matrix $P_k$ into the strategy design,
-which also can be achieved by adding an adjustment matrix $E_{k+1,i}^P$ to the cost-to-go matrix $P_{k+1}$ directly,
-so that the propagation of the small curvature can be taken into account in the regularization design.
-
-The resulting improved stage regularization strategy is summarized in Algorithm~\ref{alg:improved_modified_riccati_recursion}.
 \begin{algorithm}[htbp]
 \caption{Backward pass of improved modified Riccati recursion}
 \label{alg:improved_modified_riccati_recursion}
 \begin{algorithmic}[1]
-\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_{\mathrm{stat}, x}^N$, $\mathcal{E}(\cdot)$: mirror or Type-II strategy
+\State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_N^{\mathrm{stat}, x}$, $\mathcal{E}(\cdot)$: mirror or Type-I strategy
 \Statex 
 \For{$k = N-1$ \textbf{down to} $0$}
     \State $P_{k+1}^\mathrm{reg} \gets P_{k+1}$ \Comment{Default with no regularization}
     \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1}^\mathrm{reg} B_k$
     \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k)$
     \If{factorization fails}
-        \State $P_{k+1}^\mathrm{reg} \gets \mathcal{E}(P_{k+1})$ \Comment{Regularize cost-to-go matrix}
+        \State $P_{k+1}^\mathrm{reg} \gets \mathcal{E}(P_{k+1})$ \Comment{Regularize the cost-to-go matrix}
         \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1}^\mathrm{reg} B_k$
-        \State $\tilde{M}_k^\mathrm{reg} \gets \mathcal{E}(\tilde{M}_k)$ \Comment{Regularize reduced Hessian block}
+        \State $\tilde{M}_k^\mathrm{reg} \gets \mathcal{E}(\tilde{M}_k)$ \Comment{Regularize the reduced Hessian block}
         \State $L_k \gets \mathrm{Cholesky}(\tilde{M}_k^\mathrm{reg})$
     \EndIf
     \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1}^\mathrm{reg} A_k$
@@ -455,23 +445,19 @@ The resulting improved stage regularization strategy is summarized in Algorithm~
 \end{algorithmic}
 \end{algorithm}
 
-In Algorithm~\ref{alg:improved_modified_riccati_recursion}, when the Cholesky factorization fails,
-the algorithm first applies the regularization $\mathcal{E}(\cdot)$ to the cost-to-go matrix,
-which stops the negative-curvature propagation identified in the second insight, 
-and then applies it again to the reduced Hessian block to act as a local safeguard, 
-ensuring that the Cholesky factorization succeeds.
-
-Both corrections are produced by the same non-minimal strategy $\mathcal{E}(\cdot)$, mirror or Type-II, 
-rather than by the minimum modification rule.
-This keeps the condition number of the regularized blocks bounded, as motivated by the first insight. 
+In Algorithm~\ref{alg:improved_modified_riccati_recursion}, 
+both corrections on the reduced Hessian blocks $\tilde{M}_k$ and cost-to-go matrices $P_k$
+are produced by the same non-minimal strategy $\mathcal{E}(\cdot)$, mirror or Type-I.
+This controls the condition number of the regularized blocks, as motivated by the first insight,
+and takes the propagation into account, as in the second insight.
 When no factorization failure occurs, the recursion reduces to the standard Riccati backward pass.
 
-\section{Inactivity of the regularization}
+\section{Asymptotic inactivity of the regularization}
 \label{sec:asymptotic_inactivity}
 Since the regularization is applied only as the detection triggers it,
 its behavior close to the solution is governed by the reduced Hessian $\tilde{M}_i$.
 In this section,
-we prove that any regularization triggered by this detection is inactive near solution,
+we prove that any regularization triggered by this detection is inactive near the solution,
 i.e., it vanishes once the iterates are sufficiently close to the local minimizer.
 The argument adapts that of \cite{absilNewtonKKTInteriorpointMethods2007} to the reduced Hessian $\tilde{M}_i$.
 
@@ -548,7 +534,7 @@ so we have the following Lemma~\ref{lem:SOSC}:
 \end{proposition}
 
 \begin{proof}
-    Under Assumptions~\ref{as:strict_comp}, $\mathcal{A}_0 = \emptyset$ and $\mathcal{A} = \mathcal{A}_+$,
+    Under Assumption~\ref{as:strict_comp}, $\mathcal{A}_0 = \emptyset$ and $\mathcal{A} = \mathcal{A}_+$,
     so the critical cone $C(y^*,\lambda^*)$ reduces to the null space of the active constraints.
     Therefore, we have $C(y^*,\lambda^*) = \{w \mid F w = 0,\ G_{\mathcal{A}} w = 0\}$.
 
@@ -580,10 +566,9 @@ so we have the following Lemma~\ref{lem:SOSC}:
     By Section~\ref{subsec:block_reduced_hessian}, all Cholesky factorizations in the backward pass then succeed and $E_i = 0$.
 \end{proof}
 
-Proposition~\ref{prop:vanish} shows the regularization triggered by the Riccati-based detection becomes inactive as the iterates converge to the local optimum. 
-Once the iterates are close to $(y^*,\lambda^*)$, $E_i=0$ and the regularized recursion coincides with the unregularized one,
-the solver thus recovers the exact Newton step and inherits the local convergence rate of the underlying \gls{IPM}, 
-without the regularization affecting its asymptotic behavior.
+Proposition~\ref{prop:vanish} shows that 
+once the iterates are close to $(y^*,\lambda^*)$, $E_i=0$ and the regularized recursion coincides with the unregularized one.
+The solver thus recovers the exact Newton step and inherits the local convergence rate of the underlying \gls{IPM}.
 
 % Since the regularization is applied only as the detection in Section~\ref{subsec:block_reduced_hessian} triggers it,
 % its behavior close to the solution is governed by the reduced Hessian $\tilde{M}_i$.

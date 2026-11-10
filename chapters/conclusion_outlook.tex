@@ -13,7 +13,7 @@
 \label{Chapter::Conclusion}
 
 This thesis investigated the regularizations of indefinite QP subproblems 
-from exact-Hessian SQP for NMPC inside the interior point solver,
+from exact-Hessian SQP for NMPC inside the interior--point solver,
 where the barrier curvature is already included and only the reduced Hessian has to be positive definite.
 Since the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
 indefiniteness is detected and corrected stage-wise wherever the Cholesky factorization of $\tilde{M}_k$ fails,
@@ -23,7 +23,7 @@ We showed that a minimum perturbation correction of $\tilde{M}_k$ adds a negativ
 which can make the preceding stages indefinite and ill-conditioned.
 The improved strategy therefore uses a non-minimal correction and also regularizes the cost-to-go matrix.
 We proved that the regularization becomes inactive close to the solution,
-so the local convergence rate of the interior point method is retained.
+so the local convergence rate of the \gls{IPM} is retained.
 
 In the benchmark of $175$ indefinite QPs from eight OCPs, the cost-to-go matrix is indefinite in most indefinite stages.
 With Mehrotra's probing, \textsf{PM\_MIRROR} left $4$ instances unsolved and \textsf{PM\_GMW} $8$ at a lower worst-case decomposition cost than \textsf{PM\_MIRROR},
