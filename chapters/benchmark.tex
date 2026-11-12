@@ -16,23 +16,23 @@ on the subproblems of \gls{SQP}.
 To this end, we construct a benchmark of indefinite \gls{OCP} \glspl{QP}
 that arise in the \gls{SQP} iterations of \gls{NMPC} problems.
 First, in Section \ref{sec:benchmark_construction},
-we will introduce the construction of the \gls{QP} benchmark, 
+we introduce the construction of the \gls{QP} benchmark,
 including the formulation of \gls{QP} subproblems in the benchmark, an overview of \gls{OCP} test problems 
 and the pipeline for collecting indefinite \glspl{QP}.
-Then we will analyze the collected problem instances to gain a better understanding of characteristics
+Then we analyze the collected problem instances to gain a better understanding of characteristics
 regarding definiteness in the indefinite \gls{OCP} \gls{QP} benchmark in Section \ref{sec:benchmark_analysis}.
 
 \section{Benchmark construction}
 \label{sec:benchmark_construction}
 This section describes the construction of the indefinite \gls{QP} benchmark.
-We first formulate the \gls{QP} subproblems from the \gls{SQP} iterations of the \glspl{OCP},
+We first formulate the \gls{QP} subproblems arising in \gls{SQP} iterations of the \glspl{OCP},
 then introduce the eight \gls{OCP} test problems,
 formulated as fixed-time regulator problems with quadratic stage costs and box constraints on the controls,
 and finally the collection pipeline.
 
 \subsection{Formulation of QP subproblems from OCPs}
 \label{subsec:formulation}
-We will start from the formulation of the nonlinear \glspl{OCP} 
+We start from the formulation of the nonlinear \glspl{OCP} 
 to obtain the resulting \gls{QP} subproblems that arise in the \gls{SQP} iterations.
 In the benchmark, all \glspl{OCP} share the same structure: 
 a fixed-horizon, direct multiple-shooting \gls{OCP} 
@@ -46,22 +46,21 @@ The mathematical formulation of the \glspl{OCP} is given as follows:
         \begin{bmatrix} x_k-x_k^{\mathrm{ref}} \\ u_k-u_k^{\mathrm{ref}} \end{bmatrix}}
     {\label{eq:ocp}}
     {}
-    \breakObjective{+ \tfrac12\|x_N-x_N^{\mathrm{ref}}\|_{\mathcal{Q}_N}^2}
+    \breakObjective{+ \tfrac12 (x_N-x_N^{\mathrm{ref}})^\top \mathcal{Q}_N (x_N-x_N^{\mathrm{ref}})}
     \addConstraint{x_0}{= \bar{x}_0}
     \addConstraint{x_{k+1}}{= f_k(x_k,u_k),\quad}{k = 0, \ldots, N-1}
     \addConstraint{\underline{g}}{\le \mathcal{C}_k x_k + \mathcal{D}_k u_k \le \bar{g},}{k = 0, \ldots, N-1}
     \addConstraint{\underline{h}}{\le h_k(x_k,u_k) \le \bar{h},}{k = 0, \ldots, N-1}
-    \addConstraint{\underline{g}_N}{\le \mathcal{C}_N x_N \le \bar{g}_N,}
     \addConstraint{\underline{h}_N}{\le h_N(x_N) \le \bar{h}_N,}
 \end{mini}
 where $x_{k+1}=f_k(x_k,u_k)$ is one integration step of the continuous dynamics over $[t_k,t_{k+1}]$.
 The given initial state is $\bar{x}_0$, $\mathcal{Q}_k,\mathcal{R}_k,\mathcal{Q}_N\succeq 0$ are weighting matrices, 
 $\mathcal{S}_k$ is the coupling cost matrix, and $x_k^{\mathrm{ref}},u_k^{\mathrm{ref}}$ are the reference points. 
-The term $\mathcal{C}_k x_k + \mathcal{D}_k u_k$ includes the affine and box path constraints,
-$\underline{g}_N \le \mathcal{C}_N x_N \le \bar{g}_N$ are the affine terminal constraints, and
+The term $\mathcal{C}_k x_k + \mathcal{D}_k u_k$ includes the affine and box path constraints, and
 $h_k(\cdot, \cdot)$ and $h_N(\cdot)$ collect the nonlinear path and terminal constraints, respectively.
 
-When using the exact Hessian of the Lagrangian in the \gls{SQP} iterations, the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ reads
+When using the exact Hessian of the Lagrangian in the \gls{SQP} iterations, 
+the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ reads
 \begin{align}
     H_k &= \nabla^2 \mathcal{L}(x, u, \pi, \lambda)  \notag \\
         &= \begin{bmatrix} \mathcal{Q}_k & \mathcal{S}_k^{\top} \\ \mathcal{S}_k & \mathcal{R}_k \end{bmatrix} + \sum_{j=1}^{n_x} (\pi_k)_j \nabla^2 [f_k]_j(x_k,u_k) + \sum_{j=1}^{n_h} (\lambda_k)_j \nabla^2 [h_k]_j(x_k,u_k),
@@ -75,10 +74,10 @@ and an iterate-dependent cost from the two curvature terms.
 In the latter, each component Hessian $\nabla^2[f_k]_j$ and $\nabla^2[h_k]_j$ is symmetric but carries no definiteness guarantee, 
 and the associated multipliers $(\pi_k)_j$ and $(\lambda_k)_j$ may take arbitrary sign and magnitude during the \gls{SQP} iterations.
 
-The full Hessian blocks $H_k$ are thus general symmetric and typically indefinite matrices, in particular when the multipliers are large.
+The full Hessian blocks $H_k$ are thus general symmetric and might be indefinite matrices, in particular when the multipliers are large.
 Consequently, the exact-Hessian \gls{QP} subproblem is in general nonconvex.
 
-As for $H_N$, the dynamics and the affine terminal constraints add no curvature in $x_N$,
+As for $H_N$, the dynamics add no curvature in $x_N$,
 but the nonlinear terminal constraints do, so
 \begin{equation*}
     H_N = \mathcal{Q}_N + \sum_{j=1}^{n_{h_N}} (\lambda_N)_j \nabla^2 [h_N]_j(x_N),
@@ -104,8 +103,8 @@ yields a structured \gls{QP}. The subproblem takes the form of
     \addConstraint{\begin{bmatrix} \underline{u}_k \\ \underline{x}_k \\ \underline{d}_k \end{bmatrix}}
         {\le \begin{bmatrix} J_k^{b,u} & 0 \\ 0 & J_k^{b,x} \\ D_k & C_k \end{bmatrix}
         \begin{bmatrix} \Delta u_k \\ \Delta x_k \end{bmatrix}
-        \le \begin{bmatrix} \overline{u}_k \\ \overline{x}_k \\ \overline{d}_k \end{bmatrix},}
-        {k = 0, \ldots, N}
+        \le \begin{bmatrix} \overline{u}_k \\ \overline{x}_k \\ \overline{d}_k \end{bmatrix},\quad}
+        {k = 0, \ldots, N,}
 \end{mini}
 where, at each stage $k$, $\Delta x_k \in \mathbb{R}^{n_x}$ and $\Delta u_k \in \mathbb{R}^{n_u}$
 denote the state and control deviation variables at stage $k$.
@@ -136,8 +135,8 @@ stack the Jacobians of the affine and nonlinear path constraints, with the bound
     \overline{d}_k=\begin{bmatrix}\bar{g}-\mathcal{C}_k x_k-\mathcal{D}_k u_k\\ \bar{h}-h_k(x_k,u_k)\end{bmatrix}.
 \end{equation*}
 At the terminal stage $k=N$, no control is present, so $J_N^{b,u}$ and $D_N$ are empty,
-and $C_N$, $\underline{d}_N$ and $\overline{d}_N$ are formed in the same way from $\mathcal{C}_N x_N$ and $h_N(x_N)$
-with the bounds $\underline{g}_N,\bar{g}_N$ and $\underline{h}_N,\bar{h}_N$.
+and $C_N$, $\underline{d}_N$ and $\overline{d}_N$ are formed in the same way from $h_N(x_N)$
+with the bounds $\underline{h}_N,\bar{h}_N$.
 
 \subsection{Benchmark OCPs}
 \label{subsec:benchmark_ocps}
@@ -216,25 +215,25 @@ and only the \glspl{QP} with this status are collected.
 For each problem, we keep only the \glspl{QP} that the reference solver IPOPT~\cite{wachter2006implementation} solves successfully,
 and limit the number of near-identical \glspl{QP}, identified by comparing their solutions,
 so that the number of instances per problem stays within a comparable range and the collected instances remain meaningful.
-In the end, we obtain a total of $175$ indefinite \glspl{QP} from the eight \glspl{OCP}.
-The per-problem counts are reported in Table~\ref{tab:collected_qps} and range from $15$ to $29$.
-These \glspl{QP} are stored in JSON format and available at \url{https://github.com/Pandatheon/Primal-dual_IPM.git}.
+In the end, we obtain a total of $170$ indefinite \glspl{QP} from the eight \glspl{OCP}.
+The per-problem counts are reported in Table~\ref{tab:collected_qps} and range from $18$ to $27$.
+These \glspl{QP} are stored in JSON format and are available at \url{https://github.com/Pandatheon/Primal-dual_IPM.git}.
 
 \begin{table}[htbp]
     \centering
-    \caption{Number of indefinite QPs collected from each OCP ($175$ in total).}
+    \caption{Number of indefinite QPs collected from each OCP ($170$ in total).}
     \label{tab:collected_qps}
     \begin{tabular}{l c}
         \toprule
         \textbf{Problem} & \textbf{Number} \\
         \midrule
         Pendulum     & 18 \\
-        Acrobot      & 15 \\
-        Dubins car   & 29 \\
+        Acrobot      & 19 \\
+        Dubins car   & 22 \\
         Furuta       & 19 \\
         Flying robot & 20 \\
         Robot arm    & 24 \\
-        Crane        & 29 \\
+        Crane        & 27 \\
         Moonlander   & 21 \\
         \bottomrule
     \end{tabular}
@@ -243,11 +242,10 @@ These \glspl{QP} are stored in JSON format and available at \url{https://github.
 \section{Benchmark analysis}
 \label{sec:benchmark_analysis}
 In this section,
-we will analyze the collected instances regarding the definiteness in the benchmark.
-The distribution of indefiniteness is analyzed in Section \ref{subsec:distribution},
-which describes the magnitude and coverage of the indefinite reduced Hessians in the collected \glspl{QP}.
-The source of indefiniteness is analyzed in Section \ref{subsec:source}, 
-which further illustrates the source of indefiniteness in the collected \glspl{QP} 
+we analyze the collected instances regarding the definiteness in the benchmark.
+Section \ref{subsec:distribution} describes the magnitude 
+and coverage of the indefinite reduced Hessians in the collected \glspl{QP}.
+Section \ref{subsec:source} further illustrates the source of indefiniteness in the collected \glspl{QP} 
 by analyzing the eigenvalues of the reduced Hessian blocks at each stage.
 
 \subsection{Distribution of indefiniteness}
@@ -266,13 +264,13 @@ and the \emph{width}, measured by the fraction of reduced Hessian blocks that ar
 \end{figure}
 
 As seen from Figure~\ref{fig:indefinite_qp_scatter}, 
-the depth of the collected \glspl{QP} ranges from near zero to very large values, and the width from a few stages to the entire horizon.
+the depth of the collected \glspl{QP} ranges from near zero to very large values, and the width from a few stages to almost the entire horizon.
 But wide and deep indefiniteness seldom occur together.
 Problems that are indefinite in only a small fraction of their stages, 
 such as \textsl{Crane}, \textsl{Flying robot} and \textsl{Furuta}, can still reach deep negative curvature.
 Conversely, \textsl{Dubins car} and \textsl{Robot arm} show only moderate depth with wide indefinite-stage rates.
 \textsl{Moonlander} and \textsl{Acrobot} lie in between, with intermediate indefinite-stage rates.
-\textsl{Moonlander} stays within a narrow depth band, whereas \textsl{Acrobot} spans almost the full depth range of the benchmark.
+\textsl{Moonlander} stays within a narrow depth band, whereas \textsl{Acrobot} spreads over a wide one.
 \textsl{Pendulum} contributes \glspl{QP} with very shallow negative curvature at intermediate rates.
 The eight \glspl{OCP} thus cover narrow-but-deep, intermediate and wide-but-moderate indefiniteness.
 
@@ -304,8 +302,8 @@ with only \textsl{Acrobot} and \textsl{Crane} mixed.
 The \emph{both} case dominates \textsl{Moonlander}, \textsl{Robot arm}, \textsl{Dubins car} and \textsl{Furuta}.
 The \emph{P only} case dominates \textsl{Flying robot} and \textsl{Pendulum},
 and is also the largest category in the two mixed problems, \textsl{Crane} and \textsl{Acrobot}, ahead of \emph{both}.
-The \emph{R only} case appears in four problems and is substantial only for \textsl{Dubins car},
-while marginal in \textsl{Robot arm}, \textsl{Acrobot} and \textsl{Crane}.
+The \emph{R only} case appears in three problems and is substantial only for \textsl{Dubins car},
+while marginal in \textsl{Robot arm} and \textsl{Crane}.
 
 Among all, \textsl{Flying robot} is the clearest case: all of its indefinite stages are \emph{P only}, 
 with $\tilde{R}_k \succ 0$ throughout.

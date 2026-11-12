@@ -40,3 +40,4 @@ convexification
 Levenberg
 Marquardt
 setpoint
+optimality

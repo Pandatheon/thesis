@@ -13,7 +13,7 @@
 \label{Chapter::Conclusion}
 
 This thesis investigated the regularizations of indefinite QP subproblems 
-from exact-Hessian SQP for NMPC inside the interior--point solver,
+from exact-Hessian SQP for NMPC inside the interior-point solver,
 where the barrier curvature is already included and only the reduced Hessian has to be positive definite.
 Since the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
 indefiniteness is detected and corrected stage-wise wherever the Cholesky factorization of $\tilde{M}_k$ fails,
@@ -25,11 +25,11 @@ The improved strategy therefore uses a non-minimal correction and also regulariz
 We proved that the regularization becomes inactive close to the solution,
 so the local convergence rate of the \gls{IPM} is retained.
 
-In the benchmark of $175$ indefinite QPs from eight OCPs, the cost-to-go matrix is indefinite in most indefinite stages.
-With Mehrotra's probing, \textsf{PM\_MIRROR} left $4$ instances unsolved and \textsf{PM\_GMW} $8$ at a lower worst-case decomposition cost than \textsf{PM\_MIRROR},
-against $28$ to $57$ for full Hessian regularization and $11$ for inertia correction.
-The full Hessian methods failed on almost every \textsl{Flying robot} instance, where only the cost-to-go matrix is indefinite, and only at a few stages.
-The instances that no method solved combine deep negative curvature with a large share of indefinite stages.
+With Mehrotra's probing, \textsf{PM\_MIRROR} and \textsf{PM\_GMW} solved all $170$ instances, 
+\textsf{PM\_GMW} at a lower worst-case decomposition cost than \textsf{PM\_MIRROR},
+against $21$ to $48$ unsolved for full Hessian regularization and $9$ for inertia correction.
+The full Hessian methods failed on almost every \textsl{Flying robot} instance, 
+where only the cost-to-go matrix is indefinite, and only at a few stages.
 
 Several questions remain open.
 First, the regularization magnitude, set by the eigenvalue floor $\epsilon$, is fixed,

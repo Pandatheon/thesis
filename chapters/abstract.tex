@@ -22,23 +22,24 @@
     \setlength{\parindent}{0em}
 
     In \gls{NMPC}, \gls{SQP} with the exact Hessian of the Lagrangian
-    produces \gls{QP} subproblems of which the full Hessian can be indefinite.
+    produces subproblems that are \glspl{QP} with a potentially indefinite full Hessian.
     Structure-exploiting \gls{QP} solvers embedded in the \gls{SQP} solver often require a positive definite full Hessian,
-    so the full Hessian is regularized at the \gls{SQP} level before it is passed to the solver,
+    so the full Hessian is typically regularized at the \gls{SQP} level before it is passed to the \gls{QP} solver,
     which in general changes the solution of each \gls{QP} and also the feedback in \gls{SQP} with real-time iteration.
     In contrast to SQP-level regularizations,
-    regularizing at the \gls{QP} level can introduce two advantages.
-    First, this lets the solver exploit the curvature from inequality constraints without extra estimation, 
+    regularizing at the \gls{QP} level in \gls{IPM} can introduce two advantages.
+    First, this lets the \gls{QP} solver exploit the curvature from inequality constraints without extra estimation, 
     and, second, only return the solution of the original QP.
 
     This thesis investigates primal regularizations inside interior-point solvers 
-    for indefinite \glspl{QP} with \gls{OCP} structure, with a focus on the proposed Riccati-based regularization,
-    which regularizes only at the stages where the Cholesky factorization fails during Riccati recursion.
-    This thesis shows with a general case that the minimum perturbation strategy can make the Riccati-based regularization fail, 
-    and further derives an improved strategy from the case to avoid such failure.
-    It is proven that the Riccati-based regularization becomes inactive near the solution.
+    for indefinite \glspl{QP} with \gls{OCP} structure, with a focus on the proposed Riccati-based regularization.
+    This thesis shows that the minimum perturbation strategy can make the Riccati-based regularization fail, 
+    and, based on these observations, an improved strategy is derived to avoid such failure cases.
+    It is proven that the Riccati-based regularization becomes inactive near the solution,
+    as it regularizes only at the stages where the Cholesky factorization fails during Riccati recursion.
 
-    For evaluation, this thesis builds a benchmark of $175$ indefinite \gls{OCP} \glspl{QP} from the \gls{SQP} iterations.
+    For evaluation, this thesis builds a benchmark of $170$ indefinite \gls{OCP} \glspl{QP} 
+    from \gls{SQP} iterations when solving \gls{NMPC} problems.
     With the regularizations implemented in a prototype solver that reproduces the iterations of HPIPM on convex \glspl{QP},
     this thesis compares the Riccati-based regularization with full Hessian regularization and inertia correction 
     in terms of robustness, efficiency and estimated factorization cost.

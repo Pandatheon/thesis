@@ -16,3 +16,4 @@
 {"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QSection \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q concludes the chapter by analyzing the failures and the Mehrotra ablation.\\E$"}
 {"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QSection \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q presents the numerical comparison, first among the Riccati-based methods themselves and then against full Hessian regularization and inertia correction, followed by ablations of the barrier update and the line search.\\E$"}
 {"rule":"A_INFINITIVE","sentence":"^\\QBut with the curvature contributions from inequality constraints, the iterate can still move towards the exact solution without any regularization.\\E$"}
+{"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QThe third category is the Levenberg–Marquardt-style inertia correction of Section \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q, which we denote by INERTIALM.\\E$"}
