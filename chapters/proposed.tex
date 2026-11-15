@@ -59,12 +59,20 @@ project and mirror~\cite{verschueren2017sparsity} from eigenvalue modification,
 \gls{GMW}~\cite{gill1981practical} from modified Cholesky factorization,
 and inertia correction~\cite{wachter2006implementation} from Levenberg--Marquardt.
 
-Let $A \in \mathbb{R}^{n\times n}$ be a symmetric matrix.
+Let $A \in \mathbb{R}^{n\times n}$ be a symmetric matrix and $E$ its adjustment.
 $A$ admits the eigenvalue decomposition $A = V D_E V^\top$,
-where $V$ is orthogonal and $D_E$ is the diagonal matrix of eigenvalues.
-If $A$ is positive definite,
-it also admits the modified Cholesky factorization $A = L D_I L^\top$, with $L$ unit lower triangular and $D_I$ diagonal.
-In this notation, the four methods read as follows:
+where $V$ is orthogonal and $D_E$ is the diagonal matrix of eigenvalues $\nu$.
+If no zero pivot occurs during the factorization, 
+$A$ also admits the $\mathrm{LDL}^\top$ factorization $A = L D_I L^\top$,
+with $L$ unit lower triangular and $D_I$ diagonal.
+
+The methods can be compared in terms of four objectives adapted from~\cite{fangModifiedCholeskyAlgorithms2007}.
+First, $E$ should be zero if $A$ is sufficiently positive definite.
+Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
+$\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$.
+Third, $A + E$ should be reasonably well-conditioned.
+Fourth, the regularization strategies should be computationally efficient.
+Each method is described below with the trade-offs it makes among these objectives.
 
 \paragraph{Eigenvalue modification: project and mirror.}
 For both project and mirror, 
@@ -75,29 +83,18 @@ and the eigenvalues in $D_E$ are then modified in different manners,
     \mathrm{mirror}(A, \epsilon) &:= V \max(\epsilon I, \lvert D_E\rvert) V^\top,
 \end{align*}
 where $\epsilon > 0$ is a small constant and the $\max$ operator is applied component-wise.
-Project clips any negative or near-zero eigenvalues to $\epsilon$,
-which keeps a minimal adjustment to the original matrix for positive definiteness,
-thus achieving the minimal Frobenius norm of the adjustment matrix $E$ \cite{nocedal2006numerical},
-but may lead to an increase in the condition number if the original eigenvalues were not close to zero.
-Mirror reflects negative eigenvalues to their positive counterparts.
-It preserves the magnitude of the curvature in all directions,
-which avoids the ill-conditioning of project at the cost of a larger perturbation
-when $\lvert\nu_{\min}\rvert > \epsilon$.
+Project clips negative or near-zero eigenvalues to $\epsilon$,
+which gives the smallest adjustment $E$ in Frobenius norm for positive definiteness~\cite{nocedal2006numerical},
+but may increase the condition number if the eigenvalues satisfy $\lvert\nu\rvert \gg \epsilon$.
+Mirror flips negative eigenvalues to their positive counterparts,
+which avoids the ill-conditioning of project, at the cost of a larger perturbation 
+when a negative eigenvalue $\nu$ of $A$ satisfies $\lvert\nu\rvert > \epsilon$.
 
 \paragraph{Modified Cholesky factorization: \gls{GMW}.}
-A modified Cholesky factorization determines $E$ during the factorization itself,
-with four objectives~\cite{fangModifiedCholeskyAlgorithms2007}.
-First, $E$ should be zero if $A$ is sufficiently positive definite.
-Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
-$\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$ for some reasonable norm.
-Third, $A + E$ should be reasonably well-conditioned.
-Fourth, since the standard Cholesky factorization of $A$ costs about $\tfrac{1}{3}n^3$ flops,
-the modification should add only a small multiple of $n^2$ operations,
-so that the cost remains that of one Cholesky factorization to leading order.
-
-According to how they correct the pivots $D_I$, 
-similarly to how mirror and project correct eigenvalues,
-modified Cholesky factorizations fall into two types~\cite{fangModifiedCholeskyAlgorithms2007}.
+A modified Cholesky factorization determines $E$ during the factorization itself.
+Similarly to how mirror and project correct eigenvalues,
+modified Cholesky factorizations fall into two types~\cite{fangModifiedCholeskyAlgorithms2007},
+according to how they correct the pivots $D_I$.
 A Type-I strategy sets $\hat{D_I} = \max(\lvert D_I\rvert, \epsilon)$,
 whereas a Type-II strategy sets $\hat{D_I} = \max(D_I, \epsilon)$.
 Type-I thus corresponds to mirror and Type-II to project,
@@ -106,8 +103,8 @@ so Type-I favors a well-conditioned $A+E$ and Type-II a small $\|E\|$.
 \gls{GMW} is the most common Type-I strategy and, 
 unlike the Type-II strategies of 
 Schnabel--Eskow~\cite{schnabelNewModifiedCholesky1990} and Cheng--Higham~\cite{chengModifiedCholeskyAlgorithm1998},
-requires neither Gerschgorin bounds nor block pivoting~\cite{mcsweeneyModifiedCholeskyDecomposition2017}.
-It directly performs the $\mathrm{LDL}^\top$ factorization and corrects its pivots,
+requires neither Gerschgorin bounds nor $2\times2$ block pivoting~\cite{mcsweeneyModifiedCholeskyDecomposition2017}.
+It directly performs the $\mathrm{LDL}^\top$ factorization with diagonal pivoting and corrects its pivots,
 whose signs give the inertia of $A$~\cite{gill1981practical}.
 During the \gls{GMW} factorization,
 each pivot is replaced by the largest of three values:
@@ -117,21 +114,75 @@ and the smallest value for keeping the entries of the corresponding column of $L
 The first two values form the Type-I rule $\max(\lvert D_I\rvert, \epsilon)$, 
 and the third only adds the bound on $L$ for numerical stability.
 
-The increments form a nonnegative diagonal correction $E$ with $A + E = L D_I L^\top$,
+The increments form a nonnegative diagonal correction $E$ with $A + E = L \hat{D_I} L^\top$,
 which avoids the cost of an eigendecomposition and still guarantees positive definiteness,
-but $E$ is generally not minimal and tends to over-modify $A$.
+but $E$ is generally not minimal.
 
 \paragraph{Levenberg-Marquardt: inertia correction.}
 In this strategy,
 a uniform multiple of the identity is instead added to shift every eigenvalue by the same amount.
-The method is easy to implement, but, because it acts equally in all directions, 
-a shift large enough for a few negative eigenvalues also distorts the eigenvalues that were already positive.
 The operation can be described as
     \begin{equation*}
         \mathrm{ic}(A, \delta_w) := A + \delta_w I, \qquad \delta_w \geq 0.
     \end{equation*}
 In practice, $\delta_w$ needs to be found by repeatedly increasing $\delta_w$ until the Cholesky factorization of $A + \delta_w I$ is successful.
-This strategy is widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl}.
+The method is easy to implement and is widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl}.
+However, as it acts equally in all directions,
+a shift large enough for a few negative eigenvalues also distorts the eigenvalues that were already positive.
+
+\begin{example}[Perturbation magnitude of the four methods]
+\label{ex:reg_comparison}
+Consider an indefinite $2\times2$ symmetric matrix $A$ and its decomposition
+\begin{equation*}
+\begin{aligned}
+    A = \begin{bmatrix} 2 & 2 \\ 2 & -1 \end{bmatrix}
+&= \underbrace{\begin{bmatrix} \tfrac{2}{\sqrt{5}} & \tfrac{1}{\sqrt{5}} \\ \tfrac{1}{\sqrt{5}} & -\tfrac{2}{\sqrt{5}} \end{bmatrix}}_{V}
+       \underbrace{\begin{bmatrix} 3 & 0 \\ 0 & -2 \end{bmatrix}}_{D_E}
+       \underbrace{\begin{bmatrix} \tfrac{2}{\sqrt{5}} & \tfrac{1}{\sqrt{5}} \\ \tfrac{1}{\sqrt{5}} & -\tfrac{2}{\sqrt{5}} \end{bmatrix}}_{V^\top} \\
+    &= \underbrace{\begin{bmatrix} 1 & 0 \\ 1 & 1 \end{bmatrix}}_{L}
+       \underbrace{\begin{bmatrix} 2 & 0 \\ 0 & -3 \end{bmatrix}}_{D_I}
+       \underbrace{\begin{bmatrix} 1 & 1 \\ 0 & 1 \end{bmatrix}}_{L^\top}.
+\end{aligned}
+\end{equation*}
+For project, mirror and \gls{GMW}, let $\epsilon = 10^{-4}$.
+Inertia correction starts from $\delta_w = 0$ and increases $\delta_w$ by $5$ after each failed factorization,
+which gives $\delta_w = 5$.
+The resulting matrices are
+\begin{alignat*}{2}
+    \mathrm{project}(A,\epsilon) &= V \begin{bmatrix} 3 & 0 \\ 0 & \epsilon \end{bmatrix} V^\top
+        \approx \begin{bmatrix} 2.4 & 1.2 \\ 1.2 & 0.6 \end{bmatrix}, &\qquad
+    L \hat{D_I} L^\top &= L \begin{bmatrix} 2 & 0 \\ 0 & 3 \end{bmatrix} L^\top
+        = \begin{bmatrix} 2 & 2 \\ 2 & 5 \end{bmatrix}, \\
+    \mathrm{mirror}(A,\epsilon) &= V \begin{bmatrix} 3 & 0 \\ 0 & 2 \end{bmatrix} V^\top
+        = \begin{bmatrix} 2.8 & 0.4 \\ 0.4 & 2.2 \end{bmatrix}, &\qquad
+    \mathrm{ic}(A,\delta_w) &= A + 5\, I
+        = \begin{bmatrix} 7 & 2 \\ 2 & 4 \end{bmatrix}.
+\end{alignat*}
+Compared with the minimal adjustment $\inf\{\|\Delta A\|_F : A + \Delta A \succeq 0\} = 2$,
+the adjustments and the resulting condition numbers are listed in Table~\ref{tab:reg_example}.
+\begin{table}[htbp]
+\centering
+\caption{Adjustment norm and condition number of the four methods from Example~\ref{ex:reg_comparison}.}
+\label{tab:reg_example}
+\vspace{0.5em}
+\begin{tabular}{lcc}
+    \toprule
+    Method & $\|E\|_F - 2$ & $\kappa(A+E)$ \\
+    \midrule
+    project            & $10^{-4}$      & $3\times10^{4}$ \\
+    mirror             & $2$            & $1.5$ \\
+    \gls{GMW}          & $4$            & $6$ \\
+    inertia correction & $\approx 5.07$ & $\approx 2.67$ \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+Among the four methods, project gives the smallest perturbation that makes $A$ positive definite,
+at the cost of a large condition number.
+The other three methods balance the perturbation and the condition number,
+with mirror achieving the best balance in this example.
+
+\end{example}
 
 \subsection{Indefiniteness detection on reduced Hessian}
 \label{subsec:detection}
@@ -151,7 +202,7 @@ The positive definiteness of the reduced Hessian is thus a necessary and suffici
 the equality-constrained \gls{QP} admitting a unique global optimum.
 
 Since the \gls{KKT} system after the Schur complement in \eqref{eq:schur_comp_KKT} is that of an equality-constrained \gls{QP} as
-\begin{mini}[2]
+\begin{mini}
     {\Delta y}
     {\frac{1}{2} \Delta y^\top \tilde{H}_i \Delta y + (\tilde{r}_i^{\mathrm{stat}})^\top \Delta y}
     {\label{eq:newton_qp}}
@@ -187,10 +238,33 @@ It ensures positive curvature in every direction,
 i.e.\ $\Delta y^\top \tilde{H}_i^\mathrm{reg} \Delta y > 0$ 
 also for $\Delta y = Y \Delta y_y + Z \Delta y_z$ with $\Delta y_y \neq 0$, 
 which matters at infeasible iterates where $\Delta y$ leaves the null space of $F$.
+
 However, it could be conservative when equality constraints are satisfied.
 At an iterate with $r_i^{\mathrm{eq}} = 0$, $\Delta y$ lies in the null space of $F$,
 so only the curvature of $\tilde{H}_i$ within this subspace affects the step,
 and removing negative curvature outside it makes the adjustment larger than necessary.
+
+\begin{example}[Full and reduced Hessian regularization]
+\label{ex:full_vs_reduced}
+Consider the \gls{QP}~\eqref{eq:toy_qp} at an iterate with $r_i^{\mathrm{eq}} = 0$, 
+without the curvature from the bound on $u_0$.
+For $(x_0,u_0,x_1,u_1,x_2)$, the full Hessian, a null-space basis and the reduced Hessian are
+\begin{equation*}
+    H = \operatorname{diag}\bigl(0, 1, -3, 1, \tfrac{1}{2}\bigr), \quad
+    Z = \begin{bmatrix} 0 & 1 & 1 & 0 & 1 \\ 0 & 0 & 0 & 1 & 1 \end{bmatrix}^\top, \quad
+    M = Z^\top H Z = \begin{bmatrix} -\tfrac{3}{2} & \tfrac{1}{2} \\[2pt] \tfrac{1}{2} & \tfrac{3}{2} \end{bmatrix},
+\end{equation*}
+where $M$ has eigenvalues $+\tfrac{\sqrt{10}}{2}$ and $-\tfrac{\sqrt{10}}{2}$.
+Mirror on the full Hessian and reduced Hessian give
+\begin{equation*}
+    Z^\top \mathrm{mirror}(H, \epsilon) Z = \begin{bmatrix} \tfrac{9}{2} & \tfrac{1}{2} \\[2pt] \tfrac{1}{2} & \tfrac{3}{2} \end{bmatrix},
+    \qquad
+    \mathrm{mirror}(M, \epsilon) = \begin{bmatrix} \tfrac{\sqrt{10}}{2} & 0 \\[2pt] 0 & \tfrac{\sqrt{10}}{2} \end{bmatrix},
+\end{equation*}
+so with the full Hessian regularization, 
+the reduced Hessian changes by $6$ in Frobenius norm,
+and with the reduced one, by $\sqrt{10} \approx 3.16$.
+\end{example}
 
 The following result shows that, with a part adapted from~\cite{nocedal2006numerical},
 when equality constraints are satisfied,

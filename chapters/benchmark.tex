@@ -38,7 +38,7 @@ In the benchmark, all \glspl{OCP} share the same structure:
 a fixed-horizon, direct multiple-shooting \gls{OCP} 
 with a quadratic stage cost that penalizes deviations from given state and control references.
 The mathematical formulation of the \glspl{OCP} is given as follows:
-\begin{mini}[2]
+\begin{mini}
     {x, u}
     {\sum_{k=0}^{N-1} \frac{1}{2}
         \begin{bmatrix} x_k-x_k^{\mathrm{ref}} \\ u_k-u_k^{\mathrm{ref}} \end{bmatrix}^{\!\top}
@@ -87,7 +87,7 @@ where $n_{h_N}$ is the number of nonlinear terminal constraints and $\lambda_N$ 
 Collecting the stage Hessians $H_k$ and Jacobians 
 and linearizing the constraints of \eqref{eq:ocp} at the current \gls{SQP} iterate 
 yields a structured \gls{QP}. The subproblem takes the form of
-\begin{mini}[2]
+\begin{mini}
     {\Delta x, \Delta u}
     {\sum_{k=0}^{N-1} \left( \frac{1}{2}
         \begin{bmatrix} \Delta x_k \\ \Delta u_k \end{bmatrix}^{\!\top}
@@ -264,7 +264,7 @@ and the \emph{width}, measured by the fraction of reduced Hessian blocks that ar
 \end{figure}
 
 As seen from Figure~\ref{fig:indefinite_qp_scatter}, 
-the depth of the collected \glspl{QP} ranges from near zero to very large values, and the width from a few stages to almost the entire horizon.
+the depth of the collected \glspl{QP} spans several orders of magnitude, and the width ranges from a few stages to almost the entire horizon.
 But wide and deep indefiniteness seldom occur together.
 Problems that are indefinite in only a small fraction of their stages, 
 such as \textsl{Crane}, \textsl{Flying robot} and \textsl{Furuta}, can still reach deep negative curvature.

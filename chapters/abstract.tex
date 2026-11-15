@@ -28,8 +28,10 @@
     which in general changes the solution of each \gls{QP} and also the feedback in \gls{SQP} with real-time iteration.
     In contrast to SQP-level regularizations,
     regularizing at the \gls{QP} level in \gls{IPM} can introduce two advantages.
-    First, this lets the \gls{QP} solver exploit the curvature from inequality constraints without extra estimation, 
-    and, second, only return the solution of the original QP.
+    First, common to all \gls{QP}-level regularizations, 
+    this lets the \gls{QP} solver return the solution of the original QP,
+    and, second, specific to \gls{IPM},
+    it lets the solver exploit the curvature from inequality constraints without extra estimation.
 
     This thesis investigates primal regularizations inside interior-point solvers 
     for indefinite \glspl{QP} with \gls{OCP} structure, with a focus on the proposed Riccati-based regularization.

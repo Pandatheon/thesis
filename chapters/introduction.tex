@@ -12,9 +12,6 @@
 \chapter{Introduction}
 \label{Chapter::Introduction}
 
-\section{Motivation}
-\label{sec:motivation}
-
 In \gls{NMPC}, a nonlinear \gls{OCP} is solved in each sampling period 
 to compute the optimal control input for the current state.
 To solve the continuous-time \glspl{OCP}, 
@@ -42,23 +39,27 @@ Project raises every eigenvalue to at least the threshold,
 while mirror replaces the negative eigenvalues with their absolute values, using the threshold as a lower bound.
 This, however, in general modifies the solution of the subproblems and also the feedback itself in the real-time iteration.
 
-Convexification~\cite{verschueren2017sparsity}, as a more advanced regularization method,
-applies a backward sweep similar to a Riccati recursion for regularization.
+Convexification~\cite{verschueren2017sparsity}, as a more advanced regularization method, aims to keep the primal solution.
+If no inequality constraint is present, the primal solution is kept as long as the \emph{reduced Hessian},
+i.e.\ the Hessian on the null space of the dynamics, is unchanged.
+Otherwise, the same holds for the \emph{fully reduced Hessian},
+i.e.\ the Hessian on the null space of the dynamics and the active constraints.
+To exploit this, convexification applies a backward sweep similar to a Riccati recursion.
 The sweep transfers cost between neighboring stages through the dynamics 
 and adds curvature from the estimated active inequality constraints with an estimated weight to each stage.
 The cost transfer keeps only the needed curvature for each stage to be positive definite 
-while leaving the reduced Hessian, i.e.\ the Hessian on the null space of the dynamics, unchanged.
+while leaving the reduced Hessian unchanged.
 The added curvature makes the reduced Hessian positive definite 
-if the estimation of the active constraints and weight is correct and
-the fully reduced Hessian, i.e.\ the Hessian on the null space of the dynamics and the active constraints, is positive definite.
-This results in a positive definite full Hessian with the fully reduced Hessian unchanged,
-and the same primal solution of the original \gls{QP} is thus kept.
+if the fully reduced Hessian is positive definite, 
+which makes a correct estimation of the active constraints and the weight possible, 
+and if this estimation is indeed correct.
+The full Hessian is then positive definite with the fully reduced Hessian unchanged,
+so the original primal solution is kept.
 But if the fully reduced Hessian is indefinite or the estimation is incorrect, 
-the backward sweep could still reach a stage with indefinite blocks,
-and convexification falls back to projecting the stage block, which modifies the \gls{QP} solution.
-In acados, only the cost transfer in convexification is implemented, 
-so it could fail to regularize with inequality constraints in practice.
-
+the sweep could still reach a stage with indefinite blocks,
+where convexification falls back to projection, which modifies the \gls{QP} solution.
+In acados, convexification implements only the cost transfer
+and could thus fail to regularize with inequality constraints in practice.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{images/introduction/regularization_overview.pdf}
@@ -71,13 +72,13 @@ the \gls{IPM} relaxes the complementarity from each inequality constraint by a b
 This adds weighted curvature from inequality constraints to the Hessian inherently throughout the iterations.
 The weight on each constraint, i.e.\ the ratio of its multiplier to its slack, changes with the current iterate,
 so neither an estimate of the active set nor a penalty weight is needed.
-The reduced Hessian with curvature from inequality constraints is positive definite,
+The reduced Hessian with curvature from inequality constraints can be positive definite,
 as long as the fully reduced Hessian is positive definite.
 
 \begin{example}[A \gls{QP} with an indefinite reduced Hessian]
 \label{ex:toy}
-Consider an indefinite \gls{QP}
-\begin{mini}|l|
+Consider the following indefinite \gls{QP}
+\begin{mini}
   {x_0,u_0,x_1,u_1,x_2}
   {\tfrac{1}{2}(u_0^2 - 3x_1^2 + u_1^2 + \tfrac{1}{2}x_2^2)}
   {\label{eq:toy_qp}}
@@ -89,7 +90,7 @@ Consider an indefinite \gls{QP}
 \end{mini}
 By eliminating $x_0$, $x_1$ and $x_2$ using the equality constraints,
 we have a \gls{QP} with an indefinite reduced Hessian as:
-\begin{mini}|l|
+\begin{mini}
   {u_0,u_1}
   {\frac{1}{2}\begin{bmatrix}u_0\\u_1\end{bmatrix}^{\!\top}\!
    \begin{bmatrix}-\tfrac{3}{2} & \tfrac{1}{2}\\[2pt] \tfrac{1}{2} & \tfrac{3}{2}\end{bmatrix}\!
@@ -100,7 +101,6 @@ we have a \gls{QP} with an indefinite reduced Hessian as:
   {}
   \addConstraint{-1}{\le u_0 \le 1.}{}
 \end{mini}
-
 Denote the objective of~\eqref{eq:toy_qp_reduced} by $f(u_0,u_1)$.
 For a fixed $u_0$, the minimizer of the objective over $u_1$ follows from
 \begin{equation*}
@@ -110,9 +110,9 @@ For a fixed $u_0$, the minimizer of the objective over $u_1$ follows from
 \end{equation*}
 Substituting $u_1^\star(u_0)$ back into $f$ leaves a function of $u_0$ alone,
 \begin{equation*}
-  f\bigl(u_0,u_1^\star\bigr) = -\tfrac{5}{6}u_0^2 - \tfrac{8}{3}u_0 - \tfrac{1}{12}.
+  f\bigl(u_0,u_1^\star(u_0)\bigr) = -\tfrac{5}{6}u_0^2 - \tfrac{8}{3}u_0 - \tfrac{1}{12}.
 \end{equation*}
-Since $f\bigl(u_0,u_1^\star\bigr)$ is concave, its minimum over $-1 \le u_0 \le 1$ lies on a bound,
+Since $f\bigl(u_0,u_1^\star(u_0)\bigr)$ is concave, its minimum over $-1 \le u_0 \le 1$ lies on a bound,
 and comparing $f\bigl(-1, 0\bigr) = \tfrac{7}{4}$ with $f\bigl(1,-\frac{2}{3}\bigr)= -\tfrac{43}{12}$ gives
 the exact solution $(1, -\frac{2}{3})$.
 
@@ -156,15 +156,16 @@ which is the fixed point satisfying the optimality conditions of~\eqref{eq:toy_q
     \centering
     \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_sqp_level.pdf}
     \caption{
-    Contour lines of a \gls{QP} with an indefinite reduced Hessian.
+    Contour lines of a QP with an indefinite reduced Hessian, 
+    coloured from blue (low) to yellow (high) objective value within each panel.
     (a) shows the original objective, 
     (b) shows the subproblem objective of the \gls{QP} after mirror,
     and (c) shows the \gls{SQP} iterates when the \gls{QP} is solved as an \gls{NLP} for completeness.}
     \label{fig:toy_example_sqp}
 \end{figure}
 
-From a \gls{QP} perspective,
-the curvature contributions from inequality constraints can be exploited in the \gls{IPM}.
+From a \gls{QP} perspective with \glspl{IPM},
+the curvature contributions from inequality constraints can be exploited, as detailed in Section~\ref{sec:ipm}.
 At the cold start, both bounds in $-1 \le u_0 \le 1$ have the slack as $1$.
 Choosing the initial barrier parameter as $10$, 
 the corresponding initialized multiplier is $10$, so the summed weight of two constraints is $20$.
@@ -178,18 +179,12 @@ which is positive definite.
 The local second-order model in Figure~\ref{fig:toy_example_ipm}b is therefore convex without any extra work,
 the \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterations, as shown in Figure~\ref{fig:toy_example_ipm}c.
 
-% From a \gls{QP} perspective,
-% the curvature contributions from inequality constraints can be exploited in the \gls{IPM}.
-% As shown in Figure~\ref{fig:toy_example_ipm}b, 
-% the curvature contributions from inequality constraints can make the reduced Hessian positive definite,
-% and the local second-order model can thus produce a direction towards the exact solution without any extra work.
-% The \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterations, as shown in Figure~\ref{fig:toy_example_ipm}c.
-
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.0\textwidth]{images/introduction/toy_bound_ipm_level.pdf}
     \caption{
-    Contour lines of a \gls{QP} with an indefinite reduced Hessian.
+    Contour lines of a QP with an indefinite reduced Hessian, 
+    coloured from blue (low) to yellow (high) objective value within each panel.
     (a) shows the original objective, 
     (b) shows the local second-order model with curvature contributions from inequality constraints,
     and (c) shows the \gls{IPM} iterates on the \gls{QP}.}
@@ -201,7 +196,7 @@ the \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterati
 In other cases, such as in the early \gls{SQP} iterations,
 where the curvature contribution may not be enough to make the reduced Hessian positive definite, 
 a regularization to the Hessian is still needed.
-But if the regularization is made inside the solver, 
+But if the regularization is performed inside the solver, 
 the solution of the original \gls{QP} remains, and thus an exact Newton step in \gls{SQP} is preserved.
 
 A structure-exploiting interior-point \gls{QP} solver that handles indefiniteness at the \gls{QP} level is 
@@ -209,8 +204,7 @@ therefore interesting as an alternative to regularizing at the \gls{SQP} level.
 This consideration leads to the question of how the regularization should be performed inside the solver,
 and this thesis addresses this question for indefinite \glspl{QP} with \gls{OCP} structure.
 
-\section{Contributions}
-\label{sec:contributions}
+\paragraph{Contributions}
 The main contributions of this thesis are the following:
 \begin{enumerate}
     \item \textbf{Riccati-based regularization}: 
@@ -233,8 +227,7 @@ The main contributions of this thesis are the following:
     and includes ablation studies on the solver settings to show which components the results depend on~(Chapter~\ref{Chapter::Experiments}).
 \end{enumerate}
 
-\section{Outline}
-\label{sec:outline}
+\paragraph{Outline}
 The remainder of this thesis is organized as follows.
 In Chapter~\ref{Chapter::Theoretical_Background}, 
 we start with theoretical background regarding primal--dual \glspl{IPM} for \gls{OCP}-structured \glspl{QP}, 

@@ -59,7 +59,7 @@ and some repeat the Cholesky factorization with an increasing diagonal shift.
 Iteration counts alone therefore do not reflect the factorization cost,
 so we express this cost in a common proxy unit.
 
-We take one Cholesky factorization of the reduced Hessian block as the proxy unit. 
+We take one Cholesky factorization of the reduced Hessian block $\tilde{M}_k$ as the proxy unit. 
 For factorizing an $n_u \times n_u$ matrix, the cost is approximately $\tfrac{1}{3} n_u^3$ flops, hence
 \begin{equation}
 \mathrm{unit} \;\approx\; \tfrac{1}{3}\, n_u^3 .
@@ -82,17 +82,35 @@ the ratios are considered as
 \omega_H \;=\; \left(\frac{n_x+n_u}{n_u}\right)^{3}.
 \end{equation}
 
-Thus, a modified Cholesky factorization of the cost-to-go matrix costs $\omega_P$ units and an eigenvalue decomposition $27\omega_P$ units.
-
+Thus, a modified Cholesky factorization of the cost-to-go matrix costs $\omega_P$ units 
+and an eigenvalue decomposition $27\omega_P$ units.
 Likewise, the two factorizations of a full Hessian block cost $\omega_H$ and $27\omega_H$ units.
-Since the full Hessian regularization modifies all $N$ blocks $\tilde{H}_k$ at once,
-each regularization costs $N\omega_H$ or $27N\omega_H$ units.
+Since the full Hessian regularization modifies all $N$ blocks $\tilde{H}_k$ at once, its cost scales with $N$.
 
 The factorization cost of a run is thus the sum of two parts,
 the Cholesky factorizations of the Riccati recursion itself and
 the additional factorizations introduced by the regularization.
 The latter includes every rerun of the Riccati recursion, whose factorizations are counted again,
 and every failed Cholesky factorization, which counts as one proxy unit, although it may stop early.
+Moreover, since the recursion requires the Cholesky factor of the reduced Hessian block, 
+a modified Cholesky factorization of this block provides the factor directly, 
+whereas an eigenvalue modification requires an additional Cholesky factorization.
+Table~\ref{tab:flop_units} summarizes the resulting cost of each regularization.
+\begin{table}[htbp]
+  \centering
+  \caption{Factorization cost per regularization in proxy units.}
+  \label{tab:flop_units}
+  \vspace{0.5em}
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Matrix} & \textbf{Modified Cholesky} & \textbf{Eigenvalue} \\
+    \midrule
+    Reduced Hessian block              & $1$          & $27 + 1$ \\
+    Cost-to-go matrix            & $\omega_P$   & $27\omega_P$ \\
+    Full Hessian, all $N$ blocks & $N\omega_H$  & $27N\omega_H + N\omega_H$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Prototype solver implementation}
 \label{sec:prototype}
@@ -297,10 +315,10 @@ Taken together, the three categories span ten methods, which all run on the same
 
 \subsection{General setup}
 \label{subsec:general_setup}
-The parameter settings regarding experiments are collected in Table~\ref{tab:general_settings}.
-The implemented \gls{IPM} is summarized in Algorithm~\ref{alg:ipm_experiment}, 
-which uses Mehrotra's probing for updating barrier parameters,
-and the two-type line search to control step size after the \gls{FTB} rule.
+The experiment parameters are collected in Table~\ref{tab:general_settings}.
+The implemented \gls{IPM} is summarized in Algorithm~\ref{alg:ipm_experiment},
+which uses Mehrotra's probing to update the barrier parameters 
+and the two-type line search to control the step size after the \gls{FTB} rule.
 
 \begin{table}[htbp]
 \centering
@@ -328,22 +346,23 @@ and the two-type line search to control step size after the \gls{FTB} rule.
 
 \begin{algorithm}[htbp]
 \setstretch{1.02}
-\caption{Primal--dual \gls{IPM} used in the experiments}
+\caption{Primal--dual \gls{IPM} implemented in the experiments}
 \label{alg:ipm_experiment}
 \begin{algorithmic}[1]
-\State \textbf{Input:} \gls{QP} with \gls{OCP} structure, initial iterate, iteration budget $i_{\mathrm{max}}$
+\State \textbf{Input:} \gls{QP} with \gls{OCP} structure, initial iterate $z_0$, iteration budget $i_{\mathrm{max}}$
 \For{$i = 0$ \textbf{to} $i_{\mathrm{max}}-1$}
     \State compute $r_i^{\mathrm{stat}}, r_i^{\mathrm{eq}}, r_i^{\mathrm{ineq}}, r_i^{\mathrm{comp}}$
     \If{all residuals are below $\varepsilon_{\mathrm{stat}}, \varepsilon_{\mathrm{eq}}, \varepsilon_{\mathrm{ineq}}, \varepsilon_{\mathrm{comp}}$}
-        \State \Return current iterate
+        \State \Return current iterate $z_i$
     \EndIf
     \State factorize \gls{LHS} with regularizations \Comment{Proxy units recorded}
-    \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{aff}}$ for the affine direction
+    \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{aff}}$ for $\Delta z^{\mathrm{aff}}$
     \State compute $\mu_{\mathrm{aff}}$ and $\sigma_i \gets (\mu_{\mathrm{aff}}/\mu_i)^3$  \Comment{Mehrotra's probing}
-    \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{pro}}$ for the search direction
+    \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{pro}}$ for $\Delta z$
     \State compute $\alpha_i^{\mathrm{prim}}, \alpha_i^{\mathrm{dual}}$ by the \gls{FTB}
     \State line search to reduce $\alpha_i^{\mathrm{prim}}$ \Comment{two-type line search}
-    \State update primal and dual variables
+    \State $z_{i+1}^{\mathrm{prim}} \gets z_i^{\mathrm{prim}} + \alpha_i^{\mathrm{prim}} \Delta z^{\mathrm{prim}}$
+    \State $z_{i+1}^{\mathrm{dual}} \gets z_i^{\mathrm{dual}} + \alpha_i^{\mathrm{dual}} \Delta z^{\mathrm{dual}}$
 \EndFor
 \State \Return Max iteration reached
 \end{algorithmic}
