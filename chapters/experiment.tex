@@ -494,7 +494,7 @@ inertia correction remains competitive in factorization cost, similar to \textsf
     \label{fig:flop-profile-inertia}
 \end{figure}
 
-\subsection{Ablation on the conditional Mehrotra}
+\subsection{Ablation on Mehrotra's probing}
 \label{subsec:ablation_mehrotra}
 All results in the previous sections used Mehrotra's probing.
 To justify this choice, we rerun \textsf{PM\_MIRROR}, \textsf{PM\_GMW}, \textsf{INERTIA\_LM} and \textsf{H\_PROJECT}, 
@@ -625,12 +625,13 @@ Since the full Hessian regularizations and \textsf{INERTIA\_LM} cannot directly 
 they perturb the $\tilde{H}_k$ over the whole horizon. 
 This slows down the convergence and thus exhausts the iteration budget.
 The Riccati-based regularization avoids this by treating an indefinite stage where it arises in the recursion
-and only affecting the preceding stages.
+and only affecting the stages preceding it.
 
 \subsection{Analysis of the Mehrotra ablation}
 \label{subsec:mehrotra_analysis}
 Based on the ablation in Section~\ref{subsec:ablation_mehrotra},
-this subsection explains why the ranking of Section~\ref{sec:comparison} reverses under the conditional Mehrotra corrector,
+this subsection explains why the ranking of Section~\ref{sec:comparison} reverses 
+under the conditional Mehrotra's predictor--corrector,
 i.e.\ why \textsf{PM\_MIRROR} loses far more instances than \textsf{INERTIA\_LM}.
 
 With the simplified notation of \eqref{eq:schur_comp_KKT_reduced},

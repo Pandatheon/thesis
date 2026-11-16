@@ -32,13 +32,17 @@ The full Hessian methods failed on almost every \textsl{Flying robot} instance,
 where only the cost-to-go matrix is indefinite, and only at a few stages.
 
 Several questions remain open.
-First, the regularization magnitude, set by the eigenvalue floor $\epsilon$, is fixed,
-and the remaining failures occur where large corrections are applied at many stages.
-Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks or to the barrier parameter, could improve robustness.
+Regarding the benchmark, the benchmark is still limited to small-scale \glspl{QP} with \gls{OCP} structure from regulator problems.
+First, scaling up the benchmark to larger state dimensions and longer horizons
+would show whether \textsf{PM\_MIRROR} and \textsf{PM\_GMW} remain robust beyond small-scale \glspl{QP}
+and how their factorization cost grows with the stage dimension.
 Second, in time-optimal and economic MPC,
-the cost provides little positive curvature, so indefiniteness is likely to be broader than in this benchmark.
+the cost provides little positive curvature, so the indefiniteness is likely to differ from that in this benchmark and to be harder to handle.
 Whether the ranking of the methods carries over remains to be tested.
-Finally, the QPs were solved in isolation with a Python prototype.
+Regarding the regularizations and the solver, two points remain.
+First, the regularization magnitude is set by a fixed eigenvalue floor $\epsilon$.
+Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks, could improve efficiency and robustness on other problems.
+Second, the QPs were solved in isolation with a Python prototype.
 An implementation in HPIPM and \texttt{acados} is needed for a run-time comparison,
 and, since the full step from the indefinite QP solution might be too aggressive,
 it remains to be investigated how the globalization mechanisms, such as a trust region and line search,

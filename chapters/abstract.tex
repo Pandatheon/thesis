@@ -35,15 +35,15 @@
 
     This thesis investigates primal regularizations inside interior-point solvers 
     for indefinite \glspl{QP} with \gls{OCP} structure, with a focus on the proposed Riccati-based regularization.
-    This thesis shows that the minimum perturbation strategy can make the Riccati-based regularization fail, 
+    It shows that the minimum perturbation strategy can make the Riccati-based regularization fail, 
     and, based on these observations, an improved strategy is derived to avoid such failure cases.
-    It is proven that the Riccati-based regularization becomes inactive near the solution,
+    The Riccati-based regularization is also proven to become inactive near the solution,
     as it regularizes only at the stages where the Cholesky factorization fails during Riccati recursion.
 
     For evaluation, this thesis builds a benchmark of $170$ indefinite \gls{OCP} \glspl{QP} 
     from \gls{SQP} iterations when solving \gls{NMPC} problems.
     With the regularizations implemented in a prototype solver that reproduces the iterations of HPIPM on convex \glspl{QP},
-    this thesis compares the Riccati-based regularization with full Hessian regularization and inertia correction 
+    the Riccati-based regularization is compared with full Hessian regularization and inertia correction 
     in terms of robustness, efficiency and estimated factorization cost.
 }
 \end{document}
