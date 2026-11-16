@@ -146,8 +146,8 @@ It is approximate for the \gls{QP} subproblem and also an approximate Newton ste
 
 For completeness, Figure~\ref{fig:toy_example_sqp}c shows the latter case, 
 where \gls{SQP} solves~\eqref{eq:toy_qp} as an \gls{NLP}.
-\gls{SQP} regularizes and linearizes at each iterate, for a \gls{QP}, 
-the regularized Hessian stays constant, only the gradient changes.
+SQP regularizes and linearizes at each iterate. 
+Since the problem is a QP, the regularized Hessian stays constant and only the gradient changes.
 From the cold start, \gls{SQP} first takes the approximate step from the first subproblem
 and then takes several iterations to reach the exact solution, 
 which is the fixed point satisfying the optimality conditions of~\eqref{eq:toy_qp}.
@@ -167,7 +167,7 @@ which is the fixed point satisfying the optimality conditions of~\eqref{eq:toy_q
 From a \gls{QP} perspective with \glspl{IPM},
 the curvature contributions from inequality constraints can be exploited, as detailed in Section~\ref{sec:ipm}.
 At the cold start, both bounds in $-1 \le u_0 \le 1$ have the slack as $1$.
-Choosing the initial barrier parameter as $10$, 
+With the initial barrier parameter chosen as $10$,
 the corresponding initialized multiplier is $10$, so the summed weight of two constraints is $20$.
 Since both bounds act on $u_0$ only, it adds to the $u_0$ entry of the reduced Hessian,
 \begin{equation*}
@@ -176,8 +176,8 @@ Since both bounds act on $u_0$ only, it adds to the $u_0$ entry of the reduced H
   = \begin{bmatrix}\tfrac{37}{2} & \tfrac{1}{2}\\[2pt] \tfrac{1}{2} & \tfrac{3}{2}\end{bmatrix},
 \end{equation*}
 which is positive definite.
-The local second-order model in Figure~\ref{fig:toy_example_ipm}b is therefore convex without any extra work,
-the \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterations, as shown in Figure~\ref{fig:toy_example_ipm}c.
+The local second-order model in Figure~\ref{fig:toy_example_ipm}b is therefore convex without any extra work.
+The \gls{IPM} can thus solve the indefinite \gls{QP} in several \gls{QP} iterations, as shown in Figure~\ref{fig:toy_example_ipm}c.
 
 \begin{figure}[htbp]
     \centering

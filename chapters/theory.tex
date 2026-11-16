@@ -31,7 +31,7 @@ with consideration of the nonconvex case. Algorithm~\ref{alg:ipm} outlines how t
 \caption{Primal--dual \gls{IPM} for \glspl{QP} with \gls{OCP} structure}
 \label{alg:ipm}
 \begin{algorithmic}[1]
-\State \textbf{Input:} \gls{QP} with \gls{OCP} structure, initial iterate $z_0$, iteration budget $i_{\mathrm{max}}$
+\State \textbf{Input:} \gls{OCP}-structured \gls{QP}, primal--dual iterate $z_0$, iteration budget $i_{\mathrm{max}}$
 \For{$i = 0$ \textbf{to} $i_{\mathrm{max}}-1$}
     \State compute the residuals $r_i^{\mathrm{stat}}, r_i^{\mathrm{eq}}, r_i^{\mathrm{ineq}}, r_i^{\mathrm{comp}}$ \Comment{Section~\ref{sec:ipm}}
     \If{all residuals are below their tolerances}

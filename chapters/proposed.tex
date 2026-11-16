@@ -54,33 +54,34 @@ and finally the regularization on the full or the reduced Hessian in Section~\re
 In order to compute the adjustment matrix $E_i$, three categories of strategies are commonly used,
 which are eigenvalue modification, modified Cholesky factorization and Levenberg--Marquardt
 \cite{nocedal2006numerical, mcsweeneyModifiedCholeskyDecomposition2017, More1978levenberg}.
-From these categories we select four methods to be implemented and compared:
+From these categories we select four strategies to be implemented and compared:
 project and mirror~\cite{verschueren2017sparsity} from eigenvalue modification,
 \gls{GMW}~\cite{gill1981practical} from modified Cholesky factorization,
 and inertia correction~\cite{wachter2006implementation} from Levenberg--Marquardt.
 
 Let $A \in \mathbb{R}^{n\times n}$ be a symmetric matrix and $E$ its adjustment.
-$A$ admits the eigenvalue decomposition $A = V D_E V^\top$,
-where $V$ is orthogonal and $D_E$ is the diagonal matrix of eigenvalues $\nu$.
+$A$ admits the eigenvalue decomposition $A = V D_\nu V^\top$,
+where $V$ is orthogonal and $D_\nu$ is the diagonal matrix of eigenvalues $\nu$.
 If no zero pivot occurs during the factorization, 
 $A$ also admits the $\mathrm{LDL}^\top$ factorization $A = L D_I L^\top$,
 with $L$ unit lower triangular and $D_I$ diagonal.
 
-The methods can be compared in terms of four objectives adapted from~\cite{fangModifiedCholeskyAlgorithms2007}.
+The strategies can be compared in terms of four objectives adapted from~\cite{fangModifiedCholeskyAlgorithms2007}.
 First, $E$ should be zero if $A$ is sufficiently positive definite.
 Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
 $\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$.
 Third, $A + E$ should be reasonably well-conditioned.
-Fourth, the regularization strategies should be computationally efficient.
-Each method is described below with the trade-offs it makes among these objectives.
+Fourth, the regularization strategies should be computationally efficient, which is discussed in detail in Section~\ref{subsec:flop_unit}.
+Since all four strategies can substantially satisfy the first objective,
+each strategy is discussed mainly in terms of the trade-off between the second and third objectives.
 
 \paragraph{Eigenvalue modification: project and mirror.}
 For both project and mirror, 
-the eigenvalue decomposition $A = V D_E V^\top$ is first computed,
-and the eigenvalues in $D_E$ are then modified in different manners,
+the eigenvalue decomposition $A = V D_\nu V^\top$ is first computed,
+and the eigenvalues in $D_\nu$ are then modified in different manners,
 \begin{align*}
-    \mathrm{project}(A, \epsilon) &:= V \max(\epsilon I, D_E) V^\top, \\
-    \mathrm{mirror}(A, \epsilon) &:= V \max(\epsilon I, \lvert D_E\rvert) V^\top,
+    \mathrm{project}(A, \epsilon) &:= V \max(\epsilon I, D_\nu) V^\top, \\
+    \mathrm{mirror}(A, \epsilon) &:= V \max(\epsilon I, \lvert D_\nu\rvert) V^\top,
 \end{align*}
 where $\epsilon > 0$ is a small constant and the $\max$ operator is applied component-wise.
 Project clips negative or near-zero eigenvalues to $\epsilon$,
@@ -113,10 +114,11 @@ a small value $\epsilon$ for lifting a near-zero pivot,
 and the smallest value for keeping the entries of the corresponding column of $L D_I^{1/2}$ below a fixed bound.
 The first two values form the Type-I rule $\max(\lvert D_I\rvert, \epsilon)$, 
 and the third only adds the bound on $L$ for numerical stability.
-
-The increments form a nonnegative diagonal correction $E$ with $A + E = L \hat{D_I} L^\top$,
-which avoids the cost of an eigendecomposition and still guarantees positive definiteness,
-but $E$ is generally not minimal.
+The increments thus form a nonnegative diagonal correction $E$ with
+\begin{equation*}
+    \mathrm{gmw}(A, \epsilon) := A + E = L \hat{D_I} L^\top,
+\end{equation*}
+which guarantees positive definiteness of $A + E$, but $E$ is generally not minimal.
 
 \paragraph{Levenberg-Marquardt: inertia correction.}
 In this strategy,
@@ -126,18 +128,18 @@ The operation can be described as
         \mathrm{ic}(A, \delta_w) := A + \delta_w I, \qquad \delta_w \geq 0.
     \end{equation*}
 In practice, $\delta_w$ needs to be found by repeatedly increasing $\delta_w$ until the Cholesky factorization of $A + \delta_w I$ is successful.
-The method is easy to implement and is widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl}.
+The strategy is easy to implement and is widely used in IPOPT~\cite{wachter2006implementation}, Fatrop~\cite{vanroye2023fatrop} and Crocoddyl~\cite{mastalli2020crocoddyl}.
 However, as it acts equally in all directions,
 a shift large enough for a few negative eigenvalues also distorts the eigenvalues that were already positive.
 
-\begin{example}[Perturbation magnitude of the four methods]
+\begin{example}[Perturbation magnitude of the four strategies]
 \label{ex:reg_comparison}
 Consider an indefinite $2\times2$ symmetric matrix $A$ and its decomposition
 \begin{equation*}
 \begin{aligned}
     A = \begin{bmatrix} 2 & 2 \\ 2 & -1 \end{bmatrix}
 &= \underbrace{\begin{bmatrix} \tfrac{2}{\sqrt{5}} & \tfrac{1}{\sqrt{5}} \\ \tfrac{1}{\sqrt{5}} & -\tfrac{2}{\sqrt{5}} \end{bmatrix}}_{V}
-       \underbrace{\begin{bmatrix} 3 & 0 \\ 0 & -2 \end{bmatrix}}_{D_E}
+       \underbrace{\begin{bmatrix} 3 & 0 \\ 0 & -2 \end{bmatrix}}_{D_\nu}
        \underbrace{\begin{bmatrix} \tfrac{2}{\sqrt{5}} & \tfrac{1}{\sqrt{5}} \\ \tfrac{1}{\sqrt{5}} & -\tfrac{2}{\sqrt{5}} \end{bmatrix}}_{V^\top} \\
     &= \underbrace{\begin{bmatrix} 1 & 0 \\ 1 & 1 \end{bmatrix}}_{L}
        \underbrace{\begin{bmatrix} 2 & 0 \\ 0 & -3 \end{bmatrix}}_{D_I}
@@ -151,23 +153,27 @@ The resulting matrices are
 \begin{alignat*}{2}
     \mathrm{project}(A,\epsilon) &= V \begin{bmatrix} 3 & 0 \\ 0 & \epsilon \end{bmatrix} V^\top
         \approx \begin{bmatrix} 2.4 & 1.2 \\ 1.2 & 0.6 \end{bmatrix}, &\qquad
-    L \hat{D_I} L^\top &= L \begin{bmatrix} 2 & 0 \\ 0 & 3 \end{bmatrix} L^\top
-        = \begin{bmatrix} 2 & 2 \\ 2 & 5 \end{bmatrix}, \\
+    E &\approx \begin{bmatrix} 0.4 & -0.8 \\ -0.8 & 1.6 \end{bmatrix}, \\
     \mathrm{mirror}(A,\epsilon) &= V \begin{bmatrix} 3 & 0 \\ 0 & 2 \end{bmatrix} V^\top
         = \begin{bmatrix} 2.8 & 0.4 \\ 0.4 & 2.2 \end{bmatrix}, &\qquad
+    E &= \begin{bmatrix} 0.8 & -1.6 \\ -1.6 & 3.2 \end{bmatrix}, \\
+    \mathrm{gmw}(A,\epsilon) &= L \begin{bmatrix} 2 & 0 \\ 0 & 3 \end{bmatrix} L^\top
+        = \begin{bmatrix} 2 & 2 \\ 2 & 5 \end{bmatrix}, &\qquad
+    E &= \begin{bmatrix} 0 & 0 \\ 0 & 6 \end{bmatrix}, \\
     \mathrm{ic}(A,\delta_w) &= A + 5\, I
-        = \begin{bmatrix} 7 & 2 \\ 2 & 4 \end{bmatrix}.
+        = \begin{bmatrix} 7 & 2 \\ 2 & 4 \end{bmatrix}, &\qquad
+    E &= \begin{bmatrix} 5 & 0 \\ 0 & 5 \end{bmatrix}.
 \end{alignat*}
 Compared with the minimal adjustment $\inf\{\|\Delta A\|_F : A + \Delta A \succeq 0\} = 2$,
 the adjustments and the resulting condition numbers are listed in Table~\ref{tab:reg_example}.
 \begin{table}[htbp]
 \centering
-\caption{Adjustment norm and condition number of the four methods from Example~\ref{ex:reg_comparison}.}
+\caption{Adjustment norm and condition number of the four strategies from Example~\ref{ex:reg_comparison}.}
 \label{tab:reg_example}
 \vspace{0.5em}
 \begin{tabular}{lcc}
     \toprule
-    Method & $\|E\|_F - 2$ & $\kappa(A+E)$ \\
+    Strategy & $\|E\|_F - 2$ & $\kappa(A+E)$ \\
     \midrule
     project            & $10^{-4}$      & $3\times10^{4}$ \\
     mirror             & $2$            & $1.5$ \\
@@ -177,9 +183,9 @@ the adjustments and the resulting condition numbers are listed in Table~\ref{tab
 \end{tabular}
 \end{table}
 
-Among the four methods, project gives the smallest perturbation that makes $A$ positive definite,
+Among the four strategies, project gives the smallest perturbation that makes $A$ positive definite,
 at the cost of a large condition number.
-The other three methods balance the perturbation and the condition number,
+The other three strategies balance the perturbation and the condition number,
 with mirror achieving the best balance in this example.
 
 \end{example}

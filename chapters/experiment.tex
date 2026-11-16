@@ -349,7 +349,7 @@ and the two-type line search to control the step size after the \gls{FTB} rule.
 \caption{Primal--dual \gls{IPM} implemented in the experiments}
 \label{alg:ipm_experiment}
 \begin{algorithmic}[1]
-\State \textbf{Input:} \gls{QP} with \gls{OCP} structure, initial iterate $z_0$, iteration budget $i_{\mathrm{max}}$
+\State \textbf{Input:} \gls{OCP}-structured \gls{QP}, primal--dual iterate $z_0$, iteration budget $i_{\mathrm{max}}$
 \For{$i = 0$ \textbf{to} $i_{\mathrm{max}}-1$}
     \State compute $r_i^{\mathrm{stat}}, r_i^{\mathrm{eq}}, r_i^{\mathrm{ineq}}, r_i^{\mathrm{comp}}$
     \If{all residuals are below $\varepsilon_{\mathrm{stat}}, \varepsilon_{\mathrm{eq}}, \varepsilon_{\mathrm{ineq}}, \varepsilon_{\mathrm{comp}}$}
@@ -602,8 +602,8 @@ It remains a potential issue for full Hessian regularization, as rounding errors
 \subsection{Failure by category}
 \label{subsec:failure_category}
 Figure~\ref{fig:failures-by-category} breaks down the same failures by the \gls{OCP} each instance was collected from.
-Combined with Figure~\ref{fig:indefinite_qp_scatter},
-\textsf{M\_MIRROR}, \textsf{M\_GMW} and \textsf{PM\_PROJECT} fail mostly 
+Together with Figure~\ref{fig:indefinite_qp_scatter},
+this shows that \textsf{M\_MIRROR}, \textsf{M\_GMW} and \textsf{PM\_PROJECT} fail mostly 
 on the wide indefiniteness of \textsl{Dubins car} and \textsl{Robot arm},
 whereas the full Hessian methods fail mostly on the narrow indefiniteness of \textsl{Flying robot} and \textsl{Crane}.
 
