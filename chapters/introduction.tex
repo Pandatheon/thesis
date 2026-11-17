@@ -23,17 +23,18 @@ In the real-time iteration~\cite{diehl2005real},
 one \gls{SQP} iteration is performed per sampling time, with the linearization done before the new state is known,
 so only the \gls{QP} solve lies between measurement and feedback.
 The \gls{QP} solve therefore requires efficiency, for which structure-exploiting solvers are usually employed.
+The open-source framework \texttt{acados}~\cite{verschueren2020acadosmodularopensourceframework}
+provides the real-time iteration together with such solvers.
 
 When the exact Hessian of the Lagrangian is used in \gls{QP} subproblems~\cite{BoggsTolle1995},
 they might have an indefinite full Hessian.
-The \gls{QP} solvers embedded in \gls{SQP} for exploiting \gls{OCP} structure,
-such as qpDUNES~\cite{frasch2015parallel}, FORCES~\cite{domahidi2012efficient} and HPIPM~\cite{frison2020hpipmhighperformancequadraticprogramming}, 
+Structure-exploiting \gls{QP} solvers used within \gls{SQP},
+such as qpDUNES~\cite{frasch2015parallel}, FORCES~\cite{domahidi2012efficient} and HPIPM~\cite{frison2020hpipmhighperformancequadraticprogramming},
 however, may fail to solve these \glspl{QP}, for they require convex \glspl{QP} with a positive definite full Hessian.
-One method to use these solvers in this situation is to regularize the full Hessian
-at the \gls{SQP} level before it is passed to the solver, while preserving the \gls{OCP} structure.
-Two common regularization methods mentioned in~\cite{verschueren2017sparsity}, i.e.\ project and mirror,
-are implemented in acados~\cite{verschueren2020acadosmodularopensourceframework} 
-and used to yield a positive definite full Hessian for the \gls{QP} solver.
+One way to use these solvers in this situation is to regularize the full Hessian at the \gls{SQP} level before it is passed to the solver, 
+while preserving the \gls{OCP} structure.
+For this, \texttt{acados} provides several regularization methods, including two common ones, project and mirror~\cite{verschueren2017sparsity},
+which yield a positive definite full Hessian for the \gls{QP} solver.
 Both methods regularize based on the eigenvalues of the full Hessian and use a small positive value as a threshold.
 Project raises every eigenvalue to at least the threshold,
 while mirror replaces the negative eigenvalues with their absolute values, using the threshold as a lower bound.
@@ -58,11 +59,11 @@ so the original primal solution is kept.
 But if the fully reduced Hessian is indefinite or the estimation is incorrect, 
 the sweep could still reach a stage with indefinite blocks,
 where convexification falls back to projection, which modifies the \gls{QP} solution.
-In acados, convexification implements only the cost transfer
+In \texttt{acados}, convexification implements only the cost transfer
 and could thus fail to regularize with inequality constraints in practice.
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=1.0\textwidth]{images/introduction/regularization_overview.pdf}
+    \includegraphics[width=0.95\textwidth]{images/introduction/regularization_overview.pdf}
     \caption{Regularization overview of an indefinite \gls{QP} subproblem}
     \label{fig:regularization_overview}
 \end{figure}
@@ -216,7 +217,7 @@ The main contributions of this thesis are the following:
     and proves the regularization to be inactive near the solution (Chapter~\ref{Chapter::Primal_Regularization}).
 
     \item \textbf{A benchmark of $170$ indefinite \gls{OCP} \glspl{QP}}:
-    This thesis provides a pipeline for collecting \glspl{QP} from \gls{SQP} iterations performed within acados,
+    This thesis provides a pipeline for collecting \glspl{QP} from \gls{SQP} iterations performed within \texttt{acados},
     and collects $170$ \glspl{QP} from $8$ nonlinear \glspl{OCP},
     together with an analysis of the indefiniteness regarding the benchmark (Chapter~\ref{Chapter::Benchmark}).
 

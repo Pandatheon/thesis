@@ -71,7 +71,8 @@ First, $E$ should be zero if $A$ is sufficiently positive definite.
 Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
 $\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$.
 Third, $A + E$ should be reasonably well-conditioned.
-Fourth, the regularization strategies should be computationally efficient, which is discussed in detail in Section~\ref{subsec:flop_unit}.
+Fourth, the regularization strategies should be computationally efficient,
+which depends on the matrices they regularize and the factorization they use, as discussed in Section~\ref{subsec:flop_unit}.
 Since all four strategies can substantially satisfy the first objective,
 each strategy is discussed mainly in terms of the trade-off between the second and third objectives.
 

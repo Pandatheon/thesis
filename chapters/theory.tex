@@ -349,16 +349,16 @@ i.e.\ the resulting complementarity residual is written as
     = T_i\Lambda_i\mathbf{1} - \sigma_i\mu_i\mathbf{1}
     = T_i\Lambda_i\mathbf{1}.
 \end{equation}
-This yields the affine scaling direction $(\Delta y_{\mathrm{aff}},\Delta \pi_{\mathrm{aff}},\Delta\lambda_{\mathrm{aff}},\Delta t_{\mathrm{aff}})$.
+This yields the affine scaling direction $(\Delta y^{\mathrm{aff}},\Delta \pi^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}},\Delta t^{\mathrm{aff}})$.
 The affine step is used to estimate the centering parameter $\sigma_i$ and form the second-order correction in the following.
 
 \paragraph{Centering update.}
 After the predictor step is obtained, the centering parameter $\sigma$ is updated 
-based on the estimated duality measure $\mu_{\mathrm{aff}}$ after the affine step is taken,
+based on the estimated duality measure $\mu^{\mathrm{aff}}$ after the affine step is taken,
 which is defined as
 \begin{align}
-    \sigma_i &= (\mu_{\mathrm{aff}}/\mu_i)^3 \label{eq:centering} \\
-    \mu_{\mathrm{aff}} &= \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{aff}} \Delta t_{\mathrm{aff}})^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{aff}} \Delta \lambda_{\mathrm{aff}})}{n_c},
+    \sigma_i &= (\mu^{\mathrm{aff}}/\mu_i)^3 \label{eq:centering} \\
+    \mu^{\mathrm{aff}} &= \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{aff}} \Delta t^{\mathrm{aff}})^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{aff}} \Delta \lambda^{\mathrm{aff}})}{n_c},
 \end{align}
 where the step sizes
 $\alpha_i^{\mathrm{prim}, \mathrm{aff}}$ and $\alpha_i^{\mathrm{dual}, \mathrm{aff}}$ are 
@@ -370,10 +370,10 @@ i.e.
     \alpha_i^{\mathrm{dual}, \mathrm{aff}} &= \min\left(1, \min_{j:\Delta \lambda_j^{\mathrm{aff}}<0} -\frac{\lambda_{j,i}}{\Delta \lambda_j^{\mathrm{aff}}}\right).
 \end{align}
 
-If $\mu_{\mathrm{aff}} \ll \mu_i$, 
+If $\mu^{\mathrm{aff}} \ll \mu_i$, 
 the affine step achieves a substantial reduction in the duality gap,
 which drives $\sigma_i$ sharply to $0$, resulting in a near-Newton, aggressive step,
-whereas a stalled affine step with $\mu_{\mathrm{aff}} \approx \mu_i$
+whereas a stalled affine step with $\mu^{\mathrm{aff}} \approx \mu_i$
 gives $\sigma_i \to 1$ and thus a recentering step towards the central path.
 
 \paragraph{Corrector step.}
@@ -383,11 +383,11 @@ include the updated centering parameter $\sigma_i$
 and a second-order correction term using the calculated affine steps as follows:
 \begin{equation}
     r_i^{\mathrm{comp},\mathrm{cor}}
-    = T_i\Lambda_i\mathbf{1} + \Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1} - \sigma_i\mu_i\mathbf{1},
+    = T_i\Lambda_i\mathbf{1} + \Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1} - \sigma_i\mu_i\mathbf{1},
     \label{eq:rcomp_cc}
 \end{equation}
-where $\Delta T_{\mathrm{aff}} = \operatorname{diag}({\Delta t_{\mathrm{aff}}})$, $\Delta \Lambda_{\mathrm{aff}} = \operatorname{diag}({\Delta \lambda}_{\mathrm{aff}})$,
-the term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1}$ cancels
+where $\Delta T^{\mathrm{aff}} = \operatorname{diag}({\Delta t^{\mathrm{aff}}})$, $\Delta \Lambda^{\mathrm{aff}} = \operatorname{diag}({\Delta \lambda}^{\mathrm{aff}})$,
+the term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ cancels
 the second-order error that the affine step leaves in $t_j\lambda_j$,
 and $-\sigma_i\mu_i\mathbf{1}$ supplies the centering.
 This second solve returns the final direction $(\Delta y,\Delta\pi,\Delta\lambda,\Delta t)$ directly,
@@ -401,14 +401,14 @@ if it does not largely increase the duality measure
 after the corrector step is taken compared with that after the predictor step.
 More specifically, the duality measure after the corrector step is estimated as
 \begin{equation}
-    \mu_{\mathrm{cor}} = \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{cor}} \Delta t)^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{cor}} \Delta \lambda)}{n_c},
+    \mu^{\mathrm{cor}} = \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{cor}} \Delta t)^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{cor}} \Delta \lambda)}{n_c},
 \end{equation}
 where $\alpha_i^{\mathrm{prim}, \mathrm{cor}}$ and $\alpha_i^{\mathrm{dual}, \mathrm{cor}}$ are computed 
 as the affine step sizes in \eqref{eq:max_step_size},
 but along the corrected direction.
-If $\mu_{\mathrm{cor}} \leq 2\mu_{\mathrm{aff}}$, the corrected direction is accepted.
+If $\mu^{\mathrm{cor}} \leq 2\mu^{\mathrm{aff}}$, the corrected direction is accepted.
 Otherwise, the linear system in \eqref{eq:IPM_KKT_system} is solved again 
-without the correction term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1}$ in \eqref{eq:rcomp_cc}.
+without the correction term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ in \eqref{eq:rcomp_cc}.
 
 \subsection{Mehrotra's probing}
 \label{subsec:mehrotra_probing}
@@ -429,13 +429,13 @@ where the centering parameter $\sigma_i$ is updated using \eqref{eq:centering} a
 \subsection{Comparison of schemes for nonconvex QPs}
 \label{sec:barrier_nonconvex}
 We argue that Mehrotra's predictor--corrector scheme is not necessarily the best choice in the nonconvex case.
-In the corrector step, $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1}$ is added to the complementarity residual
+In the corrector step, $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ is added to the complementarity residual
 to include the complementarity error of a full affine step, which assumes the affine direction is an accurate Newton step.
 In nonconvex \glspl{QP}, however, the Hessian at the \gls{LHS} usually needs to be modified,
 and thus the direction can be adjusted for descent when the constraints are satisfied,
 so it is actually an inexact Newton step, violating the assumption of the predictor--corrector scheme.
 
-Probing uses the affine step only through $\sigma = (\mu_{\mathrm{aff}}/\mu)^3$, so an inexact affine step just gives $\sigma \approx 1$, i.e.\ a centering step.
+Probing uses the affine step only through $\sigma = (\mu^{\mathrm{aff}}/\mu)^3$, so an inexact affine step just gives $\sigma \approx 1$, i.e.\ a centering step.
 The iterate moves back to the central path instead of trying to decrease the incorrect complementarity error introduced by the inexact Newton step.
 
 \section{Step size control}

@@ -12,8 +12,8 @@
 \chapter{Numerical experiments} % Overview text
 \label{Chapter::Experiments}
 In this chapter, we evaluate the proposed regularization methods numerically and discuss the results.
-We begin in Section~\ref{sec:metrics} with the two metrics used throughout the comparison, 
-the iteration profile and the flop unit estimation, which measure convergence behavior and factorization cost respectively.
+We begin in Section~\ref{sec:metrics} with the metrics used throughout the comparison:
+a proxy unit for the factorization cost and the absolute performance profile, which compares the methods in both iteration count and factorization cost.
 Section~\ref{sec:prototype} then describes the prototype solver on which all experiments are run 
 and stresses that it reproduces the iteration behavior of HPIPM on convex \glspl{QP}, 
 so that any difference observed later can be attributed to the regularization rather than to the solver itself.
@@ -27,37 +27,17 @@ Section~\ref{sec:discussion} concludes the chapter by analyzing the failures and
 \section{Experiment metrics}
 \label{sec:metrics}
 In this section, we introduce the metrics used to evaluate the performance of different regularization strategies in our experiments.
-Since we care about both the convergence behavior and the factorization cost caused by different regularization methods, 
-we use two complementary metrics: iteration profile and flop unit estimation.
-The former, iteration profile, is used to evaluate how many iterations each method takes to converge on a set of test instances, 
-while the latter, flop unit estimation, is approximated by the modified Cholesky factorizations of the reduced Hessian
-and is used to evaluate the factorization cost of each method.
+Since we care about both the convergence behavior and the factorization cost caused by different regularization methods,
+we measure the cost of a run in two ways: by its iteration count and by its factorization cost.
+For the latter, Section~\ref{subsec:flop_unit} defines a proxy unit based on one Cholesky factorization of the reduced Hessian block.
+Section~\ref{subsec:performance_profile} then introduces the absolute performance profile, which compares the methods under both cost measures.
 
-\subsection{Iteration profile}
-\label{subsec:iteration_profile}
-The \emph{iteration profile} shows the number of test instances that the method solves within a certain iteration budget.
-An instance that the method fails to solve within the max iteration budget $i_\mathrm{max}$ counts as unsolved.
-
-We plot the iteration profile as a curve, 
-with the iteration budget from $1$ to $i_\mathrm{max}$ on the horizontal axis 
-and the number of solved instances on the vertical axis.
-Different from the common performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
-which uses the iteration ratio to the best method as the horizontal axis,
-the iteration profile of a method does not depend on the other methods,
-by which we emphasize the ability of each method itself to solve the instances.
-
-Plotting the profiles of all methods in one figure allows a direct comparison:
-at any budget, the higher curve belongs to the method that has solved more instances.
-And a curve that rises steeply at small budgets indicates an \emph{efficient} method,
-and its final value at $i_\mathrm{max}$, the number of solved instances, measures its \emph{robustness}.
-
-\subsection{Flop unit estimation}
+\subsection{Proxy unit for factorization cost}
 \label{subsec:flop_unit}
-The regularization strategies differ in the factorization they perform per iteration.
+The regularization strategies differ in the factorizations they perform per iteration.
 Some use an eigenvalue decomposition, some a modified Cholesky factorization,
 and some repeat the Cholesky factorization with an increasing diagonal shift.
-Iteration counts alone therefore do not reflect the factorization cost,
-so we express this cost in a common proxy unit.
+To make the factorization costs comparable, we express them in a common proxy unit.
 
 We take one Cholesky factorization of the reduced Hessian block $\tilde{M}_k$ as the proxy unit. 
 For factorizing an $n_u \times n_u$ matrix, the cost is approximately $\tfrac{1}{3} n_u^3$ flops, hence
@@ -92,25 +72,60 @@ the Cholesky factorizations of the Riccati recursion itself and
 the additional factorizations introduced by the regularization.
 The latter includes every rerun of the Riccati recursion, whose factorizations are counted again,
 and every failed Cholesky factorization, which counts as one proxy unit, although it may stop early.
-Moreover, since the recursion requires the Cholesky factor of the reduced Hessian block, 
+Counting only factorizations omits the triangular solves and matrix products of the factorization step,
+favoring regularizations that repeat it, such as inertia correction.
+
+Moreover, since the recursion requires the Cholesky factor of the reduced Hessian block,
 a modified Cholesky factorization of this block provides the factor directly, 
 whereas an eigenvalue modification requires an additional Cholesky factorization.
-Table~\ref{tab:flop_units} summarizes the resulting cost of each regularization.
+Table~\ref{tab:flop_units} summarizes the factorization cost of regularizing each matrix
 \begin{table}[htbp]
   \centering
-  \caption{Factorization cost per regularization in proxy units.}
+  \caption{Additional cost of regularizing each matrix in proxy units.}
   \label{tab:flop_units}
   \vspace{0.5em}
   \begin{tabular}{lcc}
     \toprule
     \textbf{Matrix} & \textbf{Modified Cholesky} & \textbf{Eigenvalue} \\
     \midrule
-    Reduced Hessian block              & $1$          & $27 + 1$ \\
-    Cost-to-go matrix            & $\omega_P$   & $27\omega_P$ \\
-    Full Hessian, all $N$ blocks & $N\omega_H$  & $27N\omega_H + N\omega_H$ \\
+    Reduced Hessian block       & $1$          & $27 + 1$ \\
+    Cost-to-go matrix           & $\omega_P$   & $27\omega_P$ \\
+    Full Hessian block          & $\omega_H$   & $27\omega_H$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\subsection{Absolute performance profile}
+\label{subsec:performance_profile}
+In experiments, we use a variant of the performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
+which we name as \emph{absolute performance profile}.
+Instead of the fraction of instances solved within a factor of the best method's cost,
+it plots the number of instances a method solves within a certain cost on the vertical axis against the absolute cost on the horizontal axis.
+The profile of a method thus does not depend on the other methods and emphasizes the method's own ability to solve the instances.
+
+We use two cost measures, which give two profiles:
+the \emph{iteration profile}, which measures the cost by the iteration count,
+and the \emph{proxy unit profile}, which measures it by the total factorization cost in the proxy units of Section~\ref{subsec:flop_unit}.
+An instance that the method fails to solve within the maximum iteration count $i_\mathrm{max}$ counts as unsolved in both profiles.
+A curve that rises steeply at low cost indicates an \emph{efficient} method, in iterations or in factorization,
+and its final value, the number of solved instances, measures \emph{robustness} and is the same in both profiles.
+
+
+% The \emph{absolute performance profile} of a method shows how many test instances it solves at no more than a given cost,
+% with the cost on the horizontal axis and the number of solved instances on the vertical axis.
+% We use two cost measures, which give two profiles:
+% the \emph{iteration profile}, which measures the cost by the iteration count,
+% and the \emph{proxy unit profile}, which measures it by the total factorization cost in the proxy units of Section~\ref{subsec:flop_unit}.
+% An instance that the method fails to solve within the maximum iteration count $i_\mathrm{max}$ counts as unsolved in both profiles.
+
+% Unlike the original performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
+% which uses the cost ratio to the best method as the horizontal axis,
+% the absolute performance profile uses the cost itself,
+% so the profile of a method does not depend on the other methods,
+% by which we emphasize the ability of each method itself to solve the instances.
+% A curve that rises steeply at low cost indicates an \emph{efficient} method, in iterations or in factorization,
+% and its final value, the number of solved instances, measures \emph{robustness} and is the same in both profiles.
+
 
 \section{Prototype solver implementation}
 \label{sec:prototype}
@@ -121,22 +136,22 @@ The prototype was designed to reproduce its iteration behavior on convex \glspl{
 One implementation detail deserves a special mention, 
 as it deviates from the plain \gls{FTB} rule stated in Section~\ref{sec:size_control}. 
 Rather than being a fixed fraction $\eta$ of the maximal step, 
-the primal and dual step sizes $\alpha_{\mathrm{prim}}$ and $\alpha_{\mathrm{dual}}$ are obtained 
+the primal and dual step sizes $\alpha^{\mathrm{prim}}$ and $\alpha^{\mathrm{dual}}$ are obtained 
 from their respective maximal steps through the heuristic
 \begin{equation}
   \alpha =
   \begin{cases}
-    \alpha_{\mathrm{max}}\big[(1-\alpha_{\mathrm{max}})\,\kappa_\eta + \alpha_{\mathrm{max}}\hat{\eta}\big], & \alpha_{\mathrm{max}} < 1,\\
-    \alpha_{\mathrm{max}}, & \alpha_{\mathrm{max}} = 1,
+    \alpha^{\mathrm{max}}\big[(1-\alpha^{\mathrm{max}})\,\kappa_\eta + \alpha^{\mathrm{max}}\hat{\eta}\big], & \alpha^{\mathrm{max}} < 1,\\
+    \alpha^{\mathrm{max}}, & \alpha^{\mathrm{max}} = 1,
   \end{cases}
 \end{equation}
-where $\alpha_{\mathrm{max}}\in(0,1]$ denotes the maximal step length from \eqref{eq:ftb_max_prim} or \eqref{eq:ftb_max_dual},
+where $\alpha^{\mathrm{max}}\in(0,1]$ denotes the maximal step length from \eqref{eq:ftb_max_prim} or \eqref{eq:ftb_max_dual},
 $\kappa_\eta = 0.99$ and $\hat{\eta} = 1-10^{-7}$ as in HPIPM.
 
-When $\alpha_{\mathrm{max}} < 1$, 
-the bracketed factor changes with $\alpha_{\mathrm{max}}$, 
+When $\alpha^{\mathrm{max}} < 1$, 
+the bracketed factor changes with $\alpha^{\mathrm{max}}$, 
 from a strongly blocked step to a nearly full one, so the closer the maximal step is to a full step, the less it is shortened.
-When $\alpha_{\mathrm{max}} = 1$,
+When $\alpha^{\mathrm{max}} = 1$,
 an unblocked full step can be taken without scaling by $\hat{\eta}$ so that
 the local quadratic convergence rate of the \gls{IPM} can be preserved.
 
@@ -199,7 +214,6 @@ rather than to the solver.
     The two curves coincide.}
     \label{fig:convex_iteration_profile}
 \end{figure}
-
 
 \section{Experiment setup}
 \label{sec:setup}
@@ -336,10 +350,10 @@ and the two-type line search to control the step size after the \gls{FTB} rule.
     $i_\mathrm{max}$   & $120$     & Iteration budget \\
     $n_\mathcal{P}$    & $170$     & Nonconvex \gls{QP} instances in the test set \\
     $\epsilon$         & $10^{-4}$ & Eigenvalue and pivot floor \\
-    $\beta$           & $0.4$      & Backtracking factor, $\alpha_\mathrm{prim} \leftarrow \beta\alpha_\mathrm{prim}$ \\
+    $\beta$           & $0.4$      & Backtracking factor, $\alpha^\mathrm{prim} \leftarrow \beta\alpha^\mathrm{prim}$ \\
     $n_\mathrm{max}$        & $10$        & Maximum backtracking iterations \\
-    $\kappa_s$      & $10^{-1}$  & Switching constant, $\alpha_\mathrm{prim}(-\rho) > \kappa_s\,\theta^2$ \\
-    $\gamma$        & $10^{-4}$  & Armijo constant, $\phi^+ \le \phi_i + \gamma\,\alpha_\mathrm{prim}\rho$ \\
+    $\kappa_s$      & $10^{-1}$  & Switching constant, $\alpha^\mathrm{prim}(-\rho) > \kappa_s\,\theta^2$ \\
+    $\gamma$        & $10^{-4}$  & Armijo constant, $\phi^+ \le \phi_i + \gamma\,\alpha^\mathrm{prim}\rho$ \\
     \bottomrule
 \end{tabular}
 \end{table}
@@ -357,7 +371,7 @@ and the two-type line search to control the step size after the \gls{FTB} rule.
     \EndIf
     \State factorize \gls{LHS} with regularizations \Comment{Proxy units recorded}
     \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{aff}}$ for $\Delta z^{\mathrm{aff}}$
-    \State compute $\mu_{\mathrm{aff}}$ and $\sigma_i \gets (\mu_{\mathrm{aff}}/\mu_i)^3$  \Comment{Mehrotra's probing}
+    \State compute $\mu^{\mathrm{aff}}$ and $\sigma_i \gets (\mu^{\mathrm{aff}}/\mu_i)^3$  \Comment{Mehrotra's probing}
     \State Riccati recursion with $r_i^{\mathrm{comp},\mathrm{pro}}$ for $\Delta z$
     \State compute $\alpha_i^{\mathrm{prim}}, \alpha_i^{\mathrm{dual}}$ by the \gls{FTB}
     \State line search to reduce $\alpha_i^{\mathrm{prim}}$ \Comment{two-type line search}
@@ -386,113 +400,183 @@ As a baseline we also include the unregularized recursion (\textsf{NO\_REGULARIZ
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Riccati-based_results/iteration_qp_results_riccati.pdf}
-    \caption{Iteration profile of the six Riccati-based methods and the unregularized baseline over the $170$-instance test set.}
+    \includegraphics[width=1.00\textwidth]{images/experiment/Riccati-based_results/iter_flop_profile_qp_results_riccati.pdf}
+   \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+            for the six Riccati-based methods and the unregularized baseline over the $170$-instance test set.}
     \label{fig:iter-profile-riccati}
 \end{figure}
 
-In the iteration profile of Figure~\ref{fig:iter-profile-riccati}, two trends stand out.
+In the left panel of Figure~\ref{fig:iter-profile-riccati}, two trends stand out.
 First, each \textsf{PM} dominates its counterpart \textsf{M} once the budget exceeds about $40$ iterations.
 Second, among the regularization strategies, \textsf{MIRROR} and \textsf{GMW} are clearly more effective than \textsf{PROJECT}.
-These trends validate the insights mentioned in Section \ref{sec:fail_minimal_perturbation}.
+These trends validate the insights mentioned in Section~\ref{sec:fail_minimal_perturbation}.
 Among all the methods, \textsf{PM\_MIRROR} and \textsf{PM\_GMW} top the profile.
 
 Besides, it is worth noting that
-the unregularized recursion can also solve a non-negligible fraction of the test set, around $25$ of the $170$ instances,
+the unregularized recursion can also solve a non-negligible fraction of the test set, $23$ of the $170$ instances,
 which can be explained by the curvature contribution from the barrier term that makes the reduced Hessian positive definite in some instances.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Riccati-based_results/decomp_flop_worstcase_qp_results_riccati.pdf}
-    \caption{Factorization cost per instance of the six Riccati-based methods, 
-    unsolved instances due to maximal iteration included.
-    Annotations report the maximum observed cost and the number of unsolved instances.}
-    \label{fig:flop-profile-riccati}
-\end{figure}
-
-Figure~\ref{fig:flop-profile-riccati} shows the distribution of the factorization cost per instance in proxy units for each method.
-Instances that reach the iteration cap $i_\mathrm{max}$ are included with the cost of all $i_\mathrm{max}$ iterations,
-so the distribution reflects the worst-case cost.
-
-In Figure~\ref{fig:flop-profile-riccati},
-all methods share a similar lowest cost, since some instances are solved by the unregularized recursion.
+The right panel counts each solved instance at its total factorization cost in proxy units.
 The methods based on eigenvalue modification cost more than those based on modified Cholesky factorization as expected,
 and the \textsf{PM} methods, which also act on $P_{k+1}$, cost more than their \textsf{M} counterparts.
 
-Taken together, the two figures first reveal a robustness ordering,
+Taken together, the two panels reveal a robustness ordering,
 \{\textsf{PM\_MIRROR}, \textsf{PM\_GMW}\} $>$
 \{\textsf{M\_MIRROR}, \textsf{M\_GMW}, \textsf{PM\_PROJECT}\} $>$ \textsf{M\_PROJECT}.
 Since \textsf{PM\_MIRROR} and \textsf{PM\_GMW} solve all instances, 
 we therefore focus on the two Riccati-based regularizations in the following comparisons with other regularization categories.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Riccati-based_results/iteration_qp_results_riccati.pdf}
+%     \caption{Iteration profile of the six Riccati-based methods and the unregularized baseline over the $170$-instance test set.}
+%     \label{fig:iter-profile-riccati}
+% \end{figure}
+
+% In the iteration profile of Figure~\ref{fig:iter-profile-riccati}, two trends stand out.
+% First, each \textsf{PM} dominates its counterpart \textsf{M} once the budget exceeds about $40$ iterations.
+% Second, among the regularization strategies, \textsf{MIRROR} and \textsf{GMW} are clearly more effective than \textsf{PROJECT}.
+% These trends validate the insights mentioned in Section \ref{sec:fail_minimal_perturbation}.
+% Among all the methods, \textsf{PM\_MIRROR} and \textsf{PM\_GMW} top the profile.
+
+% Besides, it is worth noting that
+% the unregularized recursion can also solve a non-negligible fraction of the test set, around $25$ of the $170$ instances,
+% which can be explained by the curvature contribution from the barrier term that makes the reduced Hessian positive definite in some instances.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Riccati-based_results/decomp_flop_worstcase_qp_results_riccati.pdf}
+%     \caption{Factorization cost per instance of the six Riccati-based methods, 
+%     unsolved instances due to maximal iteration included.
+%     Annotations report the maximum observed cost and the number of unsolved instances.}
+%     \label{fig:flop-profile-riccati}
+% \end{figure}
+
+% Figure~\ref{fig:flop-profile-riccati} shows the distribution of the factorization cost per instance in proxy units for each method.
+% Instances that reach the iteration cap $i_\mathrm{max}$ are included with the cost of all $i_\mathrm{max}$ iterations,
+% so the distribution reflects the worst-case cost.
+
+% In Figure~\ref{fig:flop-profile-riccati},
+% all methods share a similar lowest cost, since some instances are solved by the unregularized recursion.
+% The methods based on eigenvalue modification cost more than those based on modified Cholesky factorization as expected,
+% and the \textsf{PM} methods, which also act on $P_{k+1}$, cost more than their \textsf{M} counterparts.
+
+% Taken together, the two figures first reveal a robustness ordering,
+% \{\textsf{PM\_MIRROR}, \textsf{PM\_GMW}\} $>$
+% \{\textsf{M\_MIRROR}, \textsf{M\_GMW}, \textsf{PM\_PROJECT}\} $>$ \textsf{M\_PROJECT}.
+% Since \textsf{PM\_MIRROR} and \textsf{PM\_GMW} solve all instances, 
+% we therefore focus on the two Riccati-based regularizations in the following comparisons with other regularization categories.
 
 \subsection{Comparison with full Hessian regularizations}
 \label{subsec:comparison_full_hessian}
 Having identified \textsf{PM\_MIRROR} and \textsf{PM\_GMW} as the strongest Riccati-based methods, 
 we now compare them against the full Hessian regularizations.
 
-The iteration profile in Figure~\ref{fig:iter-profile-fullhessian} 
-shows that the two Riccati-based methods sit well above every full Hessian variant across the whole iteration budget,
-which indicates better performance in efficiency and robustness of the two Riccati-based methods over full Hessian regularization. 
-
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Full_Hessian_results/iteration_qp_results_riccati.pdf}
-    \caption{Iteration profile of the two strongest Riccati-based methods
-    (\textsf{PM\_MIRROR}, \textsf{PM\_GMW}) against the full Hessian regularizations
+    \includegraphics[width=1.00\textwidth]{images/experiment/Full_Hessian_results/iter_flop_profile_qp_results_riccati.pdf}
+    \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+    for the two strongest Riccati-based methods (\textsf{PM\_MIRROR}, \textsf{PM\_GMW}) against the full Hessian regularizations
     (\textsf{H\_PROJECT}, \textsf{H\_MIRROR}, \textsf{H\_GMW}) and the unregularized baseline.}
     \label{fig:iter-profile-fullhessian}
 \end{figure}
 
-In Figure~\ref{fig:flop-profile-fullhessian}, 
-the two \textsf{PM} methods also outperform them on the factorization cost.
-The worst-case costs of \textsf{H\_PROJECT} and \textsf{H\_MIRROR} lie far above those of both Riccati-based methods,
-and even \textsf{H\_GMW}, the cheapest and least robust full Hessian method, has a higher median cost than \textsf{PM\_GMW}.
+The left panel of Figure~\ref{fig:iter-profile-fullhessian}
+shows that the two Riccati-based methods sit well above every full Hessian variant across the whole iteration budget,
+which indicates better performance in efficiency and robustness of the two Riccati-based methods over full Hessian regularization.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Full_Hessian_results/decomp_flop_worstcase_qp_results_riccati.pdf}
-    \caption{Factorization cost per instance of the two strongest Riccati-based methods
-    against the full Hessian regularizations.
-    Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
-    \label{fig:flop-profile-fullhessian}
-\end{figure}
+In the right panel, the two \textsf{PM} methods also outperform them on the factorization cost.
+The curves of \textsf{H\_PROJECT} and \textsf{H\_MIRROR} lie far to the right of both Riccati-based methods,
+and even \textsf{H\_GMW}, the cheapest and least robust full Hessian method, lies to the right of \textsf{PM\_GMW}.
 
 The Riccati-based methods are thus generally more robust and cheaper than every full Hessian counterpart.
-This supports regularizing the reduced Hessian by exploiting the stage-wise structure of the problem rather than the full Hessian. 
+This supports regularizing the reduced Hessian by exploiting the stage-wise structure of the problem rather than the full Hessian.
+
+% The iteration profile in Figure~\ref{fig:iter-profile-fullhessian} 
+% shows that the two Riccati-based methods sit well above every full Hessian variant across the whole iteration budget,
+% which indicates better performance in efficiency and robustness of the two Riccati-based methods over full Hessian regularization. 
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Full_Hessian_results/iteration_qp_results_riccati.pdf}
+%     \caption{Iteration profile of the two strongest Riccati-based methods
+%     (\textsf{PM\_MIRROR}, \textsf{PM\_GMW}) against the full Hessian regularizations
+%     (\textsf{H\_PROJECT}, \textsf{H\_MIRROR}, \textsf{H\_GMW}) and the unregularized baseline.}
+%     \label{fig:iter-profile-fullhessian}
+% \end{figure}
+
+% In Figure~\ref{fig:flop-profile-fullhessian}, 
+% the two \textsf{PM} methods also outperform them on the factorization cost.
+% The worst-case costs of \textsf{H\_PROJECT} and \textsf{H\_MIRROR} lie far above those of both Riccati-based methods,
+% and even \textsf{H\_GMW}, the cheapest and least robust full Hessian method, has a higher median cost than \textsf{PM\_GMW}.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Full_Hessian_results/decomp_flop_worstcase_qp_results_riccati.pdf}
+%     \caption{Factorization cost per instance of the two strongest Riccati-based methods
+%     against the full Hessian regularizations.
+%     Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
+%     \label{fig:flop-profile-fullhessian}
+% \end{figure}
+
+% The Riccati-based methods are thus generally more robust and cheaper than every full Hessian counterpart.
+% This supports regularizing the reduced Hessian by exploiting the stage-wise structure of the problem rather than the full Hessian. 
 
 \subsection{Comparison with inertia correction}
 \label{subsec:comparison_inertia}
 Finally, we compare the two Riccati-based methods against inertia correction (\textsf{INERTIA\_LM}).
 
-In Figure~\ref{fig:iter-profile-inertia}, 
-\textsf{PM\_MIRROR} and \textsf{PM\_GMW} still sit above \textsf{INERTIA\_LM},
-which leaves $9$ unsolved at the iteration cap.
-This indicates better robustness and efficiency of the two Riccati-based methods over 
-\textsf{INERTIA\_LM} with the default parameters in Table~\ref{tab:inertia_correction}.
-
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Inertia_correction_results/iteration_qp_results_riccati.pdf}
-    \caption{Iteration profile of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
-    against inertia correction (\textsf{INERTIA\_LM}) and the unregularized baseline.}
+    \includegraphics[width=1.00\textwidth]{images/experiment/Inertia_correction_results/iter_flop_profile_qp_results_riccati.pdf}
+    \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+    for \textsf{PM\_MIRROR} and \textsf{PM\_GMW} against inertia correction (\textsf{INERTIA\_LM}) and the unregularized baseline.}
     \label{fig:iter-profile-inertia}
 \end{figure}
 
-Figure~\ref{fig:flop-profile-inertia} draws the distinction among the three methods more finely.
+In the left panel of Figure~\ref{fig:iter-profile-inertia},
+\textsf{PM\_MIRROR} and \textsf{PM\_GMW} still sit above \textsf{INERTIA\_LM},
+which leaves $9$ unsolved at the iteration cap.
+This indicates better robustness and efficiency of the two Riccati-based methods over
+\textsf{INERTIA\_LM} with the default parameters in Table~\ref{tab:inertia_correction}.
+
+The right panel draws the distinction among the three methods more finely.
 Though the factorization cost of reruns is accounted for,
-inertia correction still has the lowest median cost of the three, slightly below \textsf{PM\_GMW}.
-In the worst case, however, \textsf{INERTIA\_LM} and \textsf{PM\_GMW} are approximately on par.
+the curve of \textsf{INERTIA\_LM} stays close to that of \textsf{PM\_GMW}
+until it levels off at the $161$ instances it solves.
 
-From the evidence of this benchmark,
-inertia correction remains competitive in factorization cost, similar to \textsf{PM\_GMW}.
+% From the evidence of this benchmark,
+% inertia correction remains competitive in factorization cost, similar to \textsf{PM\_GMW}.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.80\textwidth]{images/experiment/Inertia_correction_results/decomp_flop_worstcase_qp_results_riccati.pdf}
-    \caption{Factorization cost per instance of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
-    against inertia correction. Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
-    \label{fig:flop-profile-inertia}
-\end{figure}
+% In Figure~\ref{fig:iter-profile-inertia}, 
+% \textsf{PM\_MIRROR} and \textsf{PM\_GMW} still sit above \textsf{INERTIA\_LM},
+% which leaves $9$ unsolved at the iteration cap.
+% This indicates better robustness and efficiency of the two Riccati-based methods over 
+% \textsf{INERTIA\_LM} with the default parameters in Table~\ref{tab:inertia_correction}.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Inertia_correction_results/iteration_qp_results_riccati.pdf}
+%     \caption{Iteration profile of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
+%     against inertia correction (\textsf{INERTIA\_LM}) and the unregularized baseline.}
+%     \label{fig:iter-profile-inertia}
+% \end{figure}
+
+% Figure~\ref{fig:flop-profile-inertia} draws the distinction among the three methods more finely.
+% Though the factorization cost of reruns is accounted for,
+% inertia correction still has the lowest median cost of the three, slightly below \textsf{PM\_GMW}.
+% In the worst case, however, \textsf{INERTIA\_LM} and \textsf{PM\_GMW} are approximately on par.
+
+% From the evidence of this benchmark,
+% inertia correction remains competitive in factorization cost, similar to \textsf{PM\_GMW}.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.80\textwidth]{images/experiment/Inertia_correction_results/decomp_flop_worstcase_qp_results_riccati.pdf}
+%     \caption{Factorization cost per instance of \textsf{PM\_MIRROR} and \textsf{PM\_GMW}
+%     against inertia correction. Unsolved instances and annotations as in Figure~\ref{fig:flop-profile-riccati}.}
+%     \label{fig:flop-profile-inertia}
+% \end{figure}
 
 \subsection{Ablation on Mehrotra's probing}
 \label{subsec:ablation_mehrotra}
@@ -655,7 +739,7 @@ which allows $\nu_{\min}(\tilde{M}_i+E_i)$ to stay as a small positive value.
 
 As shown in Table~\ref{tab:step_metrics}, the median affine step of \textsf{PM\_MIRROR} is longer than that of \textsf{INERTIA\_LM}.
 This difference can be amplified in Mehrotra's predictor--corrector scheme, 
-where the second-order term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}\mathbf{1}$ grows quadratically with the affine step.
+where the second-order term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ grows quadratically with the affine step.
 
 \begin{table}[htbp]
 \centering
@@ -673,7 +757,7 @@ where the second-order term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}
 \multicolumn{3}{l}{\emph{Probing, on $161$ instances solved by both}} \\
 \quad Total Iterations                                      & $4056$ & $5261$ \\
 \quad Regularized iterations                          & $1572$ & $2808$ \\
-\quad Median displacement $\alpha_{\mathrm{prim}}\|\Delta y_z\|$ & $1.61$ & $0.38$ \\
+\quad Median displacement $\alpha^{\mathrm{prim}}\|\Delta y_z\|$ & $1.61$ & $0.38$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -681,8 +765,8 @@ where the second-order term $\Delta T_{\mathrm{aff}}\Delta\Lambda_{\mathrm{aff}}
 In \textsf{PM\_MIRROR},
 the long affine step makes the second-order term dominate the \gls{RHS}, so the corrector step is long as well.
 For both steps, the \gls{FTB} rule then allows only a short step size,
-which keeps $\mu_{\mathrm{aff}}$ and $\mu_{\mathrm{cor}}$ close to $\mu$.
-The condition $\mu_{\mathrm{cor}} < 2\mu_{\mathrm{aff}}$ thus rarely detects this.
+which keeps $\mu^{\mathrm{aff}}$ and $\mu^{\mathrm{cor}}$ close to $\mu$.
+The condition $\mu^{\mathrm{cor}} < 2\mu^{\mathrm{aff}}$ thus rarely detects this.
 The corrector step dominated by the inexactness from an affine step is, therefore, taken,
 which cannot efficiently reduce the complementarity residual or the duality gap.
 In \textsf{INERTIA\_LM}, by contrast, the second-order term is usually still comparable in size to the rest of the \gls{RHS},
@@ -693,7 +777,7 @@ The scheme thus makes progress as intended, and \textsf{INERTIA\_LM} loses far f
 With probing, the affine step only affects the centering parameter,
 so the inexactness no longer enters the search direction.
 The longer step of \textsf{PM\_MIRROR}, which is a drawback under the corrector, thus becomes an advantage,
-as measured by the displacement $\alpha_{\mathrm{prim}}\|\Delta y_z\|$ in Table~\ref{tab:step_metrics}.
+as measured by the displacement $\alpha^{\mathrm{prim}}\|\Delta y_z\|$ in Table~\ref{tab:step_metrics}.
 
 \textsf{INERTIA\_LM} moves less per regularized iteration and generally needs more regularized iterations,
 while \textsf{PM\_MIRROR} moves further per regularized iteration.
