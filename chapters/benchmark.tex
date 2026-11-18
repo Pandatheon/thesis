@@ -282,11 +282,11 @@ Recall that the reduced Hessian block, $\tilde{M}_k = \tilde{R}_k + B_k^\top P_{
 is assembled from two parts, the control cost block $\tilde{R}_k$ and the cost-to-go block $P_{k+1}$.
 
 To investigate where the indefiniteness originates,
-we classify every indefinite stage by which of $R_k$ and $P_{k+1}$ has a negative eigenvalue:
+we classify every indefinite stage by which of $\tilde{R}_k$ and $P_{k+1}$ has a negative eigenvalue:
 \emph{R only} ($\tilde{R}_k \not\succeq 0$, $P_{k+1} \succeq 0$),
-\emph{P only} ($P_{k+1} \not\succeq 0$, $R_k \succeq 0$),
+\emph{P only} ($P_{k+1} \not\succeq 0$, $\tilde{R}_k \succeq 0$),
 and \emph{both} ($\tilde{R}_k, P_{k+1} \not\succeq 0$).
-Since $\tilde{R}_k, P_{k+1} \succeq 0$ would imply $M_k \succeq 0$, these three cases cover all indefinite stages.
+Since $\tilde{R}_k, P_{k+1} \succeq 0$ would imply $\tilde{M}_k \succeq 0$, these three cases cover all indefinite stages.
 
 \begin{figure}[htbp]
     \centering

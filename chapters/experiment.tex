@@ -46,7 +46,7 @@ For factorizing an $n_u \times n_u$ matrix, the cost is approximately $\tfrac{1}
 \end{equation}
 And other factorizations are expressed relative to this unit.
 
-A modified Cholesky factorization of a $n_u \times n_u$ matrix
+A modified Cholesky factorization of an $n_u \times n_u$ matrix
 only adds diagonal updates of $\mathcal{O}(n_u^2)$ cost, 
 so to leading order it also costs $1$ unit.
 A symmetric eigenvalue decomposition of the same dimension matrix costs 
@@ -331,7 +331,7 @@ Taken together, the three categories span ten methods, which all run on the same
 \label{subsec:general_setup}
 The experiment parameters are collected in Table~\ref{tab:general_settings}.
 The implemented \gls{IPM} is summarized in Algorithm~\ref{alg:ipm_experiment},
-which uses Mehrotra's probing to update the barrier parameters 
+which uses Mehrotra's probing to update the barrier parameter
 and the two-type line search to control the step size after the \gls{FTB} rule.
 
 \begin{table}[htbp]
@@ -687,7 +687,7 @@ It remains a potential issue for full Hessian regularization, as rounding errors
 \label{subsec:failure_category}
 Figure~\ref{fig:failures-by-category} breaks down the same failures by the \gls{OCP} each instance was collected from.
 Together with Figure~\ref{fig:indefinite_qp_scatter},
-this shows that \textsf{M\_MIRROR}, \textsf{M\_GMW} fail mostly on the wide indefiniteness of \textsl{Dubins car} and \textsl{Robot arm},
+this shows that \textsf{M\_MIRROR} and \textsf{M\_GMW} fail mostly on the wide indefiniteness of \textsl{Dubins car} and \textsl{Robot arm},
 whereas the full Hessian methods fail mostly on the narrow indefiniteness of \textsl{Flying robot} and \textsl{Crane}.
 
 \begin{figure}[htbp]
@@ -749,7 +749,7 @@ As shown in Table~\ref{tab:step_metrics}, the median affine direction of \textsf
 \quad Percentage of rejected corrector steps          & 4.5\,\% & 55.7\,\% \\
 \addlinespace
 \multicolumn{3}{l}{\emph{Probing, on $161$ instances solved by both}} \\
-\quad Total Iterations                                      & $4056$ & $5261$ \\
+\quad Total iterations                                      & $4056$ & $5261$ \\
 \quad Regularized iterations                          & $1572$ & $2808$ \\
 \quad Median displacement $\alpha^{\mathrm{prim}}\|\Delta y_z\|$ & $1.61$ & $0.38$ \\
 \bottomrule
@@ -759,10 +759,10 @@ As shown in Table~\ref{tab:step_metrics}, the median affine direction of \textsf
 In \textsf{PM\_MIRROR}, the long affine direction makes the second-order term dominate the complementarity residual in the \gls{RHS},
 so the corrector direction is long as well.
 The \gls{FTB} rule then allows only short step sizes for both, which keep $\mu^{\mathrm{aff}}$ and $\mu^{\mathrm{cor}}$ close to $\mu$,
-so the condition $\mu^{\mathrm{cor}} < 2\mu^{\mathrm{aff}}$ rarely rejects the corrector steps.
+so the condition $\mu^{\mathrm{cor}} \le 2\mu^{\mathrm{aff}}$ rarely rejects the corrector steps.
 The corrector step, dominated by the inexactness of the affine direction, is thus taken,
 which cannot efficiently reduce the complementarity residual or the duality measure.
-In \textsf{INERTIA\_LM}, by contrast, the second-order term usually stays comparable to the rest of complementarity residual,
+In \textsf{INERTIA\_LM}, by contrast, the second-order term usually stays comparable to the rest of the complementarity residual,
 so the condition can still reject the corrector steps as shown in Table~\ref{tab:step_metrics} and the scheme makes progress as intended.
 \textsf{INERTIA\_LM} thus loses far fewer instances than \textsf{PM\_MIRROR}.
 

@@ -162,7 +162,7 @@ which is the fixed point satisfying the optimality conditions of~\eqref{eq:toy_q
     coloured from blue (low) to yellow (high) objective value within each panel.
     (a) shows the original objective, 
     (b) shows the subproblem objective of the \gls{QP} after mirror,
-    and (c) shows the \gls{SQP} iterates when the \gls{QP} is solved as an \gls{NLP} for completeness.}
+    and (c) shows the \gls{SQP} iterates when the \gls{QP} is solved as an \acrshort{NLP} for completeness.}
     \label{fig:toy_example_sqp}
 \end{figure}
 From a \gls{QP} perspective, 
@@ -189,7 +189,7 @@ The \gls{IPM} can thus solve the indefinite \gls{QP} and obtain the exact soluti
     coloured from blue (low) to yellow (high) objective value within each panel.
     (a) shows the original objective, 
     (b) shows the local second-order model with curvature contributions from inequality constraints,
-    and (c) shows the \gls{IPM} iterates on the \gls{QP}.}
+    and (c) shows the \acrshort{IPM} iterates on the \gls{QP}.}
     \label{fig:toy_example_ipm}
 \end{figure}
 
@@ -215,7 +215,7 @@ The main contributions of this thesis are the following:
     which regularizes only when Cholesky factorization fails during the Riccati recursion.
     The thesis further analyzes why the minimum perturbation in this regularization fails,
     improves the regularization strategy, 
-    and proves that the Riccati-based regularization is inactive near the solution(Chapter~\ref{Chapter::Primal_Regularization}).
+    and proves that the Riccati-based regularization is inactive near the solution (Chapter~\ref{Chapter::Primal_Regularization}).
 
     \item \textbf{A benchmark of $170$ indefinite \gls{OCP} \glspl{QP}}:
     This thesis provides a pipeline for collecting \glspl{QP} from \gls{SQP} iterations performed within \texttt{acados},
@@ -223,7 +223,7 @@ The main contributions of this thesis are the following:
     together with an analysis of the indefiniteness regarding the benchmark (Chapter~\ref{Chapter::Benchmark}).
 
     \item \textbf{Numerical comparison and ablation}:
-    This thesis implements a prototype solver in Python, that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
+    This thesis implements a prototype solver in Python that shows identical iteration behavior to HPIPM on convex \glspl{QP}, 
     and performs experiments with this solver on the benchmark to investigate the performance of all regularizations. 
     In addition, this thesis also presents an analysis of solving failures 
     and includes ablation studies on the solver settings to show which components the results depend on~(Chapter~\ref{Chapter::Experiments}).

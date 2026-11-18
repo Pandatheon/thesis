@@ -491,7 +491,7 @@ $\rho_i = \nabla \phi_i^\top \Delta z^{\mathrm{prim}}$ the directional derivativ
 For an h-type step, the predicted objective decrease is small relative to the constraint violation.
 The \gls{FTB} step is then accepted without evaluating the objective.
 The constraints of the \gls{QP} are affine and the search direction satisfies their linearization exactly,
-so $\theta(\alpha_i^{\mathrm{prim}}) = (1-\alpha_i^{\mathrm{prim}}),\theta_i$ 
+so $\theta(\alpha_i^{\mathrm{prim}}) = (1-\alpha_i^{\mathrm{prim}})\,\theta_i$ 
 and the largest admissible step reduces the constraint violation the most.
 
 For an f-type step, sufficient objective progress is expected.
@@ -535,7 +535,7 @@ The procedure is summarized in Algorithm~\ref{alg:two_phase_line_search}.
 Two simplifications distinguish this procedure from the funnel method of \cite{kiesslingUnifiedFunnelRestoration2025}.
 First, no funnel bound $\theta_{\mathrm{max}}$ is maintained.
 In the funnel method, a trial iterate is admissible only if $\theta(z) \le \theta_{\mathrm{max}}$,
-and the bound $\theta_{\mathrm{max}}$ is decreased whenever an h-step is accepted.
+and the bound $\theta_{\mathrm{max}}$ is decreased whenever an h-type step is accepted.
 Here $\theta(\alpha_i^{\mathrm{prim}}) = (1-\alpha_i^{\mathrm{prim}})\,\theta_i \le \theta_i$ for every $\alpha_i^{\mathrm{prim}} \in (0,1]$,
 so no trial step increases the constraint violation, and the funnel itself can then be removed.
 Second, since $H$ is generally indefinite, 

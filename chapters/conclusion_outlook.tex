@@ -15,9 +15,9 @@
 \paragraph{Conclusion}
 This thesis investigated the regularizations of indefinite \gls{QP} subproblems
 from exact-Hessian \gls{SQP} for \gls{NMPC} inside the interior-point solver,
-where the barrier curvature is already included and only the reduced Hessian is needed to be positive definite.
+where the barrier curvature is already included and only the reduced Hessian needs to be positive definite.
 Since the Riccati backward pass is a block $\mathrm{LD}\mathrm{L}^\top$ factorization of the reduced Hessian,
-this thesis proposes Riccati-based regularizations, which regularize reduced Hessian stage-wise 
+this thesis proposes Riccati-based regularizations, which regularize the reduced Hessian stage-wise
 wherever the Cholesky factorization of a reduced Hessian block $\tilde{M}_k$ fails while keeping the computational cost linear in the horizon length.
 
 This thesis showed that the minimum perturbation strategy applied to a reduced Hessian block $\tilde{M}_k$
@@ -44,7 +44,7 @@ Second, in time-optimal and economic MPC,
 the cost provides little positive curvature, so the indefiniteness is likely to differ from that in this benchmark and to be harder to handle.
 Whether the ranking of the methods carries over remains to be tested.
 
-There are further directions are worth trying for regularizations.
+Further directions are worth trying for regularizations.
 First, the regularization magnitude is set by a fixed eigenvalue floor $\epsilon$.
 Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks, could improve efficiency and robustness on other problems.
 Second, a local Levenberg--Marquardt variant remains to be explored,

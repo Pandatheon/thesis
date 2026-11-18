@@ -182,7 +182,7 @@
         \begin{tikzpicture}[remember picture, overlay]
             \node[anchor=north west] at ([xshift=2mm, yshift=-2mm]current page.north west) {
                 \fontsize{10}{10}\ttfamily % Use monospaced font
-                \textcolor{lightgray}{\texttt{v1.1}}
+                % \textcolor{lightgray}{\texttt{v1.1}}
             };
         \end{tikzpicture}
 
@@ -229,11 +229,11 @@
                                            & \\
                 \textbf{\declarationstitle} \declarationsbody
                                            & \\
-                                           & \\
                                            &
             \end{tabular}
 
             \parbox{0.8\textwidth} {
+                \par\noindent\makebox[5cm][l]{Freiburg, \@submitDate} \hfill\makebox[5cm][l]{\raisebox{-0.9cm}[0pt][0pt]{\includegraphics[height=2.0cm]{settings+/signature.png}}}%
                 \par\noindent\makebox[5cm]{\hrulefill} \hfill\makebox[5cm]{\hrulefill}%
                 \par\noindent\makebox[5cm][l]{\placeDate} \hfill\makebox[5cm][l]{\signature}%
             }
