@@ -44,7 +44,7 @@ For factorizing an $n_u \times n_u$ matrix, the cost is approximately $\tfrac{1}
 \begin{equation}
 \mathrm{unit} \;\approx\; \tfrac{1}{3}\, n_u^3.
 \end{equation}
-And other factorizations are expressed relative to this unit.
+Other factorizations are expressed relative to this unit.
 
 A modified Cholesky factorization of an $n_u \times n_u$ matrix
 only adds diagonal updates of $\mathcal{O}(n_u^2)$ cost, 
@@ -156,7 +156,7 @@ an unblocked full step can be taken without scaling by $\hat{\eta}$ so that
 the local quadratic convergence rate of the \gls{IPM} can be preserved.
 
 We further align the prototype solver with HPIPM in terms of the mode settings by defining a set of HPIPM settings, 
-referred to as the following presetting, whose values are listed in Table~\ref{tab:customized_settings}.
+referred to as the presetting in the following, whose values are listed in Table~\ref{tab:customized_settings}.
 
 \begin{table}[htbp]
 \caption{Detailed settings for the defined presetting.}
@@ -600,7 +600,7 @@ whereas \textsf{INERTIA\_LM} and \textsf{H\_PROJECT} only drop about $10$ and $5
 The ranking of Section~\ref{sec:comparison} is thereby reversed, and the two Riccati-based methods sit at the bottom.
 
 But generally speaking,
-this supports Mehrotra's probing as the default method for nonconvex \glspl{QP}, as it improves the performance of methods generally.
+this supports Mehrotra's probing as the default method for nonconvex \glspl{QP}, as it improves the performance of methods.
 Section~\ref{subsec:mehrotra_analysis} discusses why \textsf{PM\_MIRROR} loses far more instances than \textsf{INERTIA\_LM}.
 
 \subsection{Ablation on the line search}
