@@ -25,10 +25,10 @@ regarding definiteness in the indefinite \gls{OCP} \gls{QP} benchmark in Section
 \section{Benchmark construction}
 \label{sec:benchmark_construction}
 This section describes the construction of the indefinite \gls{QP} benchmark.
-We first formulate the \gls{QP} subproblems arising in \gls{SQP} iterations of the \glspl{OCP},
-then introduce the eight \gls{OCP} test problems,
+We first formulate the \gls{QP} subproblems arising in \gls{SQP} iterations of the \glspl{OCP} in Section~\ref{subsec:formulation},
+then introduce the eight \gls{OCP} test problems in Section~\ref{subsec:benchmark_ocps},
 formulated as fixed-time regulator problems with quadratic stage costs and box constraints on the controls,
-and finally the collection pipeline.
+and finally the collection pipeline in Section~\ref{subsec:collection_pipeline}.
 
 \subsection{Formulation of QP subproblems from OCPs}
 \label{subsec:formulation}
@@ -47,14 +47,14 @@ The mathematical formulation of the \glspl{OCP} is given as follows:
     {\label{eq:ocp}}
     {}
     \breakObjective{+ \tfrac12 (x_N-x_N^{\mathrm{ref}})^\top \mathcal{Q}_N (x_N-x_N^{\mathrm{ref}})}
-    \addConstraint{x_0}{= \bar{x}_0}
+    \addConstraint{x_0}{= \hat{x}_0}
     \addConstraint{x_{k+1}}{= f_k(x_k,u_k),\quad}{k = 0, \ldots, N-1}
     \addConstraint{\underline{g}}{\le \mathcal{C}_k x_k + \mathcal{D}_k u_k \le \bar{g},}{k = 0, \ldots, N-1}
     \addConstraint{\underline{h}}{\le h_k(x_k,u_k) \le \bar{h},}{k = 0, \ldots, N-1}
     \addConstraint{\underline{h}_N}{\le h_N(x_N) \le \bar{h}_N,}
 \end{mini}
 where $x_{k+1}=f_k(x_k,u_k)$ is one integration step of the continuous dynamics over $[t_k,t_{k+1}]$.
-The given initial state is $\bar{x}_0$, $\mathcal{Q}_k,\mathcal{R}_k,\mathcal{Q}_N\succeq 0$ are weighting matrices, 
+The given initial state is $\hat{x}_0$, $\mathcal{Q}_k,\mathcal{R}_k,\mathcal{Q}_N\succeq 0$ are weighting matrices, 
 $\mathcal{S}_k$ is the coupling cost matrix, and $x_k^{\mathrm{ref}},u_k^{\mathrm{ref}}$ are the reference points. 
 The term $\mathcal{C}_k x_k + \mathcal{D}_k u_k$ includes the affine and box path constraints, and
 $h_k(\cdot, \cdot)$ and $h_N(\cdot)$ collect the nonlinear path and terminal constraints, respectively.
@@ -66,7 +66,8 @@ the resulting Hessian of the \gls{QP} subproblem at stage $k = 0, \dots, N-1$ re
         &= \begin{bmatrix} \mathcal{Q}_k & \mathcal{S}_k^{\top} \\ \mathcal{S}_k & \mathcal{R}_k \end{bmatrix} + \sum_{j=1}^{n_x} (\pi_k)_j \nabla^2 [f_k]_j(x_k,u_k) + \sum_{j=1}^{n_h} (\lambda_k)_j \nabla^2 [h_k]_j(x_k,u_k),
 \end{align}
 where $n_h$ is the number of nonlinear path constraints,
-and $\pi_k$ and $\lambda_k$ are the Lagrange multipliers associated with the dynamics and nonlinear constraints, respectively.
+and $\pi_k$ and $\lambda_k = \lambda_k^{\mathrm{up}} - \lambda_k^{\mathrm{low}}$ are the Lagrange multipliers associated 
+with the dynamics and nonlinear constraints, with $\lambda_k^{\mathrm{up}}, \lambda_k^{\mathrm{low}} \ge 0$ for the upper and lower bounds.
 
 The definiteness of $H_k$ is thus determined by two parts,
 a constant cost block  $\left[\begin{smallmatrix}\mathcal{Q}_k & \mathcal{S}_k^{\top}\\ \mathcal{S}_k & \mathcal{R}_k\end{smallmatrix}\right]$
@@ -74,7 +75,8 @@ and an iterate-dependent cost from the two curvature terms.
 In the latter, each component Hessian $\nabla^2[f_k]_j$ and $\nabla^2[h_k]_j$ is symmetric but carries no definiteness guarantee, 
 and the associated multipliers $(\pi_k)_j$ and $(\lambda_k)_j$ may take arbitrary sign and magnitude during the \gls{SQP} iterations.
 
-The full Hessian blocks $H_k$ are thus general symmetric matrices and might be indefinite, in particular when the multipliers are large.
+The full Hessian blocks $H_k$ are thus general symmetric matrices and might be indefinite, 
+in particular when the multipliers are large.
 Consequently, the exact-Hessian \gls{QP} subproblem is in general nonconvex.
 
 As for $H_N$, the dynamics add no curvature in $x_N$,
@@ -82,7 +84,8 @@ but the nonlinear terminal constraints do, so
 \begin{equation*}
     H_N = \mathcal{Q}_N + \sum_{j=1}^{n_{h_N}} (\lambda_N)_j \nabla^2 [h_N]_j(x_N),
 \end{equation*}
-where $n_{h_N}$ is the number of nonlinear terminal constraints and $\lambda_N$ are their multipliers. Like $H_k$, $H_N$ is thus iterate-dependent and possibly indefinite.
+where $n_{h_N}$ is the number of nonlinear terminal constraints 
+and $\lambda_N = \lambda_N^{\mathrm{up}} - \lambda_N^{\mathrm{low}}$ are their multipliers.
 
 Collecting the stage Hessians $H_k$ and Jacobians 
 and linearizing the constraints of \eqref{eq:ocp} at the current \gls{SQP} iterate 
@@ -98,7 +101,7 @@ yields a structured \gls{QP}. The subproblem takes the form of
     {}
     {}
     \breakObjective{+ \tfrac{1}{2}\, \Delta x_N^\top Q_N\, \Delta x_N + q_N^\top \Delta x_N}
-    \addConstraint{\Delta x_0}{= \Delta \bar{x}_0}
+    \addConstraint{\Delta x_0}{= \Delta \hat{x}_0}
     \addConstraint{\Delta x_{k+1}}{= A_k \Delta x_k + B_k \Delta u_k + c_k,\quad}{k = 0, \ldots, N-1}
     \addConstraint{\begin{bmatrix} \underline{u}_k \\ \underline{x}_k \\ \underline{d}_k \end{bmatrix}}
         {\le \begin{bmatrix} J_k^{b,u} & 0 \\ 0 & J_k^{b,x} \\ D_k & C_k \end{bmatrix}
@@ -110,7 +113,6 @@ where, at each stage $k$, $\Delta x_k \in \mathbb{R}^{n_x}$ and $\Delta u_k \in 
 denote the state and control deviation variables at stage $k$.
 Note that $\Delta x_k$ and $\Delta u_k$ here denote the \gls{SQP} step,
 which the \gls{QP} solver treats as its decision variables.
-
 All remaining quantities are obtained by linearizing the \gls{OCP} at the
 current \gls{SQP} iterate $(x_k,u_k)$ with multipliers $(\pi_k,\lambda_k)$.
 
@@ -122,7 +124,7 @@ with $Q_N$ and $q_N$ as the terminal Hessian and gradient.
 
 In the equality constraints, $A_k=\nabla_{x_k} f_k$ and $B_k=\nabla_{u_k} f_k$ are the Jacobians of the discretized dynamics,
 $c_k=f_k(x_k,u_k)-x_{k+1}$ is the dynamics residual, which vanishes at a dynamically feasible iterate,
-and $\Delta\bar{x}_0=\bar{x}_0-x_0$ is the residual of the initial state constraint $x_0=\bar{x}_0$.
+and $\Delta\hat{x}_0=\hat{x}_0-x_0$ is the residual of the initial state constraint $x_0=\hat{x}_0$.
 
 In the inequality constraints, $J_k^{b,u}$ and $J_k^{b,x}$ are selection matrices that pick out the bounded controls and states,
 with bounds $\underline{u}_k,\overline{u}_k$ and $\underline{x}_k,\overline{x}_k$ taken 
@@ -138,7 +140,7 @@ At the terminal stage $k=N$, no control is present, so $J_N^{b,u}$ and $D_N$ are
 and $C_N$, $\underline{d}_N$ and $\overline{d}_N$ are formed in the same way from $h_N(x_N)$
 with the bounds $\underline{h}_N,\bar{h}_N$.
 
-\subsection{Benchmark OCPs}
+\subsection{An overview of the OCPs for the benchmark}
 \label{subsec:benchmark_ocps}
 In this subsection, we introduce the eight \glspl{OCP} used to construct the benchmark. 
 Each \gls{OCP} is based on a dynamic system provided in~\cite{Kiessling2026} 
@@ -166,8 +168,7 @@ The eight \glspl{OCP} are named and characterized as follows:
 
 \begin{table}[htbp]
     \centering
-    \caption{Summary of the evaluated \glspl{OCP} 
-    in common control problem scales.}
+    \caption{Summary of the evaluated \glspl{OCP} with problem scales.}
     \label{tab:ocp_problems}
     \begin{tabular}{l ccc}
         \toprule
@@ -186,25 +187,26 @@ The eight \glspl{OCP} are named and characterized as follows:
 \end{table}
 
 Besides the different physical systems,
-these \glspl{OCP} also cover different state and control dimensions, as shown in Table \ref{tab:ocp_problems}. 
+these \glspl{OCP} also cover different state and control dimensions, 
+as shown in Table \ref{tab:ocp_problems}. 
 The state dimension $n_x$ ranges from $3$ to $6$, 
-the control dimension $n_u$ from $1$ to $4$, and the horizon length $N$ from $15$ to $50$.
+the control dimension $n_u$ from $1$ to $4$, and the horizon length $N$ from $15$ to $50$,
+which results in a small-scale \gls{QP} benchmark.
 
 \subsection{Collection pipeline}
+\label{subsec:collection_pipeline}
 Based on the eight \glspl{OCP}, 
 we can construct a benchmark of indefinite \glspl{QP} arising from \gls{SQP}-based \gls{NMPC}. 
 Specifically, we establish a collection pipeline that extracts the \gls{QP} subproblems directly from intermediate \gls{SQP} iterations.
 The collection pipeline consists of two steps: \emph{generate} and \emph{collect}, and can be summarized as follows:
 
 \begin{enumerate}
-    \item \textbf{Generate:} In this step, we generate iterates by solving the \gls{OCP} with \gls{SQP} 
-    and obtain iterates from early to late \gls{SQP} iterations.
+    \item \textbf{Generate:} We solve each \gls{OCP} with \gls{SQP} and store the iterates from early to late iterations. 
     To keep the \gls{SQP} iterations from failing on indefinite exact-Hessian \glspl{QP}, 
     we use \gls{SQP}-level regularization or the Gauss--Newton Hessian approximation in \texttt{acados}.
 
-    \item \textbf{Collect:} In this step, 
-    we utilize the previously generated iterates as initial guesses for linearization within the solver. 
-    We can selectively collect indefinite \glspl{QP} that exhibit an indefinite reduced Hessian.
+    \item \textbf{Collect:} We use the stored iterates as initial guesses for the linearization in the \gls{SQP} solver
+    and keep only the \glspl{QP} with an indefinite reduced Hessian.
 \end{enumerate}
 
 In the collect step, HPIPM uses the classical Riccati recursion (\texttt{ric\_alg = 0})~\cite{frisonAlgorithmsMethodsHighPerformance},

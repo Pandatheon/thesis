@@ -36,8 +36,7 @@ and \textsf{PM\_MIRROR} loses far more instances than \textsf{INERTIA\_LM}.
 \paragraph{Outlook}
 Several questions remain open regarding the benchmark, the regularizations and the solver.
 
-Regarding the benchmark, 
-the considered benchmark is limited to small-scale \glspl{QP} with \gls{OCP} structure from regulator problems.
+The considered benchmark is limited to small-scale \glspl{QP} with \gls{OCP} structure from regulator problems.
 First, scaling up the benchmark to larger state and control dimensions
 would show whether \textsf{PM\_MIRROR} and \textsf{PM\_GMW} remain robust beyond small-scale \glspl{QP}
 and how their factorization cost could grow.
@@ -45,16 +44,17 @@ Second, in time-optimal and economic MPC,
 the cost provides little positive curvature, so the indefiniteness is likely to differ from that in this benchmark and to be harder to handle.
 Whether the ranking of the methods carries over remains to be tested.
 
-Regarding the regularizations, further directions are worth trying.
+There are further directions are worth trying for regularizations.
 First, the regularization magnitude is set by a fixed eigenvalue floor $\epsilon$.
 Adapting the magnitude, e.g.\ to the conditioning of the corrected blocks, could improve efficiency and robustness on other problems.
 Second, a local Levenberg--Marquardt variant remains to be explored,
-which adds a multiple of the identity only to the stage block where the factorization fails instead of to every block,
-with the number of stages receiving this term as a tunable parameter, so that applying it to all stages recovers inertia correction.
+which adds a multiple of the identity to the stage block where the factorization fails 
+and to a tunable number of its neighboring stage blocks instead of to every block, 
+so that extending it to all stages recovers inertia correction.
 
-Regarding the solver, the QPs were solved in isolation with a Python prototype.
-An implementation in HPIPM and \texttt{acados} is needed for a run-time comparison,
-and, since the full step from the indefinite QP solution might be too aggressive,
+The QPs were solved in isolation with a prototype solver in Python.
+First, an implementation in HPIPM and \texttt{acados} is needed for a run-time comparison.
+Second, since the full step from the indefinite QP solution might be too aggressive,
 it remains to be investigated how the globalization mechanisms, such as a trust region and line search,
 should be designed for SQP with the indefinite QP solver for good closed-loop performance.
 

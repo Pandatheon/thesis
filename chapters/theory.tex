@@ -23,8 +23,8 @@ In this chapter, the theoretical background regarding the interior-point \gls{QP
 The primal--dual \gls{IPM} is introduced first in Section~\ref{sec:ipm}
 as the core algorithm for solving \glspl{QP} in this thesis.
 Then, the \gls{QP} with \gls{OCP} structure is introduced in Section~\ref{sec:riccati_recursion},
-where the Riccati recursion is applied for solving the \gls{QP} with linear complexity.
-Finally, the adaptive barrier update and step size control strategies 
+where the Riccati recursion is applied for efficiently solving the \gls{QP}.
+Finally, the adaptive barrier update and step size control schemes
 are discussed in Section~\ref{sec:update} and Section~\ref{sec:size_control} 
 with consideration of the nonconvex case. Algorithm~\ref{alg:ipm} outlines how these parts collaborate.
 \begin{algorithm}[htbp]
@@ -61,8 +61,7 @@ Consider a \gls{QP} with equality and inequality constraints, of which the formu
 where $y$ are the decision variables, $H$ represents the full Hessian, $g$ is the linear term,
 and $F$ and $G$ stand for the linear constraint matrices for equality and inequality constraints.
 Since the constraints are affine w.r.t.\ $y$, 
-the definiteness of the full Hessian matrix $H$ determines whether the \gls{QP} in \eqref{eq:qp_problem_unslacked}
-is convex or nonconvex.
+the \gls{QP} in \eqref{eq:qp_problem_unslacked} is convex if $H$ is positive semidefinite.
 
 By introducing slack variables $t$, we have the equivalent formulation
 \begin{mini}
@@ -80,7 +79,7 @@ The Lagrangian function of the \gls{QP} in \eqref{eq:qp_problem} is
     = \frac{1}{2} y^\top H y + g^\top y
     + \pi^\top (Fy - b) + \lambda^\top (Gy + t - d),
 \end{equation}
-where $\pi$ and  $\lambda\ge 0$  are the Lagrange multipliers associated with the equality and inequality constraints, respectively.
+where $\pi$ and  $\lambda\ge 0$  are the Lagrange multipliers associated with the equality and inequality constraints.
 Then the \gls{KKT} conditions of the \gls{QP} in \eqref{eq:qp_problem} are given by
 \begin{subequations}\label{eq:KKT_conditions}
 \begin{align}
@@ -97,10 +96,10 @@ as a smooth equation using the barrier parameter $\tau > 0$:
 \begin{equation}
     \lambda_j\, t_j = \tau, \quad j = 1,\ldots,n_c, \label{eq:kkt_comp_relaxed}
 \end{equation}
-and the parameter $\tau$ is shrunk towards zero with a certain strategy during the iterations 
-to obtain the solution of the original problem,
-and step size control is applied to ensure the satisfaction of the inequalities in \eqref{eq:kkt_sign}.
-The corresponding update strategy and step size control are discussed in the following sections.
+and the parameter $\tau$ is shrunk towards zero over the iterations 
+by an update scheme to recover the solution of the original problem.
+Step size control is applied to ensure the satisfaction of the inequalities in \eqref{eq:kkt_sign}.
+The corresponding update scheme and step size control are discussed in the following sections.
 
 In order to solve the nonlinear system in \eqref{eq:KKT_conditions},
 Newton's method linearizes the system at each iteration $i$
@@ -164,21 +163,19 @@ with
 $\tilde{H}_i = H + G^\top T_i^{-1}\Lambda_i G \succeq H$ and
 $\tilde{r}_i^{\mathrm{stat}} = r_i^{\mathrm{stat}} + G^\top T_i^{-1}(\Lambda_i r_i^{\mathrm{ineq}} - r_i^{\mathrm{comp}})$.
 Notably,
-the term $G^\top T_i^{-1}\Lambda_i G$ can be regarded 
+the positive semidefinite term $G^\top T_i^{-1}\Lambda_i G$ can be regarded 
 as the curvature contribution from the inequality constraints.
 The weight on each constraint, i.e.\ the corresponding diagonal entry of $T_i^{-1}\Lambda_i$,
-increases as the constraint becomes active and tends to zero if it is inactive,
-and this barrier term is positive semidefinite, 
-since $t$ and $\lambda$ are kept strictly positive throughout the iterations.
+increases as the constraint becomes active and tends to zero if it is inactive at the solution.
 
-In the reduced \gls{KKT} system of \eqref{eq:schur_comp_KKT},
+In the saddle point system \eqref{eq:schur_comp_KKT},
 assuming $F$ has full row rank,
 the null space method can be applied to further reduce the system.
 Let the columns of $Z$ form a basis of the null space of $F$, i.e.\ $FZ = 0$,
 and the columns of $Y$ span the range of $F^\top$, 
 so that $[\,Y \;\, Z\,]$ is nonsingular and $FY$ is invertible.
 
-The primal step can then be decomposed uniquely as $\Delta y = Y\,\Delta y_y + Z\,\Delta y_z$.
+The primal direction can then be decomposed uniquely as $\Delta y = Y\,\Delta y_y + Z\,\Delta y_z$.
 Since $F\Delta y = FY\,\Delta y_y$, only the range-space component enters the equality constraints.
 This yields a system exposing the reduced Hessian as
 \begin{equation}
@@ -211,17 +208,17 @@ and the \gls{QP} in \eqref{eq:qp_problem_unslacked} takes the particular form
     \addConstraint{G_k^x x_k + G_k^u u_k}{\le d_k,}{k = 0, \ldots, N-1}
     \addConstraint{G_N^x x_N}{\le d_N,}
 \end{mini}
-where $x_k \in \mathbb{R}^{n_x}$ and $u_k \in \mathbb{R}^{n_u}$ are the state and control at stage $k$, and $N$ is the horizon length.
-The full Hessian block
-$H_k = \begin{bmatrix} Q_k & S_k^\top \\ S_k & R_k \end{bmatrix}$
+where $x_k \in \mathbb{R}^{n_x}$ and $u_k \in \mathbb{R}^{n_u}$ are the state and control variables at stage $k$, 
+and $N$ is the horizon length.
+The full Hessian block $H_k = \begin{bmatrix} Q_k & S_k^\top \\ S_k & R_k \end{bmatrix}$
 consists of the state, control, and state--control coupling blocks
 $Q_k \in \mathbb{R}^{n_x \times n_x}$, $R_k \in \mathbb{R}^{n_u \times n_u}$, and $S_k \in \mathbb{R}^{n_u \times n_x}$.
 The $g_k^x \in \mathbb{R}^{n_x}$ and $g_k^u \in \mathbb{R}^{n_u}$ are the corresponding gradients, and $Q_N$, $g_N^x$ are the terminal Hessian and gradient.
 The $A_k \in \mathbb{R}^{n_x \times n_x}$ and $B_k \in \mathbb{R}^{n_x \times n_u}$ are the Jacobians of the dynamics with respect to the state and control,
 $b_k \in \mathbb{R}^{n_x}$ is the dynamics residual, and $\hat{x}_0 \in \mathbb{R}^{n_x}$ is the initial state.
-The $G_k^x \in \mathbb{R}^{n_{k}^c \times n_x}$ and $G_k^u \in \mathbb{R}^{n_{k}^c \times n_u}$ are the Jacobians of the $n_{k}^c$ inequality constraints at stage $k$,
+The $G_k^x \in \mathbb{R}^{n_{c,k} \times n_x}$ and $G_k^u \in \mathbb{R}^{n_{c,k} \times n_u}$ are the Jacobians of the $n_{c,k}$ inequality constraints at stage $k$,
 including linear constraints and box constraints on states and controls,
-with right-hand side $d_k \in \mathbb{R}^{n_{k}^c}$.
+with right-hand side $d_k \in \mathbb{R}^{n_{c,k}}$.
 
 Following the same derivation as in Section \ref{sec:ipm},
 we can obtain the \gls{KKT} system of \eqref{eq:ocp_qp},
@@ -257,14 +254,13 @@ and the dynamics couple only consecutive stages:
 \end{equation}
 where the block matrices $\tilde{Q}_k$, $\tilde{R}_k$, and $\tilde{S}_k$ contain the curvature contributions from inequality constraints as
 \begin{align*}
-    \tilde{Q}_k &= Q_k + (G_k^x)^\top \Lambda_k T_k^{-1} G_k^x,\\
-    \tilde{R}_k &= R_k + (G_k^u)^\top \Lambda_k T_k^{-1} G_k^u,\\
-    \tilde{S}_k &= S_k + (G_k^u)^\top \Lambda_k T_k^{-1} G_k^x.
+    \tilde{Q}_k &= Q_k + (G_k^x)^\top \Lambda_k T_k^{-1} G_k^x, && k = 0, \ldots, N,\\
+    \tilde{R}_k &= R_k + (G_k^u)^\top \Lambda_k T_k^{-1} G_k^u, && k = 0, \ldots, N-1,\\
+    \tilde{S}_k &= S_k + (G_k^u)^\top \Lambda_k T_k^{-1} G_k^x, && k = 0, \ldots, N-1.
 \end{align*}
 
 This tridiagonal structure allows for an efficient solution of the \gls{KKT} system 
-using the Riccati recursion~\cite{rao1998application},
-which consists of a backward and forward pass.
+using the Riccati recursion~\cite{rao1998application}, which consists of a backward and forward pass.
 The backward pass computes the feedback gains $K_k$ and feedforward terms $k_k$,
 as well as the cost-to-go matrices $P_k$ and vectors $p_k$,
 while the forward pass computes the optimal state and control trajectories.
@@ -276,7 +272,7 @@ The algorithmic details of the Riccati recursion are summarized in Algorithm~\re
 \State\textbf{Initialize:} $P_N \gets \tilde{Q}_N$, $p_N \gets \tilde{r}_N^{\mathrm{stat}, x}$
 
 \Statex
-\Statex\textbf{// Backward recursion}
+\Statex\textbf{// Backward pass}
 \For{$k = N-1$ \textbf{down to} $0$}
     \State $\tilde{M}_k \gets \tilde{R}_k + B_k^\top P_{k+1} B_k$
     \State $\Gamma_k \gets \tilde{S}_k + B_k^\top P_{k+1} A_k$
@@ -287,7 +283,7 @@ The algorithmic details of the Riccati recursion are summarized in Algorithm~\re
 \EndFor
 
 \Statex
-\Statex \textbf{// Forward recursion}
+\Statex \textbf{// Forward pass}
 \State $\Delta x_0 \gets \hat{x}_0 - x_0$
 \For{$k = 0$ \textbf{to} $N-1$}
     \State $\Delta u_k \gets K_k \Delta x_k + k_k$
@@ -314,8 +310,8 @@ In this section, two closely related adaptive barrier update schemes are discuss
 While monotone updates of the barrier parameter $\tau$,
 such as the Fiacco--McCormick scheme \cite{fiacco1990nonlinear}, enjoy strong convergence guarantees,
 they may lead to slow convergence and practical limitations \cite{nocedalAdaptiveBarrierUpdate2009a}.
-We therefore prefer more aggressive, adaptive updates of $\tau$ for faster convergence,
-such as Mehrotra's predictor--corrector and Mehrotra's probing presented next.
+We therefore prefer more aggressive, adaptive updates of the barrier parameter $\tau$ for faster convergence,
+such as Mehrotra's predictor--corrector and Mehrotra's probing, presented in Section~\ref{sec:mehrotra} and Section~\ref{subsec:mehrotra_probing}.
 Both schemes set $\tau$ adaptively from an affine predictor step,
 and the predictor--corrector scheme additionally corrects the search direction.
 Section~\ref{sec:barrier_nonconvex} then compares the two schemes for nonconvex \glspl{QP}.
@@ -340,9 +336,8 @@ and each iteration consists of a predictor (affine scaling) step, a centering up
 
 \paragraph{Predictor step.}
 The scheme starts with computing a predictor step, also called the affine scaling step.
-For this step, the linear system in \eqref{eq:IPM_KKT_system} is solved
-with $\sigma_i=0$ in the complementarity residual $r_i^{\mathrm{comp}}$ and no correction considered,
-i.e.\ the resulting complementarity residual is written as
+For this step, the linear system \eqref{eq:IPM_KKT_system} is solved with $\sigma_i=0$ and no correction, 
+so the complementarity residual becomes
 \begin{equation}
     \label{eq:predictor_complementarity}
     r_i^{\mathrm{comp}, \mathrm{aff}}
@@ -350,24 +345,23 @@ i.e.\ the resulting complementarity residual is written as
     = T_i\Lambda_i\mathbf{1}.
 \end{equation}
 This yields the affine scaling direction $(\Delta y^{\mathrm{aff}},\Delta \pi^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}},\Delta t^{\mathrm{aff}})$.
-The affine step is used to estimate the centering parameter $\sigma_i$ and form the second-order correction in the following.
+The predictor step is used to estimate the centering parameter $\sigma_i$ and form the second-order correction in the following.
 
 \paragraph{Centering update.}
 After the predictor step is obtained, the centering parameter $\sigma$ is updated 
-based on the estimated duality measure $\mu^{\mathrm{aff}}$ after the affine step is taken,
-which is defined as
+based on the estimated duality measure $\mu^{\mathrm{aff}}$ after the affine step is taken as follows:
 \begin{align}
     \sigma_i &= (\mu^{\mathrm{aff}}/\mu_i)^3 \label{eq:centering} \\
     \mu^{\mathrm{aff}} &= \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{aff}} \Delta t^{\mathrm{aff}})^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{aff}} \Delta \lambda^{\mathrm{aff}})}{n_c},
 \end{align}
 where the step sizes
 $\alpha_i^{\mathrm{prim}, \mathrm{aff}}$ and $\alpha_i^{\mathrm{dual}, \mathrm{aff}}$ are 
-the largest step sizes that keep the slack variables $t_i$ and Lagrange multipliers $\Lambda_i$ nonnegative,
+the largest step sizes that keep the slack variables $t_i$ and Lagrange multipliers $\lambda_i$ nonnegative,
 i.e.
 \begin{align}
     \label{eq:max_step_size}
-    \alpha_i^{\mathrm{prim}, \mathrm{aff}} &= \min\left(1, \min_{j:\Delta t_j^{\mathrm{aff}}<0} -\frac{t_{j,i}}{\Delta t_j^{\mathrm{aff}}}\right), \\
-    \alpha_i^{\mathrm{dual}, \mathrm{aff}} &= \min\left(1, \min_{j:\Delta \lambda_j^{\mathrm{aff}}<0} -\frac{\lambda_{j,i}}{\Delta \lambda_j^{\mathrm{aff}}}\right).
+    \alpha_i^{\mathrm{prim}, \mathrm{aff}} &= \min\left(1, \min_{j:\Delta t_j^{\mathrm{aff}}<0} -\frac{t_j^i}{\Delta t_j^{\mathrm{aff}}}\right), \\
+    \alpha_i^{\mathrm{dual}, \mathrm{aff}} &= \min\left(1, \min_{j:\Delta \lambda_j^{\mathrm{aff}}<0} -\frac{\lambda_j^i}{\Delta \lambda_j^{\mathrm{aff}}}\right).
 \end{align}
 
 If $\mu^{\mathrm{aff}} \ll \mu_i$, 
@@ -380,7 +374,7 @@ gives $\sigma_i \to 1$ and thus a recentering step towards the central path.
 In the corrector step, the linear system in \eqref{eq:IPM_KKT_system} is solved again
 where the complementarity residual is modified to 
 include the updated centering parameter $\sigma_i$ 
-and a second-order correction term using the calculated affine steps as follows:
+and a second-order correction term using the calculated affine direction as follows:
 \begin{equation}
     r_i^{\mathrm{comp},\mathrm{cor}}
     = T_i\Lambda_i\mathbf{1} + \Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1} - \sigma_i\mu_i\mathbf{1},
@@ -388,17 +382,16 @@ and a second-order correction term using the calculated affine steps as follows:
 \end{equation}
 where $\Delta T^{\mathrm{aff}} = \operatorname{diag}({\Delta t^{\mathrm{aff}}})$, $\Delta \Lambda^{\mathrm{aff}} = \operatorname{diag}({\Delta \lambda}^{\mathrm{aff}})$,
 the term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ cancels
-the second-order error that the affine step leaves in $t_j\lambda_j$,
+the second-order error that the full affine step leaves in $t_j\lambda_j$,
 and $-\sigma_i\mu_i\mathbf{1}$ supplies the centering.
-This second solve returns the final direction $(\Delta y,\Delta\pi,\Delta\lambda,\Delta t)$ directly,
+This second solve returns the search direction $(\Delta y,\Delta\pi,\Delta\lambda,\Delta t)$ directly,
 and a step size control follows to ensure the positivity of the slack variables and Lagrange multipliers for the inequality constraints.
 
 \paragraph{Condition on corrector step.}
 In practice, the corrector step is usually applied conditionally.
-The mechanism is, therefore, called conditional Mehrotra's predictor--corrector scheme \cite{nocedalAdaptiveBarrierUpdate2009a},
-where the corrector step is only accepted 
-if it does not largely increase the duality measure 
-after the corrector step is taken compared with that after the predictor step.
+This variant is called the conditional Mehrotra's predictor--corrector scheme \cite{nocedalAdaptiveBarrierUpdate2009a},
+where the corrected direction is only accepted
+if it does not largely increase the duality measure after the corrector step is taken compared with that after the predictor step.
 More specifically, the duality measure after the corrector step is estimated as
 \begin{equation}
     \mu^{\mathrm{cor}} = \frac{(t_i + \alpha_i^{\mathrm{prim}, \mathrm{cor}} \Delta t)^\top (\lambda_i + \alpha_i^{\mathrm{dual}, \mathrm{cor}} \Delta \lambda)}{n_c},
@@ -428,32 +421,35 @@ where the centering parameter $\sigma_i$ is updated using \eqref{eq:centering} a
 
 \subsection{Comparison of schemes for nonconvex QPs}
 \label{sec:barrier_nonconvex}
-We argue that Mehrotra's predictor--corrector scheme is not necessarily the best choice in the nonconvex case.
+We argue that the Mehrotra's predictor--corrector scheme is not necessarily the best choice in the nonconvex case.
 In the corrector step, $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ is added to the complementarity residual
-to include the complementarity error of a full affine step, which assumes the affine direction is an accurate Newton step.
+to include the complementarity error of a full affine step, which assumes the affine direction is an accurate Newton direction.
 In nonconvex \glspl{QP}, however, the Hessian at the \gls{LHS} usually needs to be modified,
-and thus the direction can be adjusted for descent when the constraints are satisfied,
-so it is actually an inexact Newton step, violating the assumption of the predictor--corrector scheme.
+so the affine direction is actually an inexact Newton direction, 
+violating the assumption of the Mehrotra's predictor--corrector scheme.
 
-Probing uses the affine step only through $\sigma = (\mu^{\mathrm{aff}}/\mu)^3$, so an inexact affine step just gives $\sigma \approx 1$, i.e.\ a centering step.
-The iterate moves back to the central path instead of trying to decrease the incorrect complementarity error introduced by the inexact Newton step.
+Mehrotra's probing uses the affine step only to compute $\sigma = (\mu^{\mathrm{aff}}/\mu)^3$.
+If an inexact affine step makes little progress, i.e.\ $\mu^{\mathrm{aff}} \approx \mu$, 
+this gives $\sigma \approx 1$ and thus a centering step.
+The iterate moves back to the central path instead of trying to decrease the incorrect complementarity error 
+introduced by the inexact Newton direction.
 
 \section{Step size control}
 \label{sec:size_control}
 In this section, we discuss the step size control employed in a primal--dual \gls{IPM}.
-The \gls{FTB} rule is first introduced as a common strategy for step size control in \glspl{IPM},
+The \gls{FTB} rule is first introduced as a common scheme for step size control in \glspl{IPM},
 which ensures that the updated slack variables and Lagrange multipliers remain positive.
 Then, a two-type line search with backtracking for \glspl{QP} is introduced, which is 
 simplified from the funnel line search method introduced in \cite{kiesslingUnifiedFunnelRestoration2025} for the nonconvex case.
 
 \subsection{Fraction-to-the-boundary rule}
 \label{subsec:ftb}
-The \gls{FTB} rule is a common strategy for step size control in primal--dual \glspl{IPM}.
+The \gls{FTB} rule is a common scheme for step size control in primal--dual \glspl{IPM}.
 The maximal step sizes $\alpha_i^{\mathrm{prim},\mathrm{max}}$ and $\alpha_i^{\mathrm{dual},\mathrm{max}}$ are computed
 without violating the nonnegativity of the slack variables and Lagrange multipliers, as
 \begin{align}
-    \alpha_i^{\mathrm{prim},\mathrm{max}} &= \min_{j:\Delta t_j<0} -\frac{t_{j,i}}{\Delta t_j}, \label{eq:ftb_max_prim} \\
-    \alpha_i^{\mathrm{dual},\mathrm{max}} &= \min_{j:\Delta \lambda_j<0} -\frac{\lambda_{j,i}}{\Delta \lambda_j}. \label{eq:ftb_max_dual}
+    \alpha_i^{\mathrm{prim},\mathrm{max}} &= \min_{j:\Delta t_j<0} -\frac{t_j^i}{\Delta t_j}, \label{eq:ftb_max_prim} \\
+    \alpha_i^{\mathrm{dual},\mathrm{max}} &= \min_{j:\Delta \lambda_j<0} -\frac{\lambda_j^i}{\Delta \lambda_j}. \label{eq:ftb_max_dual}
 \end{align}
 Then, the actual step sizes are chosen as a fraction of the maximum step sizes, i.e.,
 \begin{align}
@@ -465,12 +461,13 @@ typically set to a value close to 1 to ensure sufficient progress while maintain
 
 \subsection{Two-type line search for quadratic programs}
 \label{subsec:two_phase_search}
-% In nonconvex cases, the effect of line search still can be investigated.
-A line search with backtracking can further reduce the step size for a sufficient decrease of the primal infeasibility.
-In the nonconvex case, the regularized direction is not the exact Newton step,
-and the \gls{FTB} step along a descent direction might still increase the barrier objective in an \gls{IPM}.
+In the nonconvex case, the Hessian is usually modified, 
+so the resulting direction is not the exact Newton direction.
+Even along a descent direction, the \gls{FTB} step can then still increase the barrier objective.
+A line search with backtracking can further reduce the step size for a sufficient decrease of the barrier objective.
 We simplify the funnel method proposed in~\cite{kiesslingUnifiedFunnelRestoration2025} 
-to a two-type line search tailored for \glspl{QP}, and the two-type line search is executed after the \gls{FTB} part is performed. 
+to a two-type line search tailored for \glspl{QP}, and the two-type line search is executed 
+after the \gls{FTB} rule is performed. 
 
 In an \gls{IPM} for \glspl{QP}, the objective $\phi$ used in the line search is the barrier objective
 \begin{equation}
@@ -490,16 +487,15 @@ it is an \emph{f-type} step if
 holds, and an \emph{h-type} step otherwise,
 where $\theta_i = \lVert (r_i^{\mathrm{eq}}, r_i^{\mathrm{ineq}}) \rVert$ is the constraint violation at the current iterate and
 $\rho_i = \nabla \phi_i^\top \Delta z^{\mathrm{prim}}$ the directional derivative of $\phi$ along the primal search direction $\Delta z^{\mathrm{prim}} = (\Delta y, \Delta t)$.
-The condition depends only on the current iterate and the trial step size, so it is evaluated before a candidate is formed.
 
 For an h-type step, the predicted objective decrease is small relative to the constraint violation.
 The \gls{FTB} step is then accepted without evaluating the objective.
-The constraints of the \gls{QP} are affine and the Newton direction solves the corresponding rows of the linear system exactly,
-so $\theta(\alpha_i^{\mathrm{prim}}) = (1-\alpha_i^{\mathrm{prim}})\,\theta_i$
+The constraints of the \gls{QP} are affine and the search direction satisfies their linearization exactly,
+so $\theta(\alpha_i^{\mathrm{prim}}) = (1-\alpha_i^{\mathrm{prim}}),\theta_i$ 
 and the largest admissible step reduces the constraint violation the most.
 
 For an f-type step, sufficient objective progress is expected.
-A candidate iterate $z^{+}(\alpha_i^{\mathrm{prim}})$ is formed in the primal variables $(y,t)$
+A candidate iterate $z^{+}(\alpha_i^{\mathrm{prim}})$ is formed with the primal variables $(y,t)$
 and accepted if its objective $\phi^{+}$ satisfies the Armijo condition \cite{armijo1966minimization}
 \begin{equation}
     \label{eq:armijo}

@@ -17,3 +17,5 @@
 {"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QSection \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q presents the numerical comparison, first among the Riccati-based methods themselves and then against full Hessian regularization and inertia correction, followed by ablations of the barrier update and the line search.\\E$"}
 {"rule":"A_INFINITIVE","sentence":"^\\QBut with the curvature contributions from inequality constraints, the iterate can still move towards the exact solution without any regularization.\\E$"}
 {"rule":"MORFOLOGIK_RULE_EN_US","sentence":"^\\QThe third category is the Levenberg–Marquardt-style inertia correction of Section \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q, which we denote by INERTIALM.\\E$"}
+{"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QI have been fortunate to be surrounded by such a group of smart and kind people with enthusiasm for optimization and control, many of whom I look up to as my role models in research.\\E$"}
+{"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QI felt fortunate to be surrounded by such a group of smart and kind people with enthusiasm for optimization and control.\\E$"}

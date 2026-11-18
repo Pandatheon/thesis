@@ -12,7 +12,8 @@
 
 \chapter{Primal regularization for indefinite quadratic programs}
 \label{Chapter::Primal_Regularization}
-In this chapter, we discuss the treatment of \glspl{QP} with indefinite full Hessian matrices, referred to as indefinite \glspl{QP}.
+In this chapter, we discuss the treatment of \glspl{QP} with indefinite full Hessian matrices, 
+referred to as indefinite \glspl{QP}.
 We first review numerical strategies to regularize the Hessian matrix,
 and motivate the reduced Hessian as the target for the detection and the regularization in Section~\ref{sec:hessian_reg}.
 In Section~\ref{sec:riccati_primal_reg}, we propose Riccati-based primal regularizations,
@@ -72,7 +73,8 @@ Second, if $A$ is indefinite, $\|E\|$ should not be much larger than
 $\inf\{\|\Delta A\| : A + \Delta A \succeq 0\}$.
 Third, $A + E$ should be reasonably well-conditioned.
 Fourth, the regularization strategies should be computationally efficient,
-which depends on the matrices they regularize and the factorization they use, as discussed in Section~\ref{subsec:flop_unit}.
+which depends on the matrices they regularize and the factorization they use, 
+as discussed later in Section~\ref{subsec:flop_unit}.
 Since all four strategies can substantially satisfy the first objective,
 each strategy is discussed mainly in terms of the trade-off between the second and third objectives.
 
@@ -87,10 +89,9 @@ and the eigenvalues in $D_\nu$ are then modified in different manners,
 where $\epsilon > 0$ is a small constant and the $\max$ operator is applied component-wise.
 Project clips negative or near-zero eigenvalues to $\epsilon$,
 which gives the smallest adjustment $E$ in Frobenius norm for positive definiteness~\cite{nocedal2006numerical},
-but may increase the condition number if the eigenvalues satisfy $\lvert\nu\rvert \gg \epsilon$.
-Mirror flips negative eigenvalues to their positive counterparts,
-which avoids the ill-conditioning of project, at the cost of a larger perturbation 
-when a negative eigenvalue $\nu$ of $A$ satisfies $\lvert\nu\rvert > \epsilon$.
+but may increase the condition number if $\lvert\nu\rvert \gg \epsilon$.
+Mirror flips negative eigenvalues to their absolute values,
+which avoids the ill-conditioning of project, at the cost of a larger perturbation when $\lvert\nu\rvert > \epsilon$.
 
 \paragraph{Modified Cholesky factorization: \gls{GMW}.}
 A modified Cholesky factorization determines $E$ during the factorization itself.
@@ -123,7 +124,7 @@ which guarantees positive definiteness of $A + E$, but $E$ is generally not mini
 
 \paragraph{Levenberg-Marquardt: inertia correction.}
 In this strategy,
-a uniform multiple of the identity is instead added to shift every eigenvalue by the same amount.
+a multiple of the identity is instead added to shift every eigenvalue by the same amount.
 The operation can be described as
     \begin{equation*}
         \mathrm{ic}(A, \delta_w) := A + \delta_w I, \qquad \delta_w \geq 0.
@@ -165,8 +166,9 @@ The resulting matrices are
         = \begin{bmatrix} 7 & 2 \\ 2 & 4 \end{bmatrix}, &\qquad
     E &= \begin{bmatrix} 5 & 0 \\ 0 & 5 \end{bmatrix}.
 \end{alignat*}
-Compared with the minimal adjustment $\inf\{\|\Delta A\|_F : A + \Delta A \succeq 0\} = 2$,
-the adjustments and the resulting condition numbers are listed in Table~\ref{tab:reg_example}.
+Table~\ref{tab:reg_example} lists the adjustments relative 
+to the minimal adjustment $\inf\{\|\Delta A\|_F : A + \Delta A \succeq 0\} = 2$, 
+together with the resulting condition numbers.
 \begin{table}[htbp]
 \centering
 \caption{Adjustment norm and condition number of the four strategies from Example~\ref{ex:reg_comparison}.}
@@ -195,7 +197,7 @@ with mirror achieving the best balance in this example.
 \label{subsec:detection}
 Though the positive definiteness of the full Hessian $H$ is rather easy to detect and is sufficient for convexity,
 an equality-constrained \gls{QP} only requires the reduced Hessian to be positive definite for a unique global minimum.
-The following theorem, stated in \cite{verschueren2017sparsity} (for a proof, see \cite{nocedal2006numerical}), makes this precise:
+The following theorem, stated in \cite{verschueren2017sparsity}, makes this precise:
 
 \begin{theorem}
 \label{thm:reduced_hessian_convexity}
@@ -322,7 +324,7 @@ which contradicts the structure-exploiting purpose.
 The discussion in the previous section motivates the investigation of Riccati-based primal regularizations, 
 which aim at regularizing the reduced Hessian during the Riccati recursion so that the \gls{OCP} structure is preserved.
 In Riccati-based regularizations, the Riccati recursion serves two purposes.
-First, it detects the indefiniteness of the reduced Hessian $\tilde{M}_i$ through the failure of a Cholesky factorization,
+First, it detects the indefiniteness of the reduced Hessian $\tilde{M}_i$ by the failure of a Cholesky factorization,
 as shown in Section~\ref{subsec:block_reduced_hessian}.
 Second, it regularizes the reduced Hessian $\tilde{M}_i$ stage-wise to ensure a positive definite reduced Hessian $\tilde{M}_i$ 
 while preserving the \gls{OCP} structure, as described in Section~\ref{subsec:stage_regularization}.
@@ -435,8 +437,7 @@ and block adjustment matrices $E_k$ can be derived by any of the strategies ment
 \label{sec:fail_minimal_perturbation}
 Section~\ref{subsec:min_perturbation_failure} analyzes the case
 where the commonly used minimum perturbation strategy fails in stage-wise regularization,
-which would severely ill-condition the preceding stages
-due to the propagation of the small curvature.
+which would severely ill-condition the preceding stages.
 This motivates the improved stage-wise regularization in Section~\ref{subsec:improved_stage_reg},
 which avoids minimum perturbation and accounts for the propagation.
 
@@ -465,8 +466,8 @@ and the update of the cost-to-go matrix $P_k$ follows as
         &=\tilde{Q}_k + A_k^\top P_{k+1} A_k - \Gamma_k^\top \tilde{M}_k^{-1} \Gamma_k - \left(\frac{1}{\epsilon} - \frac{1}{\nu_j}\right) \Gamma_k^\top v_j v_j^\top \Gamma_k \notag \\
         &= P_k^{\mathrm{unreg}} - \left(\frac{1}{\epsilon} - \frac{1}{\nu_j}\right) \Gamma_k^\top v_j v_j^\top \Gamma_k.
 \end{align}
-Note that this negative rank-one modification can already render $P_k$ itself indefinite, 
-independently of its downstream effect on $\tilde{M}_{k-1}$. 
+Note that this negative rank-one modification $- \left(\frac{1}{\epsilon} - \frac{1}{\nu_j}\right) \Gamma_k^\top v_j v_j^\top \Gamma_k$ 
+can already render $P_k$ itself indefinite, independently of its downstream effect on $\tilde{M}_{k-1}$. 
 This can happen even when the perturbation on $\tilde{M}_k$ is moderate,
 provided that the negative-curvature direction $v_j$ is strongly coupled to the state, i.e.\ $\|\Gamma_k^\top v_j\|$ is large.
 
@@ -495,13 +496,13 @@ The issue in Section~\ref{subsec:min_perturbation_failure} reveals two insights 
     \item The cost-to-go matrices $P_k$ need to be incorporated into the regularization design, 
     as a purely local scheme cannot capture the severity of propagation.
 \end{enumerate}
-From the first insight, instead of the minimum perturbation strategy,
-an intuitive, but effective, approach is to use the absolute value of the negative eigenvalues or $\mathrm{LDL}^\top$ pivots as the perturbation magnitude,
+From the first insight, instead of the minimum perturbation strategy, an intuitive but effective approach is 
+to use the absolute values of the negative eigenvalues or $\mathrm{LDL}^\top$ pivots as the perturbation magnitude,
 which can avoid the severe condition number issue in the preceding stages.
 This corresponds to mirror in eigenvalue modification 
 and to the Type-I strategy, of which \gls{GMW} is a common representative, in modified Cholesky factorization.
 From the second insight, we can incorporate the cost-to-go matrices $P_k$ into the algorithm,
-so that the propagation of the small curvature can be taken into account in the regularization.
+so that the propagation can be taken into account in the regularization.
 The resulting improved stage-wise regularization algorithm is summarized in Algorithm~\ref{alg:improved_modified_riccati_recursion}.
 
 \begin{algorithm}[htbp]
@@ -533,11 +534,9 @@ The resulting improved stage-wise regularization algorithm is summarized in Algo
 \end{algorithm}
 
 In Algorithm~\ref{alg:improved_modified_riccati_recursion}, 
-both corrections on the reduced Hessian blocks $\tilde{M}_k$ and cost-to-go matrices $P_k$
-are produced by the same non-minimal strategy $\mathcal{E}(\cdot)$, mirror or Type-I.
-This controls the condition number of the regularized blocks, as motivated by the first insight,
-and takes the propagation into account, as in the second insight.
-When no factorization failure occurs, the recursion reduces to the standard Riccati backward pass.
+both the reduced Hessian blocks $\tilde{M}_k$ and the cost-to-go matrices $P_k$ are adjusted 
+by the same non-minimal strategy $\mathcal{E}(\cdot)$, mirror or Type-I, following the two insights. 
+When no factorization fails, the recursion reduces to the standard Riccati backward pass.
 
 \section{Asymptotic inactivity of the regularization}
 \label{sec:asymptotic_inactivity}
@@ -630,8 +629,8 @@ so we have the following Lemma~\ref{lem:SOSC}:
     The corresponding quadratic form of the reduced Hessian reads
     \begin{align*}
         v^\top \tilde{M}_i v &= w^\top (H + G^\top T_i^{-1} \Lambda_i  G) w \\
-                             &= w^\top H w + \sum_{j} \frac{\lambda_{j,i}}{t_{j,i}} (G_j w)^2 \\
-                             &= w^\top H w + \sum_{j \in \mathcal{A}} \frac{\lambda_{j,i}}{t_{j,i}} (G_j w)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_{j,i}}{t_{j,i}} (G_j w)^2.
+                             &= w^\top H w + \sum_{j} \frac{\lambda_j^i}{t_j^i} (G_j w)^2 \\
+                             &= w^\top H w + \sum_{j \in \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j w)^2 + \sum_{j \notin \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j w)^2.
     \end{align*}
 
     We now proceed by contradiction. Assume that $\tilde{M}_i$ is not positive definite for infinitely many $i$.
@@ -645,8 +644,8 @@ so we have the following Lemma~\ref{lem:SOSC}:
     with $w_i^\top H w_i \to \bar{w}^\top H \bar{w} > 0$.
     Hence $v_i^\top \tilde{M}_i v_i > 0$ for all sufficiently large $i$, contradicting the assumption.
 
-    For $G_{\mathcal{A}}\bar{w} \neq 0$, Assumption~\ref{as:strict_comp} gives $\lambda_{j,i} \to \lambda_j^* > 0$ and $t_{j,i} \to 0$ for $j \in \mathcal{A}$,
-    so the term $\sum_{j \in \mathcal{A}} \frac{\lambda_{j,i}}{t_{j,i}} (G_j w_i)^2 \rightarrow \infty$, 
+    For $G_{\mathcal{A}}\bar{w} \neq 0$, Assumption~\ref{as:strict_comp} gives $\lambda_j^i \to \lambda_j^* > 0$ and $t_j^i \to 0$ for $j \in \mathcal{A}$,
+    so the term $\sum_{j \in \mathcal{A}} \frac{\lambda_j^i}{t_j^i} (G_j w_i)^2 \rightarrow \infty$, 
     which dominates the other two terms, and thus $v_i^\top \tilde{M}_i v_i \rightarrow \infty$, contradicting the assumption.
 
     Therefore, we can conclude that $\tilde{M}_i = Z^\top \tilde{H}_i Z \succ 0$ for all $i$ sufficiently large.

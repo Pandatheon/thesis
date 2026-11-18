@@ -30,7 +30,7 @@ In this section, we introduce the metrics used to evaluate the performance of di
 Since we care about both the convergence behavior and the factorization cost caused by different regularization methods,
 we measure the cost of a run in two ways: by its iteration count and by its factorization cost.
 For the latter, Section~\ref{subsec:flop_unit} defines a proxy unit based on one Cholesky factorization of the reduced Hessian block.
-Section~\ref{subsec:performance_profile} then introduces the absolute performance profile, which compares the methods under both cost measures.
+Section~\ref{subsec:performance_profile} then introduces the absolute performance profile used to compare the methods.
 
 \subsection{Proxy unit for factorization cost}
 \label{subsec:flop_unit}
@@ -42,63 +42,63 @@ To make the factorization costs comparable, we express them in a common proxy un
 We take one Cholesky factorization of the reduced Hessian block $\tilde{M}_k$ as the proxy unit. 
 For factorizing an $n_u \times n_u$ matrix, the cost is approximately $\tfrac{1}{3} n_u^3$ flops, hence
 \begin{equation}
-\mathrm{unit} \;\approx\; \tfrac{1}{3}\, n_u^3 .
+\mathrm{unit} \;\approx\; \tfrac{1}{3}\, n_u^3.
 \end{equation}
-The modified factorization only adds diagonal updates of $\mathcal{O}(n_u^2)$ cost, 
-so to leading order it also costs one unit.
+And other factorizations are expressed relative to this unit.
 
-The other factorizations and decompositions are expressed relative to this unit.
-A symmetric eigenvalue decomposition of the same block costs 
-about $9 n_u^3$ flops \cite{verschuerenTimeoptimalRaceCar2016b}, i.e.
-\begin{equation}
-\frac{9 n_u^3}{\tfrac{1}{3} n_u^3} \;=\; 27 \ \text{units}.
-\end{equation}
+A modified Cholesky factorization of a $n_u \times n_u$ matrix
+only adds diagonal updates of $\mathcal{O}(n_u^2)$ cost, 
+so to leading order it also costs $1$ unit.
+A symmetric eigenvalue decomposition of the same dimension matrix costs 
+about $9 n_u^3$ flops~\cite{verschuerenTimeoptimalRaceCar2016b},
+which gives $9 n_u^3 / (\tfrac{1}{3} n_u^3) = 27$ units.
 
-Regarding the cost-to-go matrix with dimension $n_x \times n_x$ 
-and a full Hessian block with dimension ${(n_x+n_u) \times (n_x+n_u)}$, 
-the ratios are considered as
+For matrices of other dimensions, such as
+the cost-to-go matrix $P_k$ of dimension $n_x \times n_x$ 
+and a full Hessian block $\tilde{H}_k$ of dimension ${(n_x+n_u) \times (n_x+n_u)}$, 
+the ratios are taken as
 \begin{equation}
 \omega_P \;=\; \left(\frac{n_x}{n_u}\right)^{3}, \quad
 \omega_H \;=\; \left(\frac{n_x+n_u}{n_u}\right)^{3}.
 \end{equation}
-
-Thus, a modified Cholesky factorization of the cost-to-go matrix costs $\omega_P$ units 
-and an eigenvalue decomposition $27\omega_P$ units.
-Likewise, the two factorizations of a full Hessian block cost $\omega_H$ and $27\omega_H$ units.
-Since the full Hessian regularization modifies all $N$ blocks $\tilde{H}_k$ at once, its cost scales with $N$.
 
 The factorization cost of a run is thus the sum of two parts,
 the Cholesky factorizations of the Riccati recursion itself and
 the additional factorizations introduced by the regularization.
 The latter includes every rerun of the Riccati recursion, whose factorizations are counted again,
 and every failed Cholesky factorization, which counts as one proxy unit, although it may stop early.
-Counting only factorizations omits the triangular solves and matrix products of the factorization step,
-favoring regularizations that repeat it, such as inertia correction.
 
+Three points should be noted.
+Since the full Hessian regularization modifies all $N$ blocks $\tilde{H}_k$ 
+and the terminal block $\tilde{Q}_N = P_N$ at once, its cost scales with $N$.
+The factorization cost omits the triangular solves and matrix products of the factorization step,
+and thus favors regularizations that repeat this step, such as inertia correction.
 Moreover, since the recursion requires the Cholesky factor of the reduced Hessian block,
 a modified Cholesky factorization of this block provides the factor directly, 
 whereas an eigenvalue modification requires an additional Cholesky factorization.
-Table~\ref{tab:flop_units} summarizes the factorization cost of regularizing each matrix
+Table~\ref{tab:flop_units} summarizes the additional factorization cost of either regularization applied to different matrices.
 \begin{table}[htbp]
   \centering
-  \caption{Additional cost of regularizing each matrix in proxy units.}
+  \caption{Additional regularization cost in proxy units.}
   \label{tab:flop_units}
   \vspace{0.5em}
   \begin{tabular}{lcc}
     \toprule
-    \textbf{Matrix} & \textbf{Modified Cholesky} & \textbf{Eigenvalue} \\
+    \textbf{Matrix}
+    & \begin{tabular}[c]{@{}c@{}}\textbf{Modified Cholesky}\\\textbf{factorization}\end{tabular}
+    & \begin{tabular}[c]{@{}c@{}}\textbf{Eigenvalue}\\\textbf{modification}\end{tabular} \\
     \midrule
-    Reduced Hessian block       & $1$          & $27 + 1$ \\
-    Cost-to-go matrix           & $\omega_P$   & $27\omega_P$ \\
-    Full Hessian block          & $\omega_H$   & $27\omega_H$ \\
+    Reduced Hessian block $\tilde{M}_k$              & $1$          & $27 + 1$ \\
+    Cost-to-go matrix $P_k$    & $\omega_P$   & $27\omega_P$ \\
+    Full Hessian block $\tilde{H}_k$                 & $\omega_H$   & $27\omega_H$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection{Absolute performance profile}
 \label{subsec:performance_profile}
-In experiments, we use a variant of the performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
-which we name as \emph{absolute performance profile}.
+In our experiments, we use a variant of the performance profile~\cite{dolanBenchmarkingOptimizationSoftware2002},
+which we call the \emph{absolute performance profile}.
 Instead of the fraction of instances solved within a factor of the best method's cost,
 it plots the number of instances a method solves within a certain cost on the vertical axis against the absolute cost on the horizontal axis.
 The profile of a method thus does not depend on the other methods and emphasizes the method's own ability to solve the instances.
@@ -135,9 +135,9 @@ The prototype was designed to reproduce its iteration behavior on convex \glspl{
 
 One implementation detail deserves a special mention, 
 as it deviates from the plain \gls{FTB} rule stated in Section~\ref{sec:size_control}. 
-Rather than being a fixed fraction $\eta$ of the maximal step, 
+Rather than being a fixed fraction $\eta$ of the maximal step size,
 the primal and dual step sizes $\alpha^{\mathrm{prim}}$ and $\alpha^{\mathrm{dual}}$ are obtained 
-from their respective maximal steps through the heuristic
+from their respective maximal step sizes through the heuristic
 \begin{equation}
   \alpha =
   \begin{cases}
@@ -145,7 +145,7 @@ from their respective maximal steps through the heuristic
     \alpha^{\mathrm{max}}, & \alpha^{\mathrm{max}} = 1,
   \end{cases}
 \end{equation}
-where $\alpha^{\mathrm{max}}\in(0,1]$ denotes the maximal step length from \eqref{eq:ftb_max_prim} or \eqref{eq:ftb_max_dual},
+where $\alpha^{\mathrm{max}}\in(0,1]$ denotes the maximal step size from \eqref{eq:ftb_max_prim} or \eqref{eq:ftb_max_dual},
 $\kappa_\eta = 0.99$ and $\hat{\eta} = 1-10^{-7}$ as in HPIPM.
 
 When $\alpha^{\mathrm{max}} < 1$, 
@@ -222,7 +222,7 @@ the settings for the experiments are introduced.
 First, based on the previously discussed methods, 
 we name and classify the regularization methods considered in the experiment in Section~\ref{subsec:experimented_regularizations}, 
 and then we introduce the general setup of the experiments in Section~\ref{subsec:general_setup}, 
-including the convergence criterion and step size control strategy.
+including the convergence criterion and step size control scheme.
 
 \subsection{Evaluated regularizations}
 \label{subsec:experimented_regularizations}
@@ -253,7 +253,7 @@ giving two targets within this category:
   The correction is purely local and serves as a minimal safeguard for the factorization.
   \item \textsf{PM}: the cost-to-go matrix $P_{k+1}$ entering the stage is corrected as well, 
   as in Algorithm~\ref{alg:improved_modified_riccati_recursion} introduced in this work, 
-  so that the analyzed propagation of small curvature is taken into account.
+  so that the analyzed propagation is taken into account.
 \end{itemize}
 
 Pairing each target with the three strategies gives six methods,
@@ -389,7 +389,7 @@ The comparison proceeds in three stages, each narrowing the field.
 We first compare the six Riccati-based methods against one another, 
 in order to identify the strongest representatives of the category. 
 These are then set against the full Hessian regularizations, and finally against inertia correction.
-Two ablations follow, which replace Mehrotra's probing with the conditional predictor--corrector
+Two ablations follow, which replace the Mehrotra's probing with the Mehrotra's conditional predictor--corrector
 in Section~\ref{subsec:ablation_mehrotra} and disable the line search in Section~\ref{subsec:ablation_line_search}.
 
 \subsection{Comparison among Riccati-based regularizations}
@@ -401,7 +401,7 @@ As a baseline we also include the unregularized recursion (\textsf{NO\_REGULARIZ
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.00\textwidth]{images/experiment/Riccati-based_results/iter_flop_profile_qp_results_riccati.pdf}
-   \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+   \caption{Iteration profile (left) and proxy unit profile (right)
             for the six Riccati-based methods and the unregularized baseline over the $170$-instance test set.}
     \label{fig:iter-profile-riccati}
 \end{figure}
@@ -475,7 +475,7 @@ we now compare them against the full Hessian regularizations.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.00\textwidth]{images/experiment/Full_Hessian_results/iter_flop_profile_qp_results_riccati.pdf}
-    \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+    \caption{Iteration profile (left) and proxy unit profile (right)
     for the two strongest Riccati-based methods (\textsf{PM\_MIRROR}, \textsf{PM\_GMW}) against the full Hessian regularizations
     (\textsf{H\_PROJECT}, \textsf{H\_MIRROR}, \textsf{H\_GMW}) and the unregularized baseline.}
     \label{fig:iter-profile-fullhessian}
@@ -529,7 +529,7 @@ Finally, we compare the two Riccati-based methods against inertia correction (\t
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=1.00\textwidth]{images/experiment/Inertia_correction_results/iter_flop_profile_qp_results_riccati.pdf}
-    \caption{Solved instances against iteration count (left) and factorization cost per instance in proxy units (right)
+    \caption{Iteration profile (left) and proxy unit profile (right)
     for \textsf{PM\_MIRROR} and \textsf{PM\_GMW} against inertia correction (\textsf{INERTIA\_LM}) and the unregularized baseline.}
     \label{fig:iter-profile-inertia}
 \end{figure}
@@ -675,7 +675,7 @@ where ill-conditioning propagates into numerical indefiniteness or overflow.
 
 Either insight introduced in Section~\ref{sec:fail_minimal_perturbation} resolves these breakdowns.
 Abandoning the minimum perturbation rule (\textsf{M\_MIRROR}, \textsf{M\_GMW})
-or adding the cost-to-go correction (\textsf{PM\_PROJECT}) leaves only iteration-limit terminations.
+or regularizing the cost-to-go matrices (\textsf{PM\_PROJECT}) leaves only iteration-limit terminations.
 Combining both remedies, as in \textsf{PM\_MIRROR} and \textsf{PM\_GMW}, achieves the best performance in this benchmark.
 
 Among the full Hessian methods, only \textsf{H\_GMW} still breaks down, on a single instance,
@@ -687,8 +687,7 @@ It remains a potential issue for full Hessian regularization, as rounding errors
 \label{subsec:failure_category}
 Figure~\ref{fig:failures-by-category} breaks down the same failures by the \gls{OCP} each instance was collected from.
 Together with Figure~\ref{fig:indefinite_qp_scatter},
-this shows that \textsf{M\_MIRROR}, \textsf{M\_GMW} and \textsf{PM\_PROJECT} fail mostly 
-on the wide indefiniteness of \textsl{Dubins car} and \textsl{Robot arm},
+this shows that \textsf{M\_MIRROR}, \textsf{M\_GMW} fail mostly on the wide indefiniteness of \textsl{Dubins car} and \textsl{Robot arm},
 whereas the full Hessian methods fail mostly on the narrow indefiniteness of \textsl{Flying robot} and \textsl{Crane}.
 
 \begin{figure}[htbp]
@@ -719,27 +718,22 @@ under the conditional Mehrotra's predictor--corrector,
 i.e.\ why \textsf{PM\_MIRROR} loses far more instances than \textsf{INERTIA\_LM}.
 
 With the simplified notation of \eqref{eq:schur_comp_KKT_reduced},
-the regularized system and its step bound read
+the regularized system and the resulting bound on the direction read
 \begin{equation}
     (\tilde{M}_i + E_i)\, \Delta y_z = -r_i,
     \qquad
     \|\Delta y_z\| \le \frac{\|r_i\|}{\nu_{\min}(\tilde{M}_i+E_i)}.
     \label{eq:step_bound}
 \end{equation}
-As one can notice, the regularization would shorten the step taken,
-and the methods differ in how small $\nu_{\min}(\tilde{M}_i+E_i)$ can become,
-and thus in how long the regularized step is. 
-
-\textsf{INERTIA\_LM} increases a uniform shift $\delta_w$ until the factorization succeeds.
-If $\delta_w^\ast$ is the smallest shift for which it succeeds, then $\nu_{\min}(\tilde{M}_i+E_i) \ge \delta_w-\delta_w^\ast$.
-The accepted $\delta_w$ usually is larger than $\delta_w^\ast$, and $\nu_{\min}$ stays of the order of $\delta_w$.
+The bound tightens as $E_i$ raises $\nu_{\min}(\tilde{M}_i+E_i)$, 
+and the two methods raise it by different amounts.
+\textsf{INERTIA\_LM} increases a uniform shift $\delta_w$ until the factorization succeeds,
+commonly beyond the smallest successful shift $\delta_w^\ast$,
+so $\nu_{\min}(\tilde{M}_i+E_i) \ge \delta_w-\delta_w^\ast$ stays of the order of $\delta_w$.
 \textsf{PM\_MIRROR} modifies only the negative eigenvalues of $\tilde{M}_k$ and $P_k$,
 which allows $\nu_{\min}(\tilde{M}_i+E_i)$ to stay as a small positive value.
-\textsf{PM\_MIRROR} could thus reach a much longer step than \textsf{INERTIA\_LM} at the same $\|r_i\|$.
-
-As shown in Table~\ref{tab:step_metrics}, the median affine step of \textsf{PM\_MIRROR} is longer than that of \textsf{INERTIA\_LM}.
-This difference can be amplified in Mehrotra's predictor--corrector scheme, 
-where the second-order term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}\mathbf{1}$ grows quadratically with the affine step.
+\textsf{PM\_MIRROR} could thus reach a much longer direction than \textsf{INERTIA\_LM} at the same $\|r_i\|$.
+As shown in Table~\ref{tab:step_metrics}, the median affine direction of \textsf{PM\_MIRROR} is longer than that of \textsf{INERTIA\_LM}.
 
 \begin{table}[htbp]
 \centering
@@ -751,7 +745,7 @@ where the second-order term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}
  & \textsf{PM\_MIRROR} & \textsf{INERTIA\_LM} \\
 \midrule
 \multicolumn{3}{l}{\emph{Corrector, on $170$ instances}} \\
-\quad Median affine step $\|\Delta y_z\|$             & $88.7$ & $5.6$ \\
+\quad Median affine direction $\|\Delta y_z\|$             & $88.7$ & $5.6$ \\
 \quad Percentage of rejected corrector steps          & 4.5\,\% & 55.7\,\% \\
 \addlinespace
 \multicolumn{3}{l}{\emph{Probing, on $161$ instances solved by both}} \\
@@ -762,26 +756,23 @@ where the second-order term $\Delta T^{\mathrm{aff}}\Delta\Lambda^{\mathrm{aff}}
 \end{tabular}
 \end{table}
 
-In \textsf{PM\_MIRROR},
-the long affine step makes the second-order term dominate the \gls{RHS}, so the corrector step is long as well.
-For both steps, the \gls{FTB} rule then allows only a short step size,
-which keeps $\mu^{\mathrm{aff}}$ and $\mu^{\mathrm{cor}}$ close to $\mu$.
-The condition $\mu^{\mathrm{cor}} < 2\mu^{\mathrm{aff}}$ thus rarely detects this.
-The corrector step dominated by the inexactness from an affine step is, therefore, taken,
-which cannot efficiently reduce the complementarity residual or the duality gap.
-In \textsf{INERTIA\_LM}, by contrast, the second-order term is usually still comparable in size to the rest of the \gls{RHS},
-so the conditional Mehrotra's predictor--corrector scheme remains effective,
-and the condition can still reject the corrector steps as shown in Table~\ref{tab:step_metrics}.
-The scheme thus makes progress as intended, and \textsf{INERTIA\_LM} loses far fewer instances than \textsf{PM\_MIRROR}.
+In \textsf{PM\_MIRROR}, the long affine direction makes the second-order term dominate the complementarity residual in the \gls{RHS},
+so the corrector direction is long as well.
+The \gls{FTB} rule then allows only short step sizes for both, which keep $\mu^{\mathrm{aff}}$ and $\mu^{\mathrm{cor}}$ close to $\mu$,
+so the condition $\mu^{\mathrm{cor}} < 2\mu^{\mathrm{aff}}$ rarely rejects the corrector steps.
+The corrector step, dominated by the inexactness of the affine direction, is thus taken,
+which cannot efficiently reduce the complementarity residual or the duality measure.
+In \textsf{INERTIA\_LM}, by contrast, the second-order term usually stays comparable to the rest of complementarity residual,
+so the condition can still reject the corrector steps as shown in Table~\ref{tab:step_metrics} and the scheme makes progress as intended.
+\textsf{INERTIA\_LM} thus loses far fewer instances than \textsf{PM\_MIRROR}.
 
-With probing, the affine step only affects the centering parameter,
+With probing, the affine direction only affects the centering parameter,
 so the inexactness no longer enters the search direction.
-The longer step of \textsf{PM\_MIRROR}, which is a drawback under the corrector, thus becomes an advantage,
+The longer direction of \textsf{PM\_MIRROR}, a drawback with the corrector, thus becomes an advantage,
 as measured by the displacement $\alpha^{\mathrm{prim}}\|\Delta y_z\|$ in Table~\ref{tab:step_metrics}.
-
 \textsf{INERTIA\_LM} moves less per regularized iteration and generally needs more regularized iterations,
 while \textsf{PM\_MIRROR} moves further per regularized iteration.
-This larger displacement could help the iterate to move towards the constraint boundaries,
-where the reduced Hessian could be positive definite with the curvature contribution, and recover the fast convergence towards solutions.
+This larger displacement could help the iterate move towards the inequality constraint boundaries,
+where the curvature contribution could make the reduced Hessian positive definite and thus restore fast convergence.
 
 \end{document}
